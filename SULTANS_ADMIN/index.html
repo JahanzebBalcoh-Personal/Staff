@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="icon.jpg">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="JB Admin">
+<meta name="theme-color" content="#f0b429">
+<title>Jahanzeb Admin — Sultans</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"});
+const db=firebase.firestore();
+</script>
+<style>
+:root{--gold:#f0b429;--gold2:#e07b00;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;--teal:#14b8a6;--orange:#f97316;--bg:#060e1a;--card:#0f1c2e;--card2:#162035;--border:rgba(240,180,41,0.12);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.hdr{background:linear-gradient(180deg,#0a1628,#060e1a);border-bottom:2px solid var(--border);padding:10px 14px;position:sticky;top:0;z-index:200;}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;}
+.hdr-brand{display:flex;align-items:center;gap:10px;}
+.hdr-logo{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.hdr-name{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hdr-sub{font-size:9px;color:var(--muted);}
+.clk{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);font-weight:700;}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.tabs{display:flex;background:#0a1628;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:53px;z-index:199;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:10px 13px;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:.2s;}
+.tab.active{color:var(--gold);border-color:var(--gold);}
+.pg{display:none;padding:12px;max-width:1000px;margin:0 auto;}
+.pg.on{display:block;}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+@media(min-width:500px){.stats{grid-template-columns:repeat(3,1fr);}}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;position:relative;overflow:hidden;}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}
+.sc.c1::after{background:linear-gradient(90deg,var(--green),#86efac);}
+.sc.c2::after{background:linear-gradient(90deg,var(--red),#fca5a5);}
+.sc.c3::after{background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.sc.c4::after{background:linear-gradient(90deg,var(--blue),#93c5fd);}
+.sc.c5::after{background:linear-gradient(90deg,var(--orange),#fdba74);}
+.sc.c6::after{background:linear-gradient(90deg,var(--purple),#c084fc);}
+.sc.c7::after{background:linear-gradient(90deg,var(--teal),#5eead4);}
+.sc-lbl{font-size:8px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.sc-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;}
+.sc-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+.sh{display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px;}
+.sh-t{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--gold);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:12px;}
+.tw{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:12px;overflow-x:auto;}
+.tw table{width:100%;border-collapse:collapse;min-width:400px;}
+.tw thead{background:var(--card2);}
+.tw th{padding:9px 11px;text-align:left;font-size:8px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.tw td{padding:9px 11px;border-top:1px solid rgba(255,255,255,0.04);font-weight:700;font-size:12px;vertical-align:middle;}
+.bx{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:800;}
+.bx-g{background:rgba(34,197,94,0.12);color:var(--green);}
+.bx-r{background:rgba(239,68,68,0.12);color:var(--red);}
+.bx-y{background:rgba(240,180,41,0.12);color:var(--gold);}
+.bx-b{background:rgba(59,130,246,0.12);color:var(--blue);}
+.bx-p{background:rgba(168,85,247,0.12);color:var(--purple);}
+.bx-o{background:rgba(249,115,22,0.12);color:var(--orange);}
+.bx-t{background:rgba(20,184,166,0.12);color:var(--teal);}
+.btn-pdf{background:linear-gradient(135deg,var(--red),#b91c1c);color:#fff;padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;}
+.btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:10px;font-weight:800;text-decoration:none;display:inline-block;}
+.btn-sm{background:rgba(255,255,255,0.05);color:var(--soft);border:1px solid rgba(255,255,255,0.08);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;}
+.btn-edit{background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;padding:4px 9px;font-size:10px;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;border:none;}
+.btn-pay{background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;padding:4px 9px;font-size:10px;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;border:none;}
+.btn-del{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);padding:4px 9px;font-size:10px;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;border:none;border-radius:9px;padding:11px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;width:100%;}
+.frow{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+.frow input,.frow select{background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:7px 11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;}
+.fl{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
+.fl label{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.fl input,.fl select,.fl textarea{background:var(--card2);border:1.5px solid rgba(255,255,255,0.06);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;}
+.sbox{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;outline:none;width:100%;margin-bottom:10px;}
+.br{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.br-lbl{font-size:9px;color:var(--muted);font-weight:700;}
+.br-track{flex:1;height:14px;background:var(--card2);border-radius:3px;overflow:hidden;}
+.br-fill{height:100%;border-radius:3px;transition:width .6s;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.on{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal-t{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin-bottom:14px;}
+.note-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:7px;}
+.feed-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;}
+.feed-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.empty{text-align:center;padding:24px;color:var(--muted);}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);padding:10px 20px;border-radius:30px;font-weight:800;font-size:12px;z-index:9998;transition:.3s;white-space:nowrap;}
+.toast.on{transform:translateX(-50%) translateY(0);}
+.toast.ok{background:var(--green);color:#000;}
+.toast.err{background:var(--red);color:#fff;}
+.toast.info{background:var(--gold);color:#000;}
+/* TIMER */
+.tc{border-radius:13px;padding:13px;margin-bottom:8px;}
+.tc.done{background:rgba(100,116,139,0.07);border:1px solid rgba(100,116,139,0.2);}
+.tc.active{background:rgba(34,197,94,0.07);border:2px solid rgba(34,197,94,0.35);}
+.tc.next{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);}
+.tc.wait{background:rgba(240,180,41,0.05);border:1px solid rgba(240,180,41,0.15);}
+.tbadge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:1px;margin-bottom:6px;}
+.tbadge.done{background:rgba(100,116,139,0.15);color:var(--muted);}
+.tbadge.active{background:rgba(34,197,94,0.15);color:var(--green);}
+.tbadge.next{background:rgba(59,130,246,0.15);color:var(--blue);}
+.tbadge.wait{background:rgba(240,180,41,0.12);color:var(--gold);}
+.tcd{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;letter-spacing:2px;}
+.tcd.active{color:var(--green);}
+.tcd.next{color:var(--blue);}
+.tcd.urgent{color:var(--red);}
+.tbar{height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-top:7px;}
+.tbar-fill{height:100%;border-radius:4px;transition:width 1s linear;}
+.footer{text-align:center;padding:14px;border-top:1px solid var(--border);margin-top:8px;}
+.fc{font-size:10px;color:var(--muted);}
+.fc a{color:var(--gold);text-decoration:none;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="editModal">
+  <div class="modal-box">
+    <div class="modal-t" style="color:var(--blue);">Edit Booking</div>
+    <div id="edit-info" style="background:var(--card2);border-radius:9px;padding:10px;margin-bottom:12px;font-size:12px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fl"><label>Name</label><input type="text" id="e-nm"></div>
+      <div class="fl"><label>Phone</label><input type="tel" id="e-ph"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div class="fl"><label>Type</label>
+        <select id="e-vip"><option value="regular">Regular</option><option value="vip">VIP</option><option value="new">New</option></select>
+      </div>
+      <div class="fl"><label>Hours</label><input type="number" id="e-hrs" min="0.5" step="0.5"></div>
+      <div class="fl"><label>Date</label><input type="date" id="e-date"></div>
+    </div>
+    <div class="fl"><label>Time</label>
+      <div style="display:flex;gap:6px;">
+        <select id="e-hr" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.06);border-radius:9px;padding:9px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;flex:1;">
+          <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+          <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+        </select>
+        <select id="e-mn" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.06);border-radius:9px;padding:9px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;width:72px;">
+          <option value="00">:00</option><option value="15">:15</option><option value="30">:30</option><option value="45">:45</option>
+        </select>
+        <select id="e-ap" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.06);border-radius:9px;padding:9px;color:var(--gold);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;outline:none;width:72px;">
+          <option value="AM">AM</option><option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+    <div class="fl"><label>Note</label><input type="text" id="e-nt"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button onclick="saveEdit()" style="flex:1;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:9px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">Save Changes</button>
+      <button class="btn-sm" onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAY MODAL -->
+<div class="modal-bg" id="payModal">
+  <div class="modal-box">
+    <div class="modal-t" style="color:var(--purple);">Add Payment</div>
+    <div id="pay-info" style="background:var(--card2);border-radius:9px;padding:10px;margin-bottom:12px;font-size:12px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fl"><label>Cash Rs.</label><input type="number" id="p-cash" placeholder="0" oninput="calcPay()"></div>
+      <div class="fl"><label>Account Rs.</label><input type="number" id="p-acc" placeholder="0" oninput="calcPay()"></div>
+    </div>
+    <div class="fl"><label>Account Type</label>
+      <select id="p-type">
+        <option value="">N/A</option>
+        <option value="jazz">JazzCash — Abdul Gaffar</option>
+        <option value="bank">Bank Alfalah — Mehboob Ahmad</option>
+        <option value="easy">Easypaisa</option>
+      </select>
+    </div>
+    <div id="pay-calc" style="background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:9px;padding:10px;margin-bottom:12px;font-size:12px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="savePay()" style="flex:1;background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;border:none;border-radius:9px;padding:12px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">Add Payment</button>
+      <button class="btn-sm" onclick="closePay()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-row">
+    <div class="hdr-brand">
+      <div class="hdr-logo">🏏</div>
+      <div>
+        <div class="hdr-name">JAHANZEB BALOCH — ADMIN</div>
+        <div class="hdr-sub">Sultans Indoor Cricket Club, Multan</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="sdot" id="sdot"></div>
+      <div class="clk" id="clk">--:--</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="go('dash')">Dashboard</div>
+  <div class="tab" onclick="go('bk')">Bookings</div>
+  <div class="tab" onclick="go('fin')">Finance</div>
+  <div class="tab" onclick="go('cust')">Customers</div>
+  <div class="tab" onclick="go('feed')">Live Feed</div>
+  <div class="tab" onclick="go('notes')">Notes</div>
+  <div class="tab" onclick="go('settings')">Settings</div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="pg on" id="pg-dash">
+  <br>
+  <div class="sh"><div class="sh-t">Live Match Timer</div><span class="sdot"></span></div>
+  <div id="timerSec" style="margin-bottom:12px;"></div>
+
+  <div class="sh">
+    <div class="sh-t">Today's Summary</div>
+    <div style="font-size:10px;color:var(--muted);" id="todayLbl"></div>
+  </div>
+  <div class="stats" id="todayStats"></div>
+
+  <div class="sh">
+    <div class="sh-t">Monthly Summary</div>
+    <div style="display:flex;gap:6px;">
+      <select id="dm" onchange="renderDash()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;outline:none;"></select>
+      <select id="dy" onchange="renderDash()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;outline:none;"></select>
+    </div>
+  </div>
+  <div class="stats" id="monthStats"></div>
+
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:10px;">Payment Channels</div>
+    <div class="stats" style="grid-template-columns:repeat(2,1fr);" id="channels"></div>
+  </div>
+
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:10px;">Daily Chart</div>
+    <div id="dailyChart"></div>
+    <div style="display:flex;gap:12px;margin-top:8px;font-size:9px;font-weight:800;">
+      <span style="color:var(--green);">Earning</span><span style="color:var(--red);">Expense</span>
+    </div>
+  </div>
+
+  <div class="sh">
+    <div class="sh-t">Pending Dues</div>
+    <button onclick="bulkRemind()" class="btn-wa" style="font-size:10px;padding:5px 12px;">Bulk Remind</button>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Total</th><th>Paid</th><th>Due</th><th>Action</th></tr></thead>
+    <tbody id="duesTbl"></tbody>
+  </table></div>
+
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn-pdf" onclick="printDaily()" style="flex:1;padding:11px;">Daily PDF</button>
+    <button class="btn-pdf" onclick="printMonthly()" style="flex:1;padding:11px;">Monthly PDF</button>
+  </div>
+</div>
+
+<!-- BOOKINGS -->
+<div class="pg" id="pg-bk">
+  <br>
+  <div class="frow">
+    <select id="bm" onchange="renderBk()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;"></select>
+    <select id="by" onchange="renderBk()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;"></select>
+    <input type="date" id="bdf" onchange="renderBk()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;">
+    <select id="bsf" onchange="renderBk()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;">
+      <option value="">All</option><option value="pre">Pre-Match</option><option value="paid">Paid</option><option value="partial">Partial</option>
+    </select>
+    <button class="btn-sm" onclick="document.getElementById('bdf').value='';document.getElementById('bsf').value='';renderBk()">Reset</button>
+  </div>
+  <input type="text" class="sbox" placeholder="Search name, phone..." oninput="renderBk(this.value)">
+  <div id="bkStats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Time</th><th>Hrs</th><th>Total</th><th>Advance</th><th>Method</th><th>Cash</th><th>Account</th><th>Paid</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody id="bkTbl"></tbody>
+  </table></div>
+</div>
+
+<!-- FINANCE -->
+<div class="pg" id="pg-fin">
+  <br>
+  <div class="frow">
+    <select id="fm" onchange="renderFin()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;"></select>
+    <select id="fy" onchange="renderFin()" style="background:var(--card);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;"></select>
+    <button class="btn-pdf" onclick="printMonthly()">PDF</button>
+  </div>
+  <div class="stats" id="finStats"></div>
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:10px;">Payment Channels</div>
+    <div id="finCh"></div>
+  </div>
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:10px;">3 Months Comparison</div>
+    <div id="comp3"></div>
+  </div>
+  <div class="sh"><div class="sh-t">Expense Breakdown</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Category</th><th>Amount</th><th>%</th></tr></thead>
+    <tbody id="expBreak"></tbody>
+  </table></div>
+  <div class="sh"><div class="sh-t">All Expenses</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Category</th><th>Details</th><th>Via</th><th>Amount</th></tr></thead>
+    <tbody id="expTbl"></tbody>
+  </table></div>
+</div>
+
+<!-- CUSTOMERS -->
+<div class="pg" id="pg-cust">
+  <br>
+  <div class="stats" id="custStats"></div>
+  <input type="text" class="sbox" placeholder="Search customers..." oninput="renderCust(this.value)">
+  <div class="tw"><table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Type</th><th>Bookings</th><th>Spent</th><th>Last Visit</th><th>Due</th><th>Actions</th></tr></thead>
+    <tbody id="custTbl"></tbody>
+  </table></div>
+</div>
+
+<!-- LIVE FEED -->
+<div class="pg" id="pg-feed">
+  <br>
+  <div class="sh"><div class="sh-t">Live Activity</div></div>
+  <div id="feedList"><div class="empty">Waiting for activity...</div></div>
+</div>
+
+<!-- NOTES -->
+<div class="pg" id="pg-notes">
+  <br>
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:10px;">Add Note</div>
+    <div class="fl"><label>Note</label>
+      <textarea id="noteInp" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.06);border-radius:9px;padding:10px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;width:100%;min-height:80px;resize:vertical;" placeholder="Write anything..."></textarea>
+    </div>
+    <button class="btn-gold" onclick="saveNote()">Save Note</button>
+  </div>
+  <div class="sh"><div class="sh-t">My Notes</div><button class="btn-sm" onclick="if(confirm('Delete all?')){localStorage.removeItem('jb_notes');renderNotes();}">Clear All</button></div>
+  <div id="notesList"></div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="pg" id="pg-settings">
+  <br>
+  <!-- PASSWORD CHANGE -->
+  <div class="card" style="background:rgba(240,180,41,0.05);border-color:rgba(240,180,41,0.25);">
+    <div class="sh-t" style="margin-bottom:6px;">🔐 Club App Password Change</div>
+    <div style="font-size:11px;color:var(--soft);margin-bottom:14px;">Club app ka login password yahan se badlo.</div>
+    <div class="fl">
+      <label>New Password</label>
+      <input type="text" id="newPass" placeholder="Naya password..." style="font-size:16px;letter-spacing:2px;font-weight:800;">
+    </div>
+    <div class="fl">
+      <label>Confirm Password</label>
+      <input type="text" id="confPass" placeholder="Dobara likho..." style="font-size:16px;letter-spacing:2px;font-weight:800;">
+    </div>
+    <div id="passMsg" style="font-size:12px;font-weight:700;min-height:16px;margin-bottom:10px;padding:8px;border-radius:8px;display:none;"></div>
+    <button class="btn-gold" onclick="changePass()">🔐 Change Password</button>
+    <div style="margin-top:12px;background:rgba(0,0,0,0.2);border-radius:8px;padding:10px 14px;">
+      <div style="font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Current Password:</div>
+      <div id="curPass" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:var(--gold);">jahanzebbaloch</div>
+    </div>
+  </div>
+
+  <!-- SYSTEM INFO -->
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:12px;">System Info</div>
+    <div style="font-size:12px;line-height:2.2;">
+      <div>Creator: <b>Jahanzeb Baloch — 0306-0711529</b></div>
+      <div>Club App: <b>sultans-club.vercel.app</b></div>
+      <div>Admin: <b>sultans-admin.vercel.app</b></div>
+      <div>Firebase: <b>sultans-cricket</b></div>
+      <div>Rate: <b>Rs.2000/hour</b></div>
+      <div>JazzCash: <b>0300-3510175 (Abdul Gaffar)</b></div>
+      <div>Bank Alfalah: <b>83721010111101 (Mehboob Ahmad)</b></div>
+    </div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:10px;">Export Data</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-pdf" onclick="exportCSV('bookings')" style="flex:1;padding:10px;">Bookings CSV</button>
+      <button class="btn-pdf" onclick="exportCSV('expenses')" style="flex:1;padding:10px;">Expenses CSV</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="fc">Jahanzeb Baloch — <a href="tel:03060711529">0306-0711529</a> | Sultans Indoor Cricket Club, Multan</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var allBks=[],allExps=[],allCusts=[],feedItems=[];
+var editId=null,payId=null,timerInt=null;
+
+function tick(){var n=new Date();document.getElementById('clk').textContent=n.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});}
+setInterval(tick,1000);tick();
+
+var Rs=function(n){return 'Rs.'+Number(n||0).toLocaleString('en-PK');};
+var today=function(){return new Date().toISOString().slice(0,10);};
+function toast(m,t){var el=document.getElementById('toast');el.textContent=m;el.className='toast on '+(t||'ok');setTimeout(function(){el.className='toast';},3000);}
+function pmbadge(m){var mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};var ml={cash:'Cash',bank:'Alfalah',jazz:'Jazz',easy:'Easy'};return '<span class="bx '+(mp[m]||'bx-g')+'">'+(ml[m]||m||'—')+'</span>';}
+function sbadge(s){if(s==='paid')return '<span class="bx bx-g">PAID</span>';if(s==='partial')return '<span class="bx bx-y">PARTIAL</span>';if(s==='pre')return '<span class="bx bx-o">PRE</span>';return '';}
+function vbadge(v){if(v==='vip')return '<span class="bx bx-y">VIP</span>';if(v==='new')return '<span class="bx bx-b">NEW</span>';return '<span class="bx bx-t">Regular</span>';}
+function waLink(ph,msg){var p=ph.replace(/[^0-9]/g,'');var i=p.startsWith('0')?'92'+p.slice(1):p;return 'https://wa.me/'+i+'?text='+encodeURIComponent(msg);}
+function waDue(b){return 'Assalam o Alaikum '+b.nm+'!\nThe Sultans Indoor Cricket Club — Multan\n\nYour payment is pending:\nDate: '+b.date+'\nTotal: '+Rs(b.fin)+'\nDue: '+Rs(b.due)+'\n\nJazzCash: 0300-3510175 (Abdul Gaffar)\nBank Alfalah: 83721010111101\n\nThank you!';}
+function ptm(t){if(!t)return 0;var m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i);if(!m)return 0;var h=parseInt(m[1]),mn=parseInt(m[2]||0),ap=(m[3]||'').toUpperCase();if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;if(!ap&&h<8)h+=12;return h*60+mn;}
+function mtt(mins){var t=mins%1440,h24=Math.floor(t/60),m=t%60,ap=h24>=12?'PM':'AM',h12=h24>12?h24-12:h24===0?12:h24;return h12+':'+(m<10?'0':'')+m+' '+ap;}
+function fcd(s){var sec=Math.floor(s),h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),sc=sec%60;if(h>0)return h+'h '+String(m).padStart(2,'0')+'m '+String(sc).padStart(2,'0')+'s';return String(m).padStart(2,'0')+':'+String(sc).padStart(2,'0');}
+
+// FIREBASE
+function startSync(){
+  document.getElementById('sdot').style.background='var(--orange)';
+  db.collection('bookings').onSnapshot(function(snap){
+    allBks=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'');});
+    document.getElementById('sdot').style.background='var(--green)';
+    snap.docChanges().forEach(function(ch){
+      if(ch.type==='added'||ch.type==='modified'){
+        var d=ch.doc.data(),t=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}),txt='',color='var(--green)';
+        if(d.status==='pre'){txt='Pre-Match: '+d.nm+' — '+Rs(d.fin)+' (Adv: '+Rs(d.advAmt)+')';color='var(--orange)';}
+        else if(d.status==='paid'){txt='Complete: '+d.nm+' — '+Rs(d.fin)+' PAID';color='var(--green)';}
+        else if(d.status==='partial'){txt='Partial: '+d.nm+' — Due: '+Rs(d.due);color='var(--gold)';}
+        if(txt){feedItems.unshift({txt:txt,t:t,color:color});if(feedItems.length>50)feedItems.pop();if(document.getElementById('pg-feed').classList.contains('on'))renderFeed();}
+      }
+    });
+    refreshActive();
+  },function(err){document.getElementById('sdot').style.background='var(--red)';console.log(err);});
+  db.collection('expenses').onSnapshot(function(snap){allExps=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});refreshActive();});
+  db.collection('customers').onSnapshot(function(snap){allCusts=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (a.nm||'').localeCompare(b.nm||'');});refreshActive();});
+}
+
+function refreshActive(){
+  var a=document.querySelector('.tab.active');if(!a)return;
+  var fn=a.getAttribute('onclick')||'';
+  if(fn.includes('dash'))renderDash();
+  else if(fn.includes('bk'))renderBk();
+  else if(fn.includes('fin'))renderFin();
+  else if(fn.includes('cust'))renderCust('');
+  else if(fn.includes('notes'))renderNotes();
+}
+
+function go(tab){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){if((t.getAttribute('onclick')||'').includes("'"+tab+"'"))t.classList.add('active');});
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.getElementById('pg-'+tab).classList.add('on');
+  if(tab==='dash')renderDash();
+  if(tab==='bk')renderBk();
+  if(tab==='fin')renderFin();
+  if(tab==='cust')renderCust('');
+  if(tab==='feed')renderFeed();
+  if(tab==='notes')renderNotes();
+  if(tab==='settings')loadSettings();
+}
+
+// TIMER
+function startTimer(){if(timerInt)clearInterval(timerInt);renderTimer();timerInt=setInterval(renderTimer,1000);}
+function renderTimer(){
+  var now=new Date(),nm=now.getHours()*60+now.getMinutes()+now.getSeconds()/60,td=today();
+  var bks=allBks.filter(function(b){return b.date===td&&b.st;}).map(function(b){var sm=ptm(b.st),em=sm+(parseFloat(b.hrs)||1)*60;return Object.assign({},b,{sm:sm,em:em});}).sort(function(a,b){return a.sm-b.sm;});
+  if(!bks.length){document.getElementById('timerSec').innerHTML='<div style="text-align:center;padding:12px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:13px;">No bookings today</div>';return;}
+  var h='';
+  bks.forEach(function(b,idx){
+    if(nm>=b.em){
+      h+='<div class="tc done"><div class="tbadge done">DONE</div><div style="font-size:15px;font-weight:900;color:var(--muted);">'+b.nm+'</div><div style="font-size:10px;color:var(--muted);">'+b.st+' to '+mtt(b.em)+'</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:14px;color:var(--muted);">Finished</div></div>';
+    } else if(nm>=b.sm){
+      var rem=Math.max(0,(b.em-nm)*60),dur=(b.em-b.sm)*60,pct=Math.min(100,((dur-rem)/dur)*100),urg=rem<600;
+      h+='<div class="tc active" style="'+(urg?'border-color:rgba(239,68,68,0.5);':'')+'">';
+      h+='<div class="tbadge active">PLAYING NOW</div>';
+      h+='<div style="font-size:15px;font-weight:900;color:var(--green);">'+b.nm+'</div>';
+      h+='<div style="font-size:10px;color:var(--muted);">'+b.st+' to '+mtt(b.em)+'</div>';
+      h+='<div class="tcd '+(urg?'urgent':'active')+'">'+fcd(rem)+'</div>';
+      h+='<div style="font-size:9px;color:var(--muted);">'+(urg?'Almost done!':'Time remaining')+'</div>';
+      h+='<div class="tbar"><div class="tbar-fill" style="width:'+pct.toFixed(1)+'%;background:'+(urg?'var(--red)':'var(--green)')+'"></div></div>';
+      h+='</div>';
+    } else {
+      var wait=Math.max(0,(b.sm-nm)*60),isNext=bks.slice(0,idx).every(function(x){return nm>=x.em;});
+      h+='<div class="tc '+(isNext?'next':'wait')+'">';
+      h+='<div class="tbadge '+(isNext?'next':'wait')+'">'+(isNext?'UP NEXT':'WAITING')+'</div>';
+      h+='<div style="font-size:15px;font-weight:900;color:'+(isNext?'var(--blue)':'var(--gold)')+';">'+b.nm+'</div>';
+      h+='<div style="font-size:10px;color:var(--muted);">'+b.st+' to '+mtt(b.em)+'</div>';
+      h+='<div class="tcd '+(isNext?'next':'')+'" style="font-size:20px;">'+fcd(wait)+'</div>';
+      h+='<div style="font-size:9px;color:var(--muted);">Starts in</div>';
+      h+='</div>';
+    }
+  });
+  document.getElementById('timerSec').innerHTML=h;
+}
+
+// DASHBOARD
+function renderDash(){
+  var td=today(),n=new Date();
+  document.getElementById('todayLbl').textContent=n.toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long'});
+  var tB=allBks.filter(function(b){return b.date===td;}),tE=allExps.filter(function(e){return e.date===td;});
+  var inc=tB.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
+  var exp=tE.reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+  var adv=tB.reduce(function(s,b){return s+(parseFloat(b.advAmt)||0);},0);
+  var due=allBks.reduce(function(s,b){return s+(parseFloat(b.due)||0);},0);
+  document.getElementById('todayStats').innerHTML='<div class="sc c1"><div class="sc-lbl">Today Earning</div><div class="sc-val" style="color:var(--green);">'+Rs(inc)+'</div><div class="sc-sub">'+tB.filter(function(b){return b.status!=='pre';}).length+' complete</div></div>'+'<div class="sc c2"><div class="sc-lbl">Today Expense</div><div class="sc-val" style="color:var(--red);">'+Rs(exp)+'</div></div>'+'<div class="sc c3"><div class="sc-lbl">Today Profit</div><div class="sc-val" style="color:'+(inc-exp>=0?'var(--gold)':'var(--red)')+';">'+Rs(inc-exp)+'</div></div>'+'<div class="sc c4"><div class="sc-lbl">Bookings</div><div class="sc-val" style="color:var(--blue);">'+tB.length+'</div></div>'+'<div class="sc c5"><div class="sc-lbl">Today Advance</div><div class="sc-val" style="color:var(--orange);">'+Rs(adv)+'</div></div>'+'<div class="sc c6"><div class="sc-lbl">Total Due</div><div class="sc-val" style="color:var(--purple);">'+Rs(due)+'</div></div>';
+  var month=parseInt(document.getElementById('dm').value),year=parseInt(document.getElementById('dy').value);
+  var mB=allBks.filter(function(b){var d=new Date(b.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  var mE=allExps.filter(function(e){var d=new Date(e.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  var tInc=mB.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
+  var tExp=mE.reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+  document.getElementById('monthStats').innerHTML='<div class="sc c1"><div class="sc-lbl">Monthly Earning</div><div class="sc-val" style="color:var(--green);">'+Rs(tInc)+'</div><div class="sc-sub">'+mB.length+' bookings</div></div>'+'<div class="sc c2"><div class="sc-lbl">Monthly Expense</div><div class="sc-val" style="color:var(--red);">'+Rs(tExp)+'</div></div>'+'<div class="sc c3"><div class="sc-lbl">Net Profit</div><div class="sc-val" style="color:'+(tInc-tExp>=0?'var(--gold)':'var(--red)')+';">'+Rs(tInc-tExp)+'</div></div>'+'<div class="sc c5"><div class="sc-lbl">Advance</div><div class="sc-val" style="color:var(--orange);">'+Rs(mB.reduce(function(s,b){return s+(parseFloat(b.advAmt)||0);},0))+'</div></div>'+'<div class="sc c6"><div class="sc-lbl">Due</div><div class="sc-val" style="color:var(--purple);">'+Rs(mB.reduce(function(s,b){return s+(parseFloat(b.due)||0);},0))+'</div></div>'+'<div class="sc c7"><div class="sc-lbl">Discount</div><div class="sc-val" style="color:var(--teal);">'+Rs(mB.reduce(function(s,b){return s+(parseFloat(b.dA)||0);},0))+'</div></div>';
+  var cash=0,jazz=0,bank=0,easy=0;
+  mB.forEach(function(b){if(b.advMode==='cash')cash+=b.advAmt||0;if(b.advMode==='jazz')jazz+=b.advAmt||0;if(b.advMode==='bank')bank+=b.advAmt||0;if(b.advMode==='easy')easy+=b.advAmt||0;cash+=b.afterCash||0;if(b.afterAccType==='jazz')jazz+=b.afterAcc||0;if(b.afterAccType==='bank')bank+=b.afterAcc||0;if(b.afterAccType==='easy')easy+=b.afterAcc||0;});
+  document.getElementById('channels').innerHTML='<div class="sc c1"><div class="sc-lbl">Cash</div><div class="sc-val" style="color:var(--green);">'+Rs(cash)+'</div></div>'+'<div class="sc c6"><div class="sc-lbl">JazzCash</div><div class="sc-val" style="color:var(--purple);">'+Rs(jazz)+'</div></div>'+'<div class="sc c4"><div class="sc-lbl">Bank Alfalah</div><div class="sc-val" style="color:var(--blue);">'+Rs(bank)+'</div></div>'+'<div class="sc c7"><div class="sc-lbl">Easypaisa</div><div class="sc-val" style="color:var(--teal);">'+Rs(easy)+'</div></div>';
+  var dI={},dE={};
+  mB.forEach(function(b){var d=parseInt(b.date.split('-')[2]);dI[d]=(dI[d]||0)+(parseFloat(b.totalPaid)||0);});
+  mE.forEach(function(e){var d=parseInt(e.date.split('-')[2]);dE[d]=(dE[d]||0)+(parseFloat(e.amount)||0);});
+  var mx=Math.max.apply(null,Object.values(dI).concat(Object.values(dE)).concat([1]));
+  var days=[].concat(Object.keys(dI),Object.keys(dE)).map(Number).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(function(a,b){return a-b;});
+  document.getElementById('dailyChart').innerHTML=!days.length?'<div class="empty">No data</div>':days.map(function(d){return '<div class="br"><div class="br-lbl" style="width:24px;">'+String(d).padStart(2,'0')+'</div><div style="flex:1;display:flex;flex-direction:column;gap:3px;"><div class="br-track"><div class="br-fill" style="width:'+((dI[d]||0)/mx*100).toFixed(0)+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><div class="br-track"><div class="br-fill" style="width:'+((dE[d]||0)/mx*100).toFixed(0)+'%;background:linear-gradient(90deg,var(--red),#fca5a5);"></div></div></div><div style="font-size:9px;width:70px;text-align:right;font-family:\'JetBrains Mono\',monospace;"><div style="color:var(--green);">'+(dI[d]>0?Rs(dI[d]):'')+'</div><div style="color:var(--red);">'+(dE[d]>0?Rs(dE[d]):'')+'</div></div></div>';}).join('');
+  var dues=allBks.filter(function(b){return (b.due||0)>0;}).sort(function(a,b){return b.date.localeCompare(a.date);});
+  document.getElementById('duesTbl').innerHTML=!dues.length?'<tr><td colspan="7" class="empty">No pending dues!</td></tr>':dues.map(function(b){return '<tr><td style="font-size:10px;color:var(--muted);">'+b.date+'</td><td><b>'+b.nm+'</b></td><td style="color:var(--blue);">'+(b.ph||'—')+'</td><td>'+Rs(b.fin)+'</td><td style="color:var(--green);">'+Rs(b.totalPaid||0)+'</td><td style="color:var(--red);font-weight:800;">'+Rs(b.due)+'</td><td>'+(b.ph?'<a class="btn-wa" href="'+waLink(b.ph,waDue(b))+'" target="_blank">Remind</a>':'—')+'</td></tr>';}).join('');
+}
+
+// BOOKINGS
+function renderBk(q){
+  var month=parseInt(document.getElementById('bm').value),year=parseInt(document.getElementById('by').value);
+  var fd=document.getElementById('bdf').value,fs=document.getElementById('bsf').value,sq=q||'';
+  var bks=allBks.filter(function(b){var d=new Date(b.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  if(fd)bks=bks.filter(function(b){return b.date===fd;});
+  if(fs)bks=bks.filter(function(b){return b.status===fs;});
+  if(sq)bks=bks.filter(function(b){return b.nm.toLowerCase().includes(sq.toLowerCase())||b.ph.includes(sq);});
+  var tInc=bks.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
+  var tDue=bks.reduce(function(s,b){return s+(parseFloat(b.due)||0);},0);
+  document.getElementById('bkStats').innerHTML='<span style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;color:var(--green);">'+bks.length+' bookings</span><span style="background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.2);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;color:var(--gold);">Total: '+Rs(tInc)+'</span>'+(tDue>0?'<span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;color:var(--red);">Due: '+Rs(tDue)+'</span>':'');
+  document.getElementById('bkTbl').innerHTML=!bks.length?'<tr><td colspan="14" class="empty">No bookings</td></tr>':bks.map(function(b){return '<tr><td style="font-size:10px;color:var(--muted);">'+b.date+'</td><td><b>'+b.nm+'</b></td><td style="color:var(--blue);font-size:11px;">'+(b.ph||'—')+'</td><td style="font-size:11px;">'+(b.st||'—')+'</td><td>'+(b.hrs||'')+'hr</td><td style="color:var(--gold);">'+Rs(b.fin)+'</td><td style="color:var(--orange);">'+Rs(b.advAmt)+'</td><td>'+pmbadge(b.advMode)+'</td><td style="color:var(--green);">'+Rs(b.afterCash||0)+'</td><td style="color:var(--blue);">'+Rs(b.afterAcc||0)+'</td><td style="color:var(--green);">'+Rs(b.totalPaid||0)+'</td><td style="color:'+((b.due||0)>0?'var(--red)':'var(--green)')+';">'+((b.due||0)>0?Rs(b.due):'OK')+'</td><td>'+sbadge(b.status)+'</td><td style="display:flex;gap:4px;flex-wrap:wrap;"><button class="btn-edit" onclick="openEdit(\''+b.id+'\')">Edit</button>'+(((b.due||0)>0)?'<button class="btn-pay" onclick="openPay(\''+b.id+'\')">Pay</button>':'')+'<button class="btn-del" onclick="delBk(\''+b.id+'\')">Del</button></td></tr>';}).join('');
+}
+
+// FINANCE
+function renderFin(){
+  var month=parseInt(document.getElementById('fm').value),year=parseInt(document.getElementById('fy').value);
+  var mB=allBks.filter(function(b){var d=new Date(b.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  var mE=allExps.filter(function(e){var d=new Date(e.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  var tInc=mB.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
+  var tExp=mE.reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+  document.getElementById('finStats').innerHTML='<div class="sc c1"><div class="sc-lbl">Earning</div><div class="sc-val" style="color:var(--green);">'+Rs(tInc)+'</div><div class="sc-sub">'+mB.length+' bookings</div></div><div class="sc c2"><div class="sc-lbl">Expense</div><div class="sc-val" style="color:var(--red);">'+Rs(tExp)+'</div></div><div class="sc c3"><div class="sc-lbl">Net Profit</div><div class="sc-val" style="color:'+(tInc-tExp>=0?'var(--gold)':'var(--red)')+';">'+Rs(tInc-tExp)+'</div></div><div class="sc c6"><div class="sc-lbl">Discount</div><div class="sc-val" style="color:var(--purple);">'+Rs(mB.reduce(function(s,b){return s+(parseFloat(b.dA)||0);},0))+'</div></div><div class="sc c5"><div class="sc-lbl">Advance</div><div class="sc-val" style="color:var(--orange);">'+Rs(mB.reduce(function(s,b){return s+(parseFloat(b.advAmt)||0);},0))+'</div></div><div class="sc c6"><div class="sc-lbl">Due</div><div class="sc-val" style="color:var(--purple);">'+Rs(mB.reduce(function(s,b){return s+(parseFloat(b.due)||0);},0))+'</div></div>';
+  var cash=0,jazz=0,bank=0,easy=0;
+  mB.forEach(function(b){if(b.advMode==='cash')cash+=b.advAmt||0;if(b.advMode==='jazz')jazz+=b.advAmt||0;if(b.advMode==='bank')bank+=b.advAmt||0;if(b.advMode==='easy')easy+=b.advAmt||0;cash+=b.afterCash||0;if(b.afterAccType==='jazz')jazz+=b.afterAcc||0;if(b.afterAccType==='bank')bank+=b.afterAcc||0;if(b.afterAccType==='easy')easy+=b.afterAcc||0;});
+  var tot=cash+jazz+bank+easy||1;
+  document.getElementById('finCh').innerHTML=[['Cash',cash,'var(--green)'],['Jazz',jazz,'var(--purple)'],['Bank Alfalah',bank,'var(--blue)'],['Easypaisa',easy,'var(--teal)']].map(function(x){return '<div class="br" style="margin-bottom:10px;"><div class="br-lbl" style="width:80px;color:'+x[2]+';">'+x[0]+'</div><div class="br-track" style="flex:1;"><div class="br-fill" style="width:'+(x[1]/tot*100).toFixed(0)+'%;background:'+x[2]+';"></div></div><div style="font-size:11px;color:'+x[2]+';width:90px;text-align:right;font-family:\'JetBrains Mono\',monospace;">'+Rs(x[1])+' ('+(x[1]/tot*100).toFixed(0)+'%)</div></div>';}).join('');
+  var now=new Date(),amounts=[2,1,0].map(function(i){var d=new Date(now.getFullYear(),now.getMonth()-i,1),m=d.getMonth()+1,y=d.getFullYear();return allBks.filter(function(b){var bd=new Date(b.date);return bd.getMonth()+1===m&&bd.getFullYear()===y;}).reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);});
+  var mx=Math.max.apply(null,amounts.concat([1]));
+  document.getElementById('comp3').innerHTML=[2,1,0].map(function(i){var d=new Date(now.getFullYear(),now.getMonth()-i,1);return '<div class="br"><div class="br-lbl" style="width:36px;">'+MONTHS[d.getMonth()].slice(0,3)+'</div><div class="br-track" style="flex:1;"><div class="br-fill" style="width:'+(amounts[2-i]/mx*100).toFixed(0)+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><div style="font-size:10px;color:var(--green);width:75px;text-align:right;font-family:\'JetBrains Mono\',monospace;">'+Rs(amounts[2-i])+'</div></div>';}).join('');
+  var cT={};mE.forEach(function(e){cT[e.cat]=(cT[e.cat]||0)+parseFloat(e.amount);});
+  var br=Object.entries(cT).sort(function(a,b){return b[1]-a[1];});
+  document.getElementById('expBreak').innerHTML=!br.length?'<tr><td colspan="3" class="empty">No expenses</td></tr>':br.map(function(x){return '<tr><td><span class="bx bx-r">'+x[0]+'</span></td><td style="color:var(--red);">'+Rs(x[1])+'</td><td style="color:var(--muted);">'+(tExp>0?(x[1]/tExp*100).toFixed(1):0)+'%</td></tr>';}).join('');
+  document.getElementById('expTbl').innerHTML=!mE.length?'<tr><td colspan="5" class="empty">No expenses</td></tr>':mE.map(function(e){return '<tr><td style="font-size:10px;color:var(--muted);">'+e.date+'</td><td><span class="bx bx-r">'+e.cat+'</span></td><td style="font-size:11px;color:var(--soft);">'+(e.desc||'—')+'</td><td>'+pmbadge(e.pay||'cash')+'</td><td style="color:var(--red);">'+Rs(e.amount)+'</td></tr>';}).join('');
+}
+
+// CUSTOMERS
+function renderCust(q){
+  var c=q?allCusts.filter(function(x){return x.nm.toLowerCase().includes(q.toLowerCase())||x.ph.includes(q);}):allCusts;
+  var tSpent=allBks.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
+  document.getElementById('custStats').innerHTML='<div class="sc c4"><div class="sc-lbl">Total</div><div class="sc-val" style="color:var(--blue);">'+allCusts.length+'</div></div><div class="sc c5"><div class="sc-lbl">VIP</div><div class="sc-val" style="color:var(--orange);">'+allCusts.filter(function(x){return x.type==='vip';}).length+'</div></div><div class="sc c1"><div class="sc-lbl">Revenue</div><div class="sc-val" style="color:var(--green);font-size:14px;">'+Rs(tSpent)+'</div></div><div class="sc c6"><div class="sc-lbl">With Due</div><div class="sc-val" style="color:var(--purple);">'+allBks.filter(function(b){return (b.due||0)>0;}).map(function(b){return b.ph;}).filter(function(v,i,a){return a.indexOf(v)===i;}).length+'</div></div>';
+  document.getElementById('custTbl').innerHTML=!c.length?'<tr><td colspan="8" class="empty">No customers</td></tr>':c.map(function(x){var cb=allBks.filter(function(b){return b.ph===x.ph||b.nm===x.nm;}),sp=cb.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0),du=cb.reduce(function(s,b){return s+(parseFloat(b.due)||0);},0),la=cb.length?[].concat(cb).sort(function(a,b){return b.date.localeCompare(a.date);})[0].date:'—';return '<tr><td><b>'+x.nm+'</b></td><td style="color:var(--blue);">'+(x.ph||'—')+'</td><td>'+vbadge(x.type)+'</td><td style="color:var(--blue);font-weight:800;">'+cb.length+'</td><td style="color:var(--green);">'+Rs(sp)+'</td><td style="font-size:11px;color:var(--muted);">'+la+'</td><td style="color:'+(du>0?'var(--red)':'var(--green)')+';">'+( du>0?Rs(du):'OK')+'</td><td style="display:flex;gap:4px;">'+(x.ph?'<a class="btn-wa" href="'+waLink(x.ph,'Hi '+x.nm+'! Sultans Cricket Club.')+ '" target="_blank" style="font-size:9px;padding:4px 8px;">WA</a>':'')+(x.ph&&du>0?'<a class="btn-wa" href="'+waLink(x.ph,waDue({nm:x.nm,ph:x.ph,date:'—',st:'—',fin:sp,due:du}))+'" target="_blank" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--red),#b91c1c);">Due</a>':'')+'</td></tr>';}).join('');
+}
+
+// FEED
+function renderFeed(){
+  document.getElementById('feedList').innerHTML=!feedItems.length?'<div class="empty">Waiting...</div>':feedItems.map(function(f){return '<div class="feed-item"><div class="feed-dot" style="background:'+f.color+';"></div><div style="flex:1;font-size:12px;font-weight:700;">'+f.txt+'</div><div style="font-size:10px;color:var(--muted);">'+f.t+'</div></div>';}).join('');
+}
+
+// NOTES
+function saveNote(){var txt=document.getElementById('noteInp').value.trim();if(!txt){toast('Write something!','err');return;}var notes=JSON.parse(localStorage.getItem('jb_notes')||'[]');notes.unshift({txt:txt,time:new Date().toLocaleString('en-PK')});localStorage.setItem('jb_notes',JSON.stringify(notes));document.getElementById('noteInp').value='';toast('Saved!','ok');renderNotes();}
+function renderNotes(){var notes=JSON.parse(localStorage.getItem('jb_notes')||'[]');document.getElementById('notesList').innerHTML=!notes.length?'<div class="empty">No notes</div>':notes.map(function(n,i){return '<div class="note-item"><div style="font-size:9px;color:var(--muted);">'+n.time+'</div><div style="font-size:13px;font-weight:700;margin-top:4px;">'+n.txt+'</div><button class="btn-del" onclick="delNote('+i+')" style="margin-top:8px;">Delete</button></div>';}).join('');}
+function delNote(i){var n=JSON.parse(localStorage.getItem('jb_notes')||'[]');n.splice(i,1);localStorage.setItem('jb_notes',JSON.stringify(n));renderNotes();}
+
+// EDIT
+function openEdit(id){editId=id;var b=allBks.find(function(x){return x.id===id;});if(!b)return;document.getElementById('e-nm').value=b.nm||'';document.getElementById('e-ph').value=b.ph||'';document.getElementById('e-vip').value=b.vip||'regular';document.getElementById('e-hrs').value=b.hrs||'';document.getElementById('e-date').value=b.date||'';document.getElementById('e-nt').value=b.nt||'';var m=(b.st||'6:00 PM').match(/(\d+):(\d+)\s*(AM|PM)?/i);if(m){document.getElementById('e-hr').value=m[1];document.getElementById('e-mn').value=m[2].padStart(2,'0');document.getElementById('e-ap').value=(m[3]||'PM').toUpperCase();}document.getElementById('edit-info').innerHTML='<b>'+b.nm+'</b> — '+b.date+' — '+Rs(b.fin)+' — '+sbadge(b.status);document.getElementById('editModal').classList.add('on');}
+function closeEdit(){document.getElementById('editModal').classList.remove('on');editId=null;}
+async function saveEdit(){if(!editId)return;var nm=document.getElementById('e-nm').value.trim();if(!nm){toast('Name required!','err');return;}var ph=document.getElementById('e-ph').value.trim(),vip=document.getElementById('e-vip').value,hrs=parseFloat(document.getElementById('e-hrs').value)||0,date=document.getElementById('e-date').value,nt=document.getElementById('e-nt').value.trim(),st=document.getElementById('e-hr').value+':'+document.getElementById('e-mn').value+' '+document.getElementById('e-ap').value;var b=allBks.find(function(x){return x.id===editId;});var upd={nm:nm,ph:ph,vip:vip,nt:nt,st:st,date:date};if(hrs>0&&b&&hrs!==b.hrs){upd.hrs=hrs;var nf=Math.max(0,Math.round(hrs*2000)+(b.exA||0)-(b.dA||0));upd.fin=nf;upd.due=Math.max(0,nf-(b.totalPaid||0));}try{await db.collection('bookings').doc(editId).update(upd);closeEdit();toast('Updated!','ok');}catch(e){toast('Error: '+e.message,'err');}}
+
+// PAY
+function openPay(id){payId=id;var b=allBks.find(function(x){return x.id===id;});if(!b)return;document.getElementById('p-cash').value='';document.getElementById('p-acc').value='';document.getElementById('p-type').value='';document.getElementById('pay-info').innerHTML='<b>'+b.nm+'</b> — Total: <b style="color:var(--gold);">'+Rs(b.fin)+'</b> — Paid: <span style="color:var(--green);">'+Rs(b.totalPaid||0)+'</span> — <b style="color:var(--purple);">Due: '+Rs(b.due)+'</b>';calcPay();document.getElementById('payModal').classList.add('on');}
+function closePay(){document.getElementById('payModal').classList.remove('on');payId=null;}
+function calcPay(){if(!payId)return;var b=allBks.find(function(x){return x.id===payId;});if(!b)return;var c=parseFloat(document.getElementById('p-cash').value)||0,a=parseFloat(document.getElementById('p-acc').value)||0,nP=(b.totalPaid||0)+c+a,nD=Math.max(0,b.fin-nP);document.getElementById('pay-calc').innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--muted);">New Payment:</span><span style="color:var(--orange);font-weight:800;">'+Rs(c+a)+'</span></div><div style="display:flex;justify-content:space-between;"><span style="color:var(--muted);">Remaining After:</span><span style="color:'+(nD>0?'var(--red)':'var(--green)')+';font-weight:800;">'+(nD>0?Rs(nD):'CLEAR')+'</span></div>';}
+async function savePay(){if(!payId)return;var b=allBks.find(function(x){return x.id===payId;});if(!b)return;var c=parseFloat(document.getElementById('p-cash').value)||0,a=parseFloat(document.getElementById('p-acc').value)||0,t=document.getElementById('p-type').value;if(c===0&&a===0){toast('Enter amount!','err');return;}var nP=(b.totalPaid||0)+c+a,nD=Math.max(0,b.fin-nP);try{await db.collection('bookings').doc(payId).update({afterCash:(b.afterCash||0)+c,afterAcc:(b.afterAcc||0)+a,afterAccType:t||b.afterAccType||'',totalPaid:nP,due:nD,status:nD>0?'partial':'paid',lastPayAt:new Date().toISOString()});closePay();toast('Payment added!','ok');}catch(e){toast('Error: '+e.message,'err');}}
+
+// DELETE
+async function delBk(id){if(!confirm('Delete?'))return;try{await db.collection('bookings').doc(id).delete();toast('Deleted','err');}catch(e){toast('Error: '+e.message,'err');}}
+
+// BULK REMIND
+function bulkRemind(){var dues=allBks.filter(function(b){return (b.due||0)>0&&b.ph;});if(!dues.length){toast('No pending dues!','ok');return;}dues.forEach(function(b,i){setTimeout(function(){var p=b.ph.replace(/[^0-9]/g,'');var intl=p.startsWith('0')?'92'+p.slice(1):p;window.open('https://wa.me/'+intl+'?text='+encodeURIComponent(waDue(b)),'_blank');},i*1200);});toast(dues.length+' reminders sending...','info');}
+
+// PDF - Using string concatenation (NO template literals to avoid bugs)
+function printDaily(){
+  var td=today();
+  var bks=allBks.filter(function(b){return b.date===td;});
+  var exps=allExps.filter(function(e){return e.date===td;});
+  var inc=bks.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
+  var exp=exps.reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+  var w=window.open('','_blank');
+  var bkRows=bks.length?bks.map(function(b){return '<tr><td>'+(b.st||'')+'('+b.hrs+'hr)</td><td>'+b.nm+'</td><td>'+(b.ph||'')+'</td><td>Rs.'+(b.fin||0).toLocaleString()+'</td><td>Rs.'+(b.advAmt||0).toLocaleString()+'</td><td>'+b.advMode+'</td><td>Rs.'+(b.afterCash||0).toLocaleString()+'</td><td>Rs.'+(b.afterAcc||0).toLocaleString()+'</td><td>Rs.'+(b.totalPaid||0).toLocaleString()+'</td><td style="color:'+((b.due||0)>0?'red':'green')+';">'+((b.due||0)>0?'Rs.'+(b.due||0).toLocaleString():'Clear')+'</td><td>'+b.status+'</td></tr>';}).join(''):'<tr><td colspan="11" style="text-align:center;color:#888;">No bookings</td></tr>';
+  var expRows=exps.length?exps.map(function(e){return '<tr><td>'+e.cat+'</td><td>'+(e.desc||'')+'</td><td>'+(e.pay||'')+'</td><td>Rs.'+(e.amount||0).toLocaleString()+'</td></tr>';}).join(''):'<tr><td colspan="4" style="text-align:center;color:#888;">No expenses</td></tr>';
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Daily '+td+'</title>';
+  h+='<style>body{font-family:Arial;padding:20px;font-size:11px;}h1{color:#e07b00;font-size:18px;border-bottom:2px solid #e07b00;padding-bottom:8px;margin-bottom:14px;}h2{font-size:13px;margin:14px 0 8px;}.boxes{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}.box{padding:10px 14px;border:2px solid #ddd;border-radius:8px;text-align:center;flex:1;min-width:80px;}.bv{font-size:15px;font-weight:bold;display:block;}.bl{font-size:9px;color:#888;}.g{border-color:#22c55e;color:#22c55e;}.r{border-color:#ef4444;color:#ef4444;}.y{border-color:#e07b00;color:#e07b00;}.b{border-color:#3b82f6;color:#3b82f6;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#060e1a;color:#f0b429;padding:6px;text-align:left;font-size:9px;}td{padding:6px;border-bottom:1px solid #e2e8f0;font-size:10px;}tr:nth-child(even){background:#f8fafc;}.footer{text-align:center;font-size:9px;color:#888;border-top:1px solid #ddd;padding-top:10px;margin-top:14px;}@media print{button{display:none;}@page{margin:8mm;}}</style></head><body>';
+  h+='<button onclick="window.print()" style="background:#e07b00;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;width:100%;font-size:13px;margin-bottom:14px;">Print / Save PDF</button>';
+  h+='<h1>THE SULTANS - Daily Report ('+td+')</h1>';
+  h+='<div class="boxes"><div class="box g"><span class="bv">Rs.'+inc.toLocaleString()+'</span><span class="bl">Earning</span></div><div class="box r"><span class="bv">Rs.'+exp.toLocaleString()+'</span><span class="bl">Expense</span></div><div class="box y"><span class="bv">Rs.'+(inc-exp).toLocaleString()+'</span><span class="bl">'+(inc-exp>=0?'Profit':'Loss')+'</span></div><div class="box b"><span class="bv">'+bks.length+'</span><span class="bl">Bookings</span></div></div>';
+  h+='<h2>Bookings</h2><table><thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>Method</th><th>Cash</th><th>Account</th><th>Paid</th><th>Due</th><th>Status</th></tr></thead><tbody>'+bkRows+'</tbody></table>';
+  h+='<h2>Expenses</h2><table><thead><tr><th>Category</th><th>Details</th><th>Via</th><th>Amount</th></tr></thead><tbody>'+expRows+'</tbody></table>';
+  h+='<div class="footer"><p><b>Jahanzeb Baloch - 0306-0711529 | The Sultans Indoor Cricket Club, Multan</b></p></div>';
+  h+='</body></html>';
+  w.document.write(h);w.document.close();
+}
+
+function printMonthly(){
+  var month=parseInt(document.getElementById('dm').value)||new Date().getMonth()+1;
+  var year=parseInt(document.getElementById('dy').value)||new Date().getFullYear();
+  var mn=MONTHS[month-1];
+  var bks=allBks.filter(function(b){var d=new Date(b.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  var exps=allExps.filter(function(e){var d=new Date(e.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  var tInc=bks.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
+  var tExp=exps.reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+  var w=window.open('','_blank');
+  var bkRows=bks.length?bks.map(function(b){return '<tr><td>'+b.date+'</td><td>'+b.nm+'</td><td>'+(b.ph||'')+'</td><td>'+(b.st||'')+'('+b.hrs+'hr)</td><td>Rs.'+(b.fin||0).toLocaleString()+'</td><td>Rs.'+(b.advAmt||0).toLocaleString()+'</td><td>'+b.advMode+'</td><td>Rs.'+(b.afterCash||0).toLocaleString()+'</td><td>Rs.'+(b.afterAcc||0).toLocaleString()+'</td><td>Rs.'+(b.totalPaid||0).toLocaleString()+'</td><td style="color:'+((b.due||0)>0?'red':'green')+';">'+((b.due||0)>0?'Rs.'+(b.due||0).toLocaleString():'OK')+'</td><td>'+b.status+'</td></tr>';}).join(''):'<tr><td colspan="12" style="text-align:center;color:#888;">No bookings</td></tr>';
+  var expRows=exps.length?exps.map(function(e){return '<tr><td>'+e.date+'</td><td>'+e.cat+'</td><td>'+(e.desc||'')+'</td><td>'+(e.pay||'')+'</td><td>Rs.'+(e.amount||0).toLocaleString()+'</td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;color:#888;">No expenses</td></tr>';
+  var h='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+mn+' '+year+'</title>';
+  h+='<style>body{font-family:Arial;padding:20px;font-size:11px;}h1{color:#e07b00;font-size:18px;border-bottom:2px solid #e07b00;padding-bottom:8px;margin-bottom:14px;}h2{font-size:13px;margin:14px 0 8px;}.boxes{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}.box{padding:10px 14px;border:2px solid #ddd;border-radius:8px;text-align:center;flex:1;min-width:80px;}.bv{font-size:14px;font-weight:bold;display:block;}.bl{font-size:9px;color:#888;}.g{border-color:#22c55e;color:#22c55e;}.r{border-color:#ef4444;color:#ef4444;}.y{border-color:#e07b00;color:#e07b00;}.b{border-color:#3b82f6;color:#3b82f6;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#060e1a;color:#f0b429;padding:5px;text-align:left;font-size:9px;}td{padding:5px;border-bottom:1px solid #e2e8f0;font-size:10px;}tr:nth-child(even){background:#f8fafc;}.footer{text-align:center;font-size:9px;color:#888;border-top:1px solid #ddd;padding-top:10px;margin-top:14px;}@media print{button{display:none;}@page{margin:8mm;size:A4 landscape;}}</style></head><body>';
+  h+='<button onclick="window.print()" style="background:#e07b00;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;width:100%;font-size:13px;margin-bottom:14px;">Print / Save PDF</button>';
+  h+='<h1>THE SULTANS - '+mn+' '+year+'</h1>';
+  h+='<div class="boxes"><div class="box g"><span class="bv">Rs.'+tInc.toLocaleString()+'</span><span class="bl">Earning</span></div><div class="box r"><span class="bv">Rs.'+tExp.toLocaleString()+'</span><span class="bl">Expense</span></div><div class="box y"><span class="bv">Rs.'+(tInc-tExp).toLocaleString()+'</span><span class="bl">'+(tInc-tExp>=0?'Profit':'Loss')+'</span></div><div class="box b"><span class="bv">'+bks.length+'</span><span class="bl">Bookings</span></div></div>';
+  h+='<h2>All Bookings</h2><table><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Time</th><th>Total</th><th>Advance</th><th>Method</th><th>Cash</th><th>Account</th><th>Paid</th><th>Due</th><th>Status</th></tr></thead><tbody>'+bkRows+'</tbody></table>';
+  h+='<h2>All Expenses</h2><table><thead><tr><th>Date</th><th>Category</th><th>Details</th><th>Via</th><th>Amount</th></tr></thead><tbody>'+expRows+'</tbody></table>';
+  h+='<div class="footer"><p><b>Jahanzeb Baloch - 0306-0711529 | The Sultans Indoor Cricket Club, Multan</b></p></div>';
+  h+='</body></html>';
+  w.document.write(h);w.document.close();
+}
+
+// INIT
+function initSelectors(){
+  var now=new Date();
+  ['dm','bm','fm'].forEach(function(id){var el=document.getElementById(id);if(el&&!el.options.length)MONTHS.forEach(function(m,i){var o=document.createElement('option');o.value=i+1;o.textContent=m;if(i===now.getMonth())o.selected=true;el.appendChild(o);});});
+  ['dy','by','fy'].forEach(function(id){var el=document.getElementById(id);if(el&&!el.options.length)for(var y=now.getFullYear();y>=now.getFullYear()-3;y--){var o=document.createElement('option');o.value=y;o.textContent=y;el.appendChild(o);}});
+}
+
+function loadSettings(){
+  var cur=localStorage.getItem('club_pass')||'jahanzebbaloch';
+  document.getElementById('curPass').textContent=cur;
+  // Also try Firebase
+  db.collection('settings').doc('admin').get().then(function(doc){
+    if(doc.exists&&doc.data()&&doc.data().password){
+      document.getElementById('curPass').textContent=doc.data().password;
+    }
+  }).catch(function(){});
+}
+
+function changePass(){
+  var np=document.getElementById('newPass').value.trim();
+  var cp=document.getElementById('confPass').value.trim();
+  var msg=document.getElementById('passMsg');
+  if(!np){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Enter new password!';return;}
+  if(np.length<4){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Minimum 4 characters!';return;}
+  if(np!==cp){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Passwords do not match!';return;}
+  // Save to localStorage
+  localStorage.setItem('club_pass',np);
+  // Save to Firebase
+  db.collection('settings').doc('admin').set({password:np,updatedAt:new Date().toISOString()}).then(function(){
+    msg.style.display='block';msg.style.background='rgba(34,197,94,0.12)';msg.style.color='var(--green)';
+    msg.textContent='Password changed! Club app mein ab use karo: '+np;
+  }).catch(function(){
+    msg.style.display='block';msg.style.background='rgba(240,180,41,0.12)';msg.style.color='var(--gold)';
+    msg.textContent='Saved locally! New password: '+np;
+  });
+  document.getElementById('curPass').textContent=np;
+  document.getElementById('newPass').value='';
+  document.getElementById('confPass').value='';
+  setTimeout(function(){msg.style.display='none';},6000);
+}
+
+function exportCSV(type){
+  var data,headers,rows;
+  if(type==='bookings'){
+    headers='Date,Name,Phone,Time,Hours,Total,Advance,Method,Cash,Account,Paid,Due,Status';
+    rows=allBks.map(function(b){return [b.date,b.nm,b.ph||'',b.st||'',b.hrs||'',b.fin||0,b.advAmt||0,b.advMode||'',b.afterCash||0,b.afterAcc||0,b.totalPaid||0,b.due||0,b.status||''].join(',');});
+  } else {
+    headers='Date,Category,Details,Via,Amount';
+    rows=allExps.map(function(e){return [e.date,e.cat,e.desc||'',e.pay||'',e.amount||0].join(',');});
+  }
+  var csv=[headers].concat(rows).join('
+');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='sultans-'+type+'.csv';a.click();
+  toast('CSV downloading!','ok');
+}
+
+initSelectors();
+startSync();
+startTimer();
+setInterval(function(){if(document.getElementById('pg-dash').classList.contains('on')){renderTimer();}},1000);
+</script>
+</body>
+</html>

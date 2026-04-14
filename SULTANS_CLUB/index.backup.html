@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="icon.jpg">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sultans">
+<meta name="theme-color" content="#f0b429">
+<title>Sultans Cricket Club</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+emailjs.init("WEicHOT9c6wtsaRt-");
+const firebaseConfig={apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+</script>
+<style>
+:root{--gold:#f0b429;--gold2:#e07b00;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;--teal:#14b8a6;--orange:#f97316;--bg:#060e1a;--card:#0f1c2e;--card2:#162035;--border:rgba(240,180,41,0.13);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+#pinScreen{position:fixed;inset:0;background:linear-gradient(135deg,#060e1a,#0d1a2e);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+.pin-logo{font-size:52px;margin-bottom:8px;filter:drop-shadow(0 0 20px rgba(240,180,41,0.5));}
+.pin-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.pin-sub{font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:24px;text-transform:uppercase;}
+.pin-inp{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;outline:none;width:260px;text-align:center;letter-spacing:4px;margin-bottom:12px;}
+.pin-inp:focus{border-color:var(--gold);}
+.pin-login-btn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;border:none;border-radius:10px;padding:13px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;width:260px;}
+.pin-err{color:var(--red);font-size:12px;font-weight:700;margin-top:10px;min-height:18px;}
+.sync-bar{background:rgba(59,130,246,0.1);border-bottom:1px solid rgba(59,130,246,0.2);padding:4px 14px;font-size:10px;color:var(--blue);font-weight:700;text-align:center;display:none;}
+.sync-bar.on{display:block;}
+.hdr{background:linear-gradient(180deg,#0a1628,#060e1a);border-bottom:2px solid var(--border);padding:10px 14px 0;position:sticky;top:0;z-index:200;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;}
+.brand{display:flex;align-items:center;gap:10px;}
+.logo-w{width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(240,180,41,0.3);}
+.bn{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;}
+.bl{font-size:9px;color:var(--muted);letter-spacing:1px;}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.clk{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);font-weight:700;text-align:right;}
+.clkd{font-size:9px;color:var(--muted);text-align:right;margin-top:1px;}
+.lock-btn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:7px;padding:5px 10px;color:var(--red);font-size:11px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;}
+.cbar{display:flex;gap:7px;padding:5px 0 7px;border-top:1px solid rgba(255,255,255,0.05);overflow-x:auto;scrollbar-width:none;}
+.cbar::-webkit-scrollbar{display:none;}
+.ci{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--soft);white-space:nowrap;background:rgba(255,255,255,0.04);padding:3px 8px;border-radius:20px;}
+.ci b{color:var(--gold);}
+.tabs{display:flex;background:#0a1628;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:108px;z-index:199;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:10px 13px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:.2s;}
+.tab.active{color:var(--gold);border-color:var(--gold);}
+.tab.hidden{display:none;}
+.pg{display:none;padding:12px;max-width:980px;margin:0 auto;}
+.pg.on{display:block;}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;}
+@media(min-width:560px){.stats{grid-template-columns:repeat(4,1fr);}}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px;position:relative;overflow:hidden;}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:13px 13px 0 0;}
+.sc.inc::after{background:linear-gradient(90deg,var(--green),#86efac);}
+.sc.exp::after{background:linear-gradient(90deg,var(--red),#fca5a5);}
+.sc.prf::after{background:linear-gradient(90deg,var(--gold),var(--gold2));}
+.sc.bks::after{background:linear-gradient(90deg,var(--blue),#93c5fd);}
+.sc.adv::after{background:linear-gradient(90deg,var(--orange),#fdba74);}
+.sc.due::after{background:linear-gradient(90deg,var(--purple),#c084fc);}
+.sc-lbl{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.sc-val{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;line-height:1;}
+.sc.inc .sc-val{color:var(--green);}.sc.exp .sc-val{color:var(--red);}.sc.prf .sc-val{color:var(--gold);}
+.sc.bks .sc-val{color:var(--blue);}.sc.adv .sc-val{color:var(--orange);}.sc.due .sc-val{color:var(--purple);}
+.sc-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+/* TARGET BAR */
+.target-bar{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:12px;}
+.target-track{height:12px;background:var(--card2);border-radius:6px;overflow:hidden;margin:8px 0;}
+.target-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--green),#86efac);transition:width .6s;}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sh-t{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;color:var(--gold);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.row{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-bottom:8px;}
+.row.r1{grid-template-columns:1fr;}
+.row.r3{grid-template-columns:1fr 1fr 1fr;}
+.row.r4{grid-template-columns:1fr 1fr 1fr 1fr;}
+@media(max-width:520px){.row.r3,.row.r4{grid-template-columns:1fr 1fr;}}
+.fl{display:flex;flex-direction:column;gap:3px;}
+.fl label{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.fl input,.fl select,.fl textarea{background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;transition:.2s;width:100%;}
+.fl input:focus,.fl select:focus,.fl textarea:focus{border-color:var(--gold);background:#1a2840;}
+.fl select option{background:#0f1c2e;}
+.fl textarea{resize:vertical;min-height:52px;}
+.slbl{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:10px 0 6px;display:flex;align-items:center;gap:8px;}
+.slbl::before,.slbl::after{content:'';flex:1;height:1px;background:rgba(240,180,41,0.15);}
+.abox{background:linear-gradient(135deg,rgba(240,180,41,0.06),rgba(224,123,0,0.03));border:1px solid rgba(240,180,41,0.2);border-radius:11px;padding:12px;margin:8px 0;}
+.ab-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.ab-lbl{font-size:11px;color:var(--soft);font-weight:600;}
+.ab-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--gold);}
+.ab-val.g{color:var(--green);}.ab-val.r{color:var(--red);}.ab-val.p{color:var(--purple);}.ab-val.o{color:var(--orange);}.ab-val.b{color:var(--blue);}
+.final-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;margin-top:4px;}
+.final-lbl{font-size:14px;color:var(--text);font-weight:800;}
+.final-val{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--gold);}
+.stage-box{border-radius:11px;padding:14px;margin-bottom:10px;}
+.stage-box.pre{background:rgba(249,115,22,0.07);border:1.5px solid rgba(249,115,22,0.25);}
+.stage-box.post{background:rgba(34,197,94,0.07);border:1.5px solid rgba(34,197,94,0.25);}
+.stage-title{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.stage-title.pre{color:var(--orange);}.stage-title.post{color:var(--green);}
+.conflict-warn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px;display:none;}
+/* INVOICE MODAL */
+.inv-modal{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:600;display:none;align-items:center;justify-content:center;padding:12px;}
+.inv-modal.on{display:flex;}
+.inv-box{background:#fff;color:#000;border-radius:16px;padding:20px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;}
+.inv-box .print-btn-row{display:flex;gap:8px;margin-bottom:16px;}
+.inv-btn{flex:1;padding:10px;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;}
+.inv-btn.dl{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;}
+.inv-btn.wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;}
+.inv-btn.cl{background:#e2e8f0;color:#333;}
+.inv-content{font-family:Arial,sans-serif;font-size:12px;}
+.inv-header{background:#060e1a;color:#f0b429;padding:14px;border-radius:8px;text-align:center;margin-bottom:12px;}
+.inv-title-row{background:#f0b429;color:#000;padding:8px 12px;border-radius:6px;font-weight:800;font-size:13px;margin-bottom:10px;display:flex;justify-content:space-between;}
+.inv-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e2e8f0;font-size:12px;}
+.inv-total{background:#060e1a;color:#f0b429;display:flex;justify-content:space-between;padding:10px 12px;border-radius:8px;font-weight:800;font-size:14px;margin:8px 0;}
+.inv-status{text-align:center;padding:10px;border-radius:8px;font-weight:800;font-size:12px;margin:8px 0;}
+.inv-footer{text-align:center;font-size:10px;color:#888;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:10px;}
+/* BUTTONS */
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;border:none;border-radius:9px;width:100%;padding:13px;font-size:14px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;transition:.2s;}
+.btn-gold:active{transform:scale(0.98);}
+.btn-green{background:linear-gradient(135deg,var(--green),#15803d);color:#000;width:100%;padding:12px;font-size:13px;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;}
+.btn-del{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2);padding:4px 9px;font-size:10px;border-radius:7px;cursor:pointer;}
+.btn-sm{background:rgba(255,255,255,0.05);color:var(--soft);border:1px solid rgba(255,255,255,0.08);padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;}
+.btn-pdf{background:linear-gradient(135deg,var(--red),#b91c1c);color:#fff;padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;}
+.btn-orange{background:linear-gradient(135deg,var(--orange),#c2410c);color:#fff;padding:5px 11px;border-radius:8px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;}
+.btn-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;text-decoration:none;display:inline-block;}
+.btn-inv{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;}
+/* TABLE */
+.tw{background:var(--card);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:12px;overflow-x:auto;}
+.tw table{width:100%;border-collapse:collapse;min-width:360px;}
+.tw thead{background:var(--card2);}
+.tw th{padding:9px 11px;text-align:left;font-size:8px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.tw td{padding:10px 11px;border-top:1px solid rgba(255,255,255,0.04);font-weight:700;font-size:12px;vertical-align:middle;}
+.tw tr:hover td{background:rgba(255,255,255,0.015);}
+.bx{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:800;}
+.bx-g{background:rgba(34,197,94,0.12);color:var(--green);}
+.bx-r{background:rgba(239,68,68,0.12);color:var(--red);}
+.bx-y{background:rgba(240,180,41,0.12);color:var(--gold);}
+.bx-b{background:rgba(59,130,246,0.12);color:var(--blue);}
+.bx-p{background:rgba(168,85,247,0.12);color:var(--purple);}
+.bx-t{background:rgba(20,184,166,0.12);color:var(--teal);}
+.bx-o{background:rgba(249,115,22,0.12);color:var(--orange);}
+/* SLOTS */
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px;}
+@media(min-width:420px){.slots{grid-template-columns:repeat(6,1fr);}}
+@media(min-width:600px){.slots{grid-template-columns:repeat(8,1fr);}}
+.slot{aspect-ratio:1;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;text-align:center;border:1.5px solid transparent;line-height:1.2;}
+.slot.bkd{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.35);color:var(--green);}
+.slot.pre-match{background:rgba(249,115,22,0.15);border-color:rgba(249,115,22,0.35);color:var(--orange);}
+.slot.free{background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.05);color:var(--muted);}
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-day-lbl{text-align:center;font-size:9px;font-weight:800;color:var(--muted);padding:4px 0;}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid transparent;transition:.15s;}
+.cal-day:hover{border-color:var(--gold);}
+.cal-day.empty{background:transparent;cursor:default;}
+.cal-day.today{border-color:var(--gold);color:var(--gold);}
+.cal-day.has-bk{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:var(--green);}
+.cal-day.has-pre{background:rgba(249,115,22,0.12);border-color:rgba(249,115,22,0.3);color:var(--orange);}
+.cal-day.no-bk{background:rgba(255,255,255,0.03);}
+.cal-bk-ct{font-size:8px;font-weight:800;}
+/* COMPLETE MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.on{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--green);margin-bottom:14px;}
+.search-box{background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;outline:none;width:100%;margin-bottom:10px;}
+.search-box:focus{border-color:var(--gold);}
+.frow{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+.frow input,.frow select{background:var(--card);border:1.5px solid var(--border);border-radius:9px;padding:7px 11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:12px;}
+.br{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.br-lbl{width:24px;font-size:9px;color:var(--muted);font-weight:700;}
+.br-track{flex:1;height:14px;background:var(--card2);border-radius:3px;overflow:hidden;}
+.br-fill{height:100%;border-radius:3px;transition:width .5s;}
+.bi{background:linear-gradient(90deg,var(--green),#86efac);}
+.be{background:linear-gradient(90deg,var(--red),#fca5a5);}
+.empty{text-align:center;padding:28px;color:var(--muted);}
+.empty-ic{font-size:28px;margin-bottom:6px;}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(80px);padding:10px 20px;border-radius:30px;font-weight:800;font-size:12px;z-index:9998;transition:.3s;white-space:nowrap;}
+.toast.on{transform:translateX(-50%) translateY(0);}
+.toast.ok{background:var(--green);color:#000;}
+.toast.err{background:var(--red);color:#fff;}
+.toast.info{background:var(--gold);color:#000;}
+.footer{text-align:center;padding:16px;border-top:2px solid var(--border);margin-top:8px;background:var(--card);}
+.fn{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--gold);letter-spacing:2px;}
+.fc{font-size:10px;color:var(--muted);margin-top:3px;}
+.fc a{color:var(--gold);text-decoration:none;}
+
+/* TIMER SECTION */
+.timer-section{margin-bottom:12px;}
+.timer-card{border-radius:14px;padding:14px;margin-bottom:8px;position:relative;overflow:hidden;}
+.timer-card.done{background:rgba(100,116,139,0.08);border:1.5px solid rgba(100,116,139,0.2);}
+.timer-card.active{background:rgba(34,197,94,0.08);border:2px solid rgba(34,197,94,0.4);box-shadow:0 0 20px rgba(34,197,94,0.1);}
+.timer-card.next{background:rgba(59,130,246,0.07);border:1.5px solid rgba(59,130,246,0.25);}
+.timer-card.waiting{background:rgba(240,180,41,0.06);border:1.5px solid rgba(240,180,41,0.15);}
+.timer-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:1px;margin-bottom:8px;}
+.timer-badge.done{background:rgba(100,116,139,0.15);color:var(--muted);}
+.timer-badge.active{background:rgba(34,197,94,0.15);color:var(--green);animation:badgePulse 2s infinite;}
+.timer-badge.next{background:rgba(59,130,246,0.15);color:var(--blue);}
+.timer-badge.waiting{background:rgba(240,180,41,0.12);color:var(--gold);}
+@keyframes badgePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.timer-team{font-size:16px;font-weight:900;margin-bottom:3px;}
+.timer-time{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px;}
+.timer-countdown{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;letter-spacing:2px;margin:4px 0;}
+.timer-countdown.active{color:var(--green);}
+.timer-countdown.next{color:var(--blue);}
+.timer-countdown.urgent{color:var(--red);animation:urgentPulse 1s infinite;}
+@keyframes urgentPulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+.timer-bar-track{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-top:8px;}
+.timer-bar-fill{height:100%;border-radius:4px;transition:width 1s linear;}
+.timer-bar-fill.active{background:linear-gradient(90deg,var(--green),#86efac);}
+.timer-bar-fill.next{background:linear-gradient(90deg,var(--blue),#93c5fd);}
+.timer-bar-fill.urgent{background:linear-gradient(90deg,var(--red),#fca5a5);}
+.timer-done-label{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--muted);font-weight:700;}
+.timer-amount{font-size:10px;font-weight:800;margin-top:4px;}
+.no-bookings-timer{text-align:center;padding:20px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:14px;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+
+
+<!-- INVOICE MODAL -->
+<div class="inv-modal" id="invModal">
+  <div class="inv-box">
+    <div class="print-btn-row">
+      <button class="inv-btn dl" onclick="downloadInvPDF()">⬇️ Download PDF</button>
+      <button class="inv-btn wa" onclick="shareInvWA()">💬 WhatsApp</button>
+      <button class="inv-btn cl" onclick="closeInv()">✕ Close</button>
+    </div>
+    <div class="inv-content" id="invContent"></div>
+  </div>
+</div>
+
+<!-- COMPLETE MODAL -->
+<div class="modal-bg" id="completeModal">
+  <div class="modal-box">
+    <div class="modal-title">✅ Match Complete — Payment</div>
+    <div id="modal-info" style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;"></div>
+
+    <!-- EXTRA TIME / DISCOUNT ADJUST -->
+    <div style="background:rgba(240,180,41,0.07);border:1px solid rgba(240,180,41,0.2);border-radius:11px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--gold);margin-bottom:10px;">⚙️ ADJUST (Optional)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="fl">
+          <label>Extra Time (Minutes)</label>
+          <input type="number" id="m-extra-min" placeholder="0" min="0" oninput="calcModal()">
+        </div>
+        <div class="fl">
+          <label>Extra Charge</label>
+          <select id="m-extra-rate" onchange="calcModal()">
+            <option value="free">Free 🎁</option>
+            <option value="half">Half — Rs.1000/hr</option>
+            <option value="full">Full — Rs.2000/hr</option>
+          </select>
+        </div>
+        <div class="fl">
+          <label>Additional Discount Rs.</label>
+          <input type="number" id="m-disc" placeholder="0" min="0" oninput="calcModal()">
+        </div>
+        <div class="fl">
+          <label>Discount Reason</label>
+          <input type="text" id="m-disc-note" placeholder="VIP, Regular...">
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-box post">
+      <div class="stage-title post">💰 PAYMENT RECEIVED</div>
+      <div class="slbl" style="margin-top:0;">Cash</div>
+      <div class="row">
+        <div class="fl"><label>Cash Rs.</label><input type="number" id="m-cash" placeholder="0" oninput="calcModal()"></div>
+        <div class="fl"><label>Note</label><input type="text" id="m-cash-note" placeholder="Note..."></div>
+      </div>
+      <div class="slbl">Account</div>
+      <div class="row r3">
+        <div class="fl"><label>Rs.</label><input type="number" id="m-acc" placeholder="0" oninput="calcModal()"></div>
+        <div class="fl"><label>Account</label>
+          <select id="m-acc-type">
+            <option value="">N/A</option>
+            <option value="jazz">🟣 JazzCash</option>
+            <option value="bank">🏦 Bank Alfalah</option>
+            <option value="easy">🩵 Easypaisa</option>
+          </select>
+        </div>
+        <div class="fl"><label>Note</label><input type="text" id="m-acc-note"></div>
+      </div>
+      <div class="abox" style="margin-top:8px;margin-bottom:0;">
+        <div class="ab-row"><span class="ab-lbl">Original Total</span><span class="ab-val" id="m-orig">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Extra Time</span><span class="ab-val p" id="m-extra-show">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Extra Discount</span><span class="ab-val r" id="m-disc-show">-Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl" style="font-weight:800;color:var(--text);">New Total</span><span class="ab-val" id="m-total" style="font-size:17px;">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Advance (Before)</span><span class="ab-val o" id="m-adv">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Cash (Now)</span><span class="ab-val g" id="m-cash-show">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Account (Now)</span><span class="ab-val b" id="m-acc-show">Rs.0</span></div>
+        <div class="ab-row" style="border:none;"><span class="ab-lbl" style="font-weight:800;">REMAINING DUE</span><span class="ab-val r" id="m-due" style="font-size:17px;">Rs.0</span></div>
+      </div>
+    </div>
+
+    <div class="fl" style="margin-top:10px;margin-bottom:12px;">
+      <label>Status</label>
+      <select id="m-status">
+        <option value="paid">✅ Fully Paid — All Clear</option>
+        <option value="partial">💛 Partial — Kuch Baki</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-green" onclick="saveComplete()" style="flex:1;">✅ COMPLETE</button>
+      <button class="btn-sm" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ADD PAYMENT MODAL (for partial/pending bookings) -->
+<div class="modal-bg" id="addPayModal">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--purple);">💰 Payment Add Karo</div>
+    <div id="addpay-info" style="background:var(--card2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;"></div>
+    <div class="stage-box pre" style="background:rgba(168,85,247,0.07);border-color:rgba(168,85,247,0.25);">
+      <div class="stage-title" style="color:var(--purple);">💵 NAYA PAYMENT ADD KARO</div>
+      <div class="slbl" style="margin-top:0;">Cash (Haath Mein)</div>
+      <div class="row">
+        <div class="fl"><label>Cash Rs.</label><input type="number" id="ap-cash" placeholder="0" oninput="calcAddPay()"></div>
+        <div class="fl"><label>Note</label><input type="text" id="ap-cash-note" placeholder="Cash note..."></div>
+      </div>
+      <div class="slbl">Digital Account</div>
+      <div class="row r3">
+        <div class="fl"><label>Raqam Rs.</label><input type="number" id="ap-acc" placeholder="0" oninput="calcAddPay()"></div>
+        <div class="fl"><label>Konsa Account</label>
+          <select id="ap-acc-type">
+            <option value="">N/A</option>
+            <option value="jazz">🟣 JazzCash — Abdul Gaffar</option>
+            <option value="bank">🏦 Bank Alfalah — Mehboob Ahmad</option>
+            <option value="easy">🩵 Easypaisa</option>
+          </select>
+        </div>
+        <div class="fl"><label>Note</label><input type="text" id="ap-acc-note"></div>
+      </div>
+      <div class="abox" style="margin-top:8px;margin-bottom:0;">
+        <div class="ab-row"><span class="ab-lbl">Total Amount</span><span class="ab-val" id="ap-total">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Already Paid</span><span class="ab-val g" id="ap-paid">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Ab Dey Raha</span><span class="ab-val o" id="ap-new">Rs.0</span></div>
+        <div class="ab-row" style="border:none;"><span class="ab-lbl" style="font-weight:800;">After This — Due</span><span class="ab-val r" id="ap-remaining">Rs.0</span></div>
+      </div>
+    </div>
+    <div class="fl" style="margin-top:10px;margin-bottom:12px;">
+      <label>Status</label>
+      <select id="ap-status">
+        <option value="paid">✅ Ab Fully Paid — All Clear</option>
+        <option value="partial">💛 Still Partial — Kuch Baki</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-green" onclick="saveAddPay()" style="flex:1;">💰 PAYMENT ADD KARO</button>
+      <button class="btn-sm" onclick="closeAddPay()">Cancel</button>
+    </div>
+  </div>
+</div>
+<!-- EDIT BOOKING MODAL -->
+<div class="modal-bg" id="editModal">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--blue);">✏️ Booking Edit Karo</div>
+    <div class="slbl">Customer Info Update Karo</div>
+    <div class="row r3">
+      <div class="fl"><label>Naam</label><input type="text" id="ed-nm" placeholder="Naam..."></div>
+      <div class="fl"><label>Phone Number</label><input type="tel" id="ed-ph" placeholder="03xx-xxxxxxx"></div>
+      <div class="fl"><label>Type</label>
+        <select id="ed-vip">
+          <option value="regular">Regular</option>
+          <option value="vip">⭐ VIP</option>
+          <option value="new">🆕 New</option>
+        </select>
+      </div>
+    </div>
+    <div class="slbl">Time Update Karo</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+      <select id="ed-hour" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;flex:1;">
+        <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+        <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+      </select>
+      <select id="ed-min" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;width:72px;">
+        <option value="00">:00</option><option value="15">:15</option><option value="30">:30</option><option value="45">:45</option>
+      </select>
+      <select id="ed-ampm" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;outline:none;width:72px;color:var(--gold);">
+        <option value="AM">AM</option><option value="PM">PM</option>
+      </select>
+    </div>
+    <div class="row">
+      <div class="fl"><label>Ghante</label><input type="number" id="ed-hrs" placeholder="1, 2, 2.5..." min="0.5" step="0.5"></div>
+      <div class="fl"><label>Note</label><input type="text" id="ed-note" placeholder="Note..."></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn-green" onclick="saveEdit()" style="flex:1;background:linear-gradient(135deg,var(--blue),#1d4ed8);">✏️ UPDATE KARO</button>
+      <button class="btn-sm" onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp">
+<div class="sync-bar" id="syncBar">🔄 Sync ho raha hai...</div>
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="brand">
+      <div class="logo-w">🏏</div>
+      <div><div class="bn">THE SULTANS</div><div class="bl">📍 Multan, Pakistan</div></div>
+    </div>
+    <div class="hdr-r">
+      <div><div class="clk" id="clk">--:--</div><div class="clkd" id="clkd"></div></div>
+      <button class="lock-btn" onclick="window.location.reload()">🔒</button>
+    </div>
+  </div>
+  <div class="cbar">
+    <div class="ci">📞 <b>0300-9634880</b></div>
+    <div class="ci">📞 <b>0319-3510870</b></div>
+    <div class="ci">🟣 Jazz: <b>0300-3510175</b> Abdul Gaffar</div>
+    <div class="ci">🏦 Alfalah: <b>83721010111101</b> Mehboob Ahmad</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="go('dash')">🏠 Home</div>
+  <div class="tab" onclick="go('pre')">📋 Pre-Match</div>
+  <div class="tab" onclick="go('post')">✅ Complete</div>
+  <div class="tab" onclick="go('cal')">📆 Calendar</div>
+  <div class="tab" onclick="go('cust')">👥 Customers</div>
+  <div class="tab" onclick="go('exp')">💸 Kharcha</div>
+  <div class="tab" onclick="go('rep')">📊 Reports</div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="pg on" id="pg-dash">
+  <br>
+  <!-- DAILY TARGET -->
+  <div class="target-bar">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:11px;font-weight:800;color:var(--gold);">🎯 DAILY TARGET</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="targetInput" placeholder="Set target..." style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:4px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;width:120px;" oninput="saveTarget()">
+        <span style="font-size:11px;color:var(--muted);" id="targetPct">0%</span>
+      </div>
+    </div>
+    <div class="target-track"><div class="target-fill" id="targetFill" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
+      <span id="targetEarned">Earned: Rs.0</span>
+      <span id="targetRemaining">Remaining: Rs.0</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="sc inc"><div class="sc-lbl">Today's Earning</div><div class="sc-val" id="d-inc">Rs.0</div><div class="sc-sub" id="d-inc-s">0 complete</div></div>
+    <div class="sc exp"><div class="sc-lbl">Today's Expense</div><div class="sc-val" id="d-exp">Rs.0</div><div class="sc-sub" id="d-exp-s">0 entries</div></div>
+    <div class="sc prf"><div class="sc-lbl">Today's Profit</div><div class="sc-val" id="d-prf">Rs.0</div><div class="sc-sub" id="d-prf-s">Net</div></div>
+    <div class="sc bks"><div class="sc-lbl">Today's Bookings</div><div class="sc-val" id="d-sl">0</div><div class="sc-sub" id="d-sl-s">total</div></div>
+    <div class="sc adv"><div class="sc-lbl">Advance Received</div><div class="sc-val" id="d-adv">Rs.0</div><div class="sc-sub">today</div></div>
+    <div class="sc due"><div class="sc-lbl">Due Pending</div><div class="sc-val" id="d-due">Rs.0</div><div class="sc-sub">pending</div></div>
+  </div>
+
+  <div class="sh">
+    <div class="sh-t">Slot Status</div>
+    <div style="display:flex;gap:8px;font-size:9px;font-weight:800;">
+      <span style="color:var(--green);">■ Done</span>
+      <span style="color:var(--orange);">■ Pre</span>
+      <span style="color:var(--muted);">■ Free</span>
+    </div>
+  </div>
+  <div class="slots" id="slotMap"></div>
+
+  <!-- ANALYTICS -->
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:12px;">📊 Analytics</div>
+    <div class="row">
+      <div>
+        <div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">PEAK HOURS</div>
+        <div style="display:flex;gap:3px;align-items:flex-end;height:60px;" id="peakChart"></div>
+        <div style="display:flex;gap:3px;margin-top:3px;" id="peakLabels"></div>
+      </div>
+      <div>
+        <div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">BEST DAYS</div>
+        <div style="display:flex;gap:3px;align-items:flex-end;height:60px;" id="daysChart"></div>
+        <div style="display:flex;gap:3px;margin-top:3px;" id="daysLabels"></div>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+      <div style="font-size:9px;font-weight:800;color:var(--gold);letter-spacing:1px;margin-bottom:8px;">LAST 3 MONTHS</div>
+      <div id="monthComp"></div>
+    </div>
+    <div class="stats" style="margin-top:10px;grid-template-columns:repeat(3,1fr);">
+      <div class="sc" style="border-color:rgba(240,180,41,0.3);"><div class="sc-lbl">Best Day</div><div class="sc-val" style="font-size:13px;color:var(--gold);" id="ana-best">—</div></div>
+      <div class="sc" style="border-color:rgba(34,197,94,0.3);"><div class="sc-lbl">Avg/Day</div><div class="sc-val" style="font-size:13px;color:var(--green);" id="ana-avg">Rs.0</div></div>
+      <div class="sc" style="border-color:rgba(59,130,246,0.3);"><div class="sc-lbl">Customers</div><div class="sc-val" style="font-size:13px;color:var(--blue);" id="ana-custs">0</div></div>
+    </div>
+  </div>
+
+  <!-- LIVE TIMER SECTION -->
+  <div class="sh">
+    <div class="sh-t">⏱️ LIVE MATCH TIMER</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div id="timerDot" style="width:8px;height:8px;border-radius:50%;background:var(--green);animation:badgePulse 2s infinite;"></div>
+      <span style="font-size:10px;color:var(--green);font-weight:800;" id="timerClock">--:--</span>
+    </div>
+  </div>
+  <div class="timer-section" id="timerSection"></div>
+
+  <div class="sh">
+    <div class="sh-t">Today's Bookings</div>
+    <button class="btn-pdf" onclick="printDaily()">📄 PDF</button>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>Due</th><th>Stage</th><th>Actions</th></tr></thead>
+    <tbody id="dash-bks"></tbody>
+  </table></div>
+</div>
+
+<!-- PRE-MATCH -->
+<div class="pg" id="pg-pre">
+  <br>
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:4px;">📋 Pre-Match Booking</div>
+    <div style="font-size:11px;color:var(--soft);margin-bottom:12px;">Add booking before match + collect advance. After match go to Complete tab.</div>
+    <div class="conflict-warn" id="conflictWarn">⚠️ There may already be a booking on this date!</div>
+    <div class="slbl">Match Details</div>
+    <div class="row r3">
+      <div class="fl">
+        <label>Date</label>
+        <input type="date" id="b-date" onchange="checkConflict()">
+      </div>
+      <div class="fl">
+        <label>Start Time</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="b-hour" onchange="buildTime()" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;flex:1;">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          </select>
+          <select id="b-min" onchange="buildTime()" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;width:70px;">
+            <option value="00">:00</option>
+            <option value="15">:15</option>
+            <option value="30">:30</option>
+            <option value="45">:45</option>
+          </select>
+          <select id="b-ampm" onchange="buildTime()" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;outline:none;width:72px;color:var(--gold);">
+            <option value="AM">AM</option>
+            <option value="PM" selected>PM</option>
+          </select>
+        </div>
+        <input type="hidden" id="b-st" value="6:00 PM">
+        <div id="b-st-preview" style="font-size:10px;color:var(--gold);font-weight:800;margin-top:3px;text-align:center;">⏰ 6:00 PM</div>
+      </div>
+      <div class="fl"><label>Hours (Type manually)</label><input type="number" id="b-hr" placeholder="1, 2, 2.5..." min="0.5" step="0.5" oninput="calcAmt()"></div>
+    </div>
+    <!-- Day name preview -->
+    <div id="dayPreview" style="background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;color:var(--gold);margin-bottom:8px;display:none;text-align:center;"></div>
+    <div class="row">
+      <div class="fl"><label>Extra Time (Minutes)</label><input type="number" id="b-ex" placeholder="15, 30, 45..." min="0" oninput="calcAmt()"></div>
+      <div class="fl"><label>Extra Time Charge</label>
+        <select id="b-exc" onchange="calcAmt()">
+          <option value="free">Free 🎁</option>
+          <option value="half">Half Rate Rs.1000/hr</option>
+          <option value="full">Full Rate Rs.2000/hr</option>
+        </select>
+      </div>
+    </div>
+    <div class="slbl">Customer Info</div>
+    <div class="row r3">
+      <div class="fl">
+        <label>Customer Name</label>
+        <input type="text" id="b-nm" placeholder="Name..." oninput="custSearch(this.value)">
+        <div id="custDD" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;display:none;max-height:120px;overflow-y:auto;margin-top:2px;"></div>
+      </div>
+      <div class="fl"><label>Phone Number</label><input type="tel" id="b-ph" placeholder="03xx-xxxxxxx"></div>
+      <div class="fl"><label>Customer Type</label>
+        <select id="b-vip">
+          <option value="regular">Regular</option>
+          <option value="vip">⭐ VIP</option>
+          <option value="new">🆕 New</option>
+        </select>
+      </div>
+    </div>
+    <div class="slbl">Discount / Concession</div>
+    <div class="row">
+      <div class="fl"><label>Discount Type</label>
+        <select id="b-dt" onchange="calcAmt()">
+          <option value="none">No Discount</option>
+          <option value="pct">Percentage %</option>
+          <option value="flat">Fixed Amount Rs.</option>
+        </select>
+      </div>
+      <div class="fl"><label>Discount Value</label><input type="number" id="b-dv" placeholder="0" min="0" oninput="calcAmt()"></div>
+    </div>
+    <div class="abox">
+      <div class="ab-row"><span class="ab-lbl">Base Amount (Rs.2000 × hrs)</span><span class="ab-val" id="sb-base">Rs.0</span></div>
+      <div class="ab-row"><span class="ab-lbl">Extra Time</span><span class="ab-val p" id="sb-ex">Rs.0</span></div>
+      <div class="ab-row"><span class="ab-lbl">Discount</span><span class="ab-val r" id="sb-disc">-Rs.0</span></div>
+      <div class="final-row"><span class="final-lbl">FINAL TOTAL</span><span class="final-val" id="sb-final">Rs.0</span></div>
+    </div>
+    <div class="stage-box pre">
+      <div class="stage-title pre">💰 ADVANCE PAYMENT (Before Match)</div>
+      <div class="row r3">
+        <div class="fl"><label>Advance Amount (Rs.)</label><input type="number" id="adv-amt" placeholder="0" oninput="calcAdvance()"></div>
+        <div class="fl"><label>Payment Method</label>
+          <select id="adv-mode">
+            <option value="cash">💵 Cash (In Hand)</option>
+            <option value="jazz">🟣 JazzCash — Abdul Gaffar</option>
+            <option value="bank">🏦 Bank Alfalah — Mehboob Ahmad</option>
+            <option value="easy">🩵 Easypaisa</option>
+          </select>
+        </div>
+        <div class="fl"><label>Note</label><input type="text" id="adv-note" placeholder="Note..."></div>
+      </div>
+      <div class="abox" style="margin:6px 0 0;">
+        <div class="ab-row"><span class="ab-lbl">Final Total</span><span class="ab-val" id="adv-final">Rs.0</span></div>
+        <div class="ab-row"><span class="ab-lbl">Advance Paid</span><span class="ab-val o" id="adv-show">Rs.0</span></div>
+        <div class="ab-row" style="border:none;"><span class="ab-lbl" style="color:var(--purple);font-weight:800;">⏳ Remaining After Match</span><span class="ab-val p" id="adv-due">Rs.0</span></div>
+      </div>
+    </div>
+    <div class="fl" style="margin-top:8px;margin-bottom:10px;">
+      <label>Note</label><input type="text" id="b-nt" placeholder="Any note...">
+    </div>
+    <button class="btn-gold" onclick="savePreMatch()">📋 SAVE PRE-MATCH BOOKING</button>
+  </div>
+  <div class="sh"><div class="sh-t">Pre-Match Pending</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Time</th><th>Name</th><th>Phone</th><th>Hrs</th><th>Total</th><th>Advance</th><th>Due</th><th>Actions</th></tr></thead>
+    <tbody id="pre-tbl"></tbody>
+  </table></div>
+</div>
+
+<!-- COMPLETE -->
+<div class="pg" id="pg-post">
+  <br>
+  <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--green);font-weight:700;">
+    ✅ Match done? Select booking below and mark complete with remaining payment.
+  </div>
+  <div class="sh"><div class="sh-t">Pending Bookings</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Time</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>Due</th><th>Actions</th></tr></thead>
+    <tbody id="post-tbl"></tbody>
+  </table></div>
+  <div class="sh"><div class="sh-t">Completed Bookings</div></div>
+  <div class="frow">
+    <input type="date" id="comp-filter">
+    <button class="btn-sm" onclick="document.getElementById('comp-filter').value='';renderPostTab()">Reset</button>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Name</th><th>Time</th><th>Total</th><th>Advance</th><th>Cash</th><th>Account</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody id="comp-tbl"></tbody>
+  </table></div>
+</div>
+
+<!-- CALENDAR -->
+<div class="pg" id="pg-cal">
+  <br>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <button class="btn-sm" onclick="calNav(-1)">◀</button>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold);" id="calTitle"></div>
+      <button class="btn-sm" onclick="calNav(1)">▶</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div style="display:flex;gap:12px;margin-top:10px;font-size:10px;font-weight:800;">
+      <span style="color:var(--green);">■ Complete</span>
+      <span style="color:var(--orange);">■ Pre-Match</span>
+      <span style="color:var(--gold);">■ Today</span>
+    </div>
+  </div>
+  <div class="sh"><div class="sh-t" id="calDayTitle">Select a date</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>Due</th><th>Stage</th><th>Actions</th></tr></thead>
+    <tbody id="cal-bks"></tbody>
+  </table></div>
+</div>
+
+<!-- CUSTOMERS -->
+<div class="pg" id="pg-cust">
+  <br>
+  <!-- BULK WHATSAPP -->
+  <div class="card" style="background:rgba(37,211,102,0.05);border-color:rgba(37,211,102,0.2);">
+    <div class="sh-t" style="color:var(--green);margin-bottom:8px;">💬 Bulk WhatsApp Reminder</div>
+    <div style="font-size:12px;color:var(--soft);margin-bottom:10px;">Send due payment reminder to ALL pending customers at once.</div>
+    <button class="btn-wa" style="width:100%;padding:12px;font-size:14px;border-radius:9px;" onclick="bulkWAReminder()">💬 SEND REMINDER TO ALL DUE CUSTOMERS</button>
+  </div>
+
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:8px;">➕ Add Customer</div>
+    <div class="row r3">
+      <div class="fl"><label>Name</label><input type="text" id="c-nm" placeholder="Customer name..."></div>
+      <div class="fl"><label>Phone</label><input type="tel" id="c-ph" placeholder="03xx-xxxxxxx"></div>
+      <div class="fl"><label>Type</label>
+        <select id="c-type">
+          <option value="regular">Regular</option>
+          <option value="vip">⭐ VIP</option>
+        </select>
+      </div>
+    </div>
+    <div class="fl" style="margin-bottom:10px;"><label>Note</label><input type="text" id="c-note" placeholder="Any note..."></div>
+    <button class="btn-gold" onclick="saveCust()">💾 SAVE CUSTOMER</button>
+  </div>
+  <input type="text" class="search-box" placeholder="🔍 Search by name or phone..." oninput="renderCustTable(this.value)">
+  <div class="tw"><table>
+    <thead><tr><th>Name</th><th>Phone</th><th>Type</th><th>Bookings</th><th>Total Spent</th><th>Last Visit</th><th>Due</th><th>Note</th><th>Actions</th></tr></thead>
+    <tbody id="c-tbl"></tbody>
+  </table></div>
+</div>
+
+<!-- EXPENSE -->
+<div class="pg" id="pg-exp">
+  <br>
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:8px;">➕ Add Expense</div>
+    <div class="row r4">
+      <div class="fl"><label>Date</label><input type="date" id="e-d"></div>
+      <div class="fl"><label>Category</label>
+        <select id="e-c" onchange="checkExpCat()">
+          <option>Electricity</option><option>Maintenance</option><option>Staff Salary</option>
+          <option>Rent</option><option>Equipment</option><option>Marketing</option>
+          <option>Diesel/Petrol</option><option>Generator</option><option>Cleaning</option>
+          <option>Water</option><option>Internet</option><option>Other</option>
+        </select>
+      </div>
+      <div class="fl"><label>Amount (Rs.)</label><input type="number" id="e-a" placeholder="0"></div>
+      <div class="fl"><label>Paid Via</label>
+        <select id="e-pay">
+          <option value="cash">💵 Cash</option>
+          <option value="jazz">🟣 JazzCash</option>
+          <option value="bank">🏦 Bank Alfalah</option>
+        </select>
+      </div>
+    </div>
+    <div id="e-other-wrap" style="display:none;margin-bottom:8px;">
+      <div class="fl"><label>Type your own category</label><input type="text" id="e-other" placeholder="Canteen, Transport, etc..."></div>
+    </div>
+    <div class="fl" style="margin-bottom:10px;">
+      <label>Details (Write anything)</label>
+      <textarea id="e-desc" placeholder="E.g: 10 liters diesel Rs.300/liter, March electricity bill..."></textarea>
+    </div>
+    <button class="btn-gold" onclick="saveExp()">💾 SAVE EXPENSE</button>
+  </div>
+  <div class="frow">
+    <input type="date" id="ef-d">
+    <select id="ef-c" onchange="renderET()">
+      <option value="">All</option><option>Electricity</option><option>Maintenance</option>
+      <option>Staff Salary</option><option>Rent</option><option>Equipment</option>
+      <option>Diesel/Petrol</option><option>Generator</option><option>Other</option>
+    </select>
+    <button class="btn-sm" onclick="clrEF()">Reset</button>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Category</th><th>Details</th><th>Paid Via</th><th>Amount</th><th></th></tr></thead>
+    <tbody id="e-tbl"></tbody>
+  </table></div>
+</div>
+
+<!-- REPORTS -->
+<div class="pg" id="pg-rep">
+  <br>
+  <div class="frow">
+    <select id="r-m" onchange="renderRep()"></select>
+    <select id="r-y" onchange="renderRep()"></select>
+    <button class="btn-pdf" onclick="printReport()">📄 PDF Report</button>
+  </div>
+  <div class="stats">
+    <div class="sc inc"><div class="sc-lbl">Monthly Earning</div><div class="sc-val" id="r-inc">Rs.0</div><div class="sc-sub" id="r-inc-s"></div></div>
+    <div class="sc exp"><div class="sc-lbl">Monthly Expense</div><div class="sc-val" id="r-exp">Rs.0</div><div class="sc-sub" id="r-exp-s"></div></div>
+    <div class="sc prf"><div class="sc-lbl">Net Profit</div><div class="sc-val" id="r-prf">Rs.0</div><div class="sc-sub" id="r-prf-s"></div></div>
+    <div class="sc bks"><div class="sc-lbl">Total Discount</div><div class="sc-val" id="r-disc" style="color:var(--purple);">Rs.0</div><div class="sc-sub"></div></div>
+    <div class="sc adv"><div class="sc-lbl">Total Advance</div><div class="sc-val" id="r-adv" style="color:var(--orange);">Rs.0</div><div class="sc-sub"></div></div>
+    <div class="sc due"><div class="sc-lbl">Total Due</div><div class="sc-val" id="r-due" style="color:var(--purple);">Rs.0</div><div class="sc-sub"></div></div>
+  </div>
+  <div class="card">
+    <div class="sh-t" style="margin-bottom:10px;">Payment Channels</div>
+    <div class="stats" style="grid-template-columns:repeat(2,1fr);">
+      <div class="sc" style="border-color:rgba(34,197,94,0.3);"><div class="sc-lbl">💵 Cash</div><div class="sc-val" style="color:var(--green);" id="r-cash">Rs.0</div></div>
+      <div class="sc" style="border-color:rgba(168,85,247,0.3);"><div class="sc-lbl">🟣 JazzCash</div><div class="sc-val" style="color:var(--purple);" id="r-jazz">Rs.0</div></div>
+      <div class="sc" style="border-color:rgba(59,130,246,0.3);"><div class="sc-lbl">🏦 Bank Alfalah</div><div class="sc-val" style="color:var(--blue);" id="r-bank">Rs.0</div></div>
+      <div class="sc" style="border-color:rgba(20,184,166,0.3);"><div class="sc-lbl">🩵 Easypaisa</div><div class="sc-val" style="color:var(--teal);" id="r-easy">Rs.0</div></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--gold);margin-bottom:10px;">Daily Summary</div>
+    <div id="ch"></div>
+    <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;font-weight:800;">
+      <span style="color:var(--green);">▬ Earning</span><span style="color:var(--red);">▬ Expense</span>
+    </div>
+  </div>
+  <div class="sh"><div class="sh-t">Pending Payments</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>After Match</th><th>Due</th><th>Remind</th></tr></thead>
+    <tbody id="pd-tbl"></tbody>
+  </table></div>
+  <div class="sh"><div class="sh-t">Expense Breakdown</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Category</th><th>Total</th><th>%</th></tr></thead>
+    <tbody id="eb-tbl"></tbody>
+  </table></div>
+</div>
+
+<div class="footer">
+  <div class="fn">🏏 THE SULTANS INDOOR CRICKET CLUB — MULTAN</div>
+  <div class="fc">Created by <a href="tel:03060711529">Jahanzeb Baloch — 0306-0711529</a></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const EJ_SVC='service_k7x22hb',EJ_TPL='template_xgs0c7b',EJ_TO='amjahanzaib15@gmail.com';
+const RATE=2000;
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let ADMIN_PASS=localStorage.getItem('admin_pass')||'jahanzebbaloch';
+let activeBookingId=null;
+let allBookings=[],allExpenses=[],allCustomers=[];
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+let currentInvBooking=null;
+
+// ─── FIREBASE LISTENERS ───
+function startListeners(){
+  showSync(true);
+  db.collection('bookings').onSnapshot(s=>{allBookings=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));showSync(false);refreshTab();},err=>{showSync(false);console.log('Bookings error:',err);});
+  db.collection('expenses').onSnapshot(s=>{allExpenses=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('Expenses error:',err);});
+  db.collection('customers').onSnapshot(s=>{allCustomers=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nm||'').localeCompare(b.nm||''));refreshTab();},err=>{console.log('Customers error:',err);});
+}
+function showSync(on){document.getElementById('syncBar').className='sync-bar'+(on?' on':'');}
+function refreshTab(){
+  const a=document.querySelector('.tab.active');if(!a)return;
+  const fn=a.getAttribute('onclick')||'';
+  if(fn.includes('dash'))renderDash();
+  else if(fn.includes('pre'))renderPreTable();
+  else if(fn.includes('post'))renderPostTab();
+  else if(fn.includes('cal'))renderCal();
+  else if(fn.includes('cust'))renderCustTable('');
+  else if(fn.includes('exp'))renderET();
+  else if(fn.includes('rep'))renderRep();
+}
+
+
+// ─── CLOCK ───
+function tick(){
+  const n=new Date();
+  document.getElementById('clk').textContent=n.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clkd').textContent=n.toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+}
+setInterval(tick,1000);tick();
+
+// ─── HELPERS ───
+const Rs=n=>'Rs.'+Number(n||0).toLocaleString('en-PK');
+const today=()=>new Date().toISOString().slice(0,10);
+function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast on '+t;setTimeout(()=>el.className='toast',3000);}
+function pmbadge(m){const mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};const ml={cash:'💵 Cash',bank:'🏦 Alfalah',jazz:'🟣 Jazz',easy:'🩵 Easy'};return`<span class="bx ${mp[m]||'bx-g'}">${ml[m]||m}</span>`;}
+function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ PRE</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
+function vipbadge(v){if(v==='vip')return'<span class="bx bx-y">⭐ VIP</span>';if(v==='new')return'<span class="bx bx-b">🆕 NEW</span>';return'<span class="bx bx-t">Regular</span>';}
+function accName(t){return{jazz:'JazzCash (Abdul Gaffar)',bank:'Bank Alfalah (Mehboob Ahmad)',easy:'Easypaisa'}[t]||'';}
+function waLink(phone,msg){const p=phone.replace(/[^0-9]/g,'');const intl=p.startsWith('0')?'92'+p.slice(1):p;return`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;}
+
+// ─── WHATSAPP MESSAGES ───
+function waConfirm(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\n✅ *Your booking is confirmed!*\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n🕐 Hours: ${b.hrs} hrs\n💰 Total: ${Rs(b.fin)}\n💵 Advance Paid: ${Rs(b.advAmt)}\n⏳ Remaining: ${Rs(b.due)}\n\nPlease arrive on time!\n*Thank you! 🙏*`;}
+function waDue(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\nYour payment is pending:\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n💰 Total: ${Rs(b.fin)}\n❗ *Due Amount: ${Rs(b.due)}*\n\nPlease clear your payment:\n🟣 JazzCash: 0300-3510175 (Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101 (Mehboob Ahmad)\n\n*Thank you! 🙏*`;}
+function waInvoiceText(b){
+  const status=b.status==='paid'?'✅ FULLY PAID':b.status==='partial'?'💛 PARTIAL PAYMENT':'⏳ PRE-MATCH';
+  return `🏏 *THE SULTANS INDOOR CRICKET CLUB*\n📍 Multan, Pakistan\n\n━━━━━━━━━━━━━━\n📄 *BOOKING RECEIPT*\n━━━━━━━━━━━━━━\n👤 *Name:* ${b.nm}\n📞 *Phone:* ${b.ph||'—'}\n📅 *Date:* ${b.date}\n⏰ *Time:* ${b.st||'—'} (${b.hrs} hrs${b.exM>0?' + '+b.exM+' min':''})\n💰 *Rate:* Rs.2000/hr${b.dA>0?'\n🎁 *Discount:* -'+Rs(b.dA):''}\n\n━━━━━━━━━━━━━━\n💵 *PAYMENT DETAILS*\n━━━━━━━━━━━━━━\n*Total: ${Rs(b.fin)}*\nAdvance (${b.advMode}): ${Rs(b.advAmt)}${b.status!=='pre'?'\nCash (After Match): '+Rs(b.afterCash||0)+'\nAccount (After Match): '+Rs(b.afterAcc||0):''}\n*Due Remaining: ${(b.due||0)>0?Rs(b.due):'CLEAR ✅'}*\n\n*Status: ${status}*\n\n━━━━━━━━━━━━━━\n🏦 *PAYMENT ACCOUNTS*\n━━━━━━━━━━━━━━\n🟣 JazzCash: 0300-3510175\n(Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101\n(Mehboob Ahmad)\n\n📞 0300-9634880\nThank you! 🙏`;}
+
+// ─── TABS ───
+function go(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>{if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes("'"+tab+"'"))t.classList.add('active');});
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+tab).classList.add('on');
+  if(tab==='dash')renderDash();if(tab==='pre')renderPreTable();if(tab==='post')renderPostTab();
+  if(tab==='cal')renderCal();if(tab==='cust')renderCustTable('');if(tab==='exp')renderET();if(tab==='rep')renderRep();
+}
+
+// ─── TARGET ───
+function saveTarget(){
+  const v=document.getElementById('targetInput').value;
+  localStorage.setItem('daily_target',v);
+  updateTarget();
+}
+function updateTarget(){
+  const target=parseFloat(localStorage.getItem('daily_target'))||0;
+  const inp=document.getElementById('targetInput');
+  if(inp&&!inp.value&&target)inp.value=target;
+  const td=today();
+  const earned=allBookings.filter(b=>b.date===td).reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+  if(!target){document.getElementById('targetFill').style.width='0%';document.getElementById('targetPct').textContent='0%';document.getElementById('targetEarned').textContent='Earned: '+Rs(earned);document.getElementById('targetRemaining').textContent='Set a target ↑';return;}
+  const pct=Math.min(100,Math.round((earned/target)*100));
+  document.getElementById('targetFill').style.width=pct+'%';
+  document.getElementById('targetFill').style.background=pct>=100?'linear-gradient(90deg,var(--gold),var(--gold2))':'linear-gradient(90deg,var(--green),#86efac)';
+  document.getElementById('targetPct').textContent=pct+'%';
+  document.getElementById('targetEarned').textContent='Earned: '+Rs(earned);
+  document.getElementById('targetRemaining').textContent=pct>=100?'🎉 Target Achieved!':'Remaining: '+Rs(Math.max(0,target-earned));
+}
+
+// ─── CONFLICT ───
+function checkConflict(){calcAmt();const date=document.getElementById('b-date').value;const bks=allBookings.filter(b=>b.date===date);document.getElementById('conflictWarn').style.display=bks.length?'block':'none';}
+
+// ─── CALC ───
+function calcAmt(){
+  const hrs=parseFloat(document.getElementById('b-hr').value)||0;
+  const base=Math.round(hrs*RATE);
+  const exM=parseFloat(document.getElementById('b-ex').value)||0;
+  const exC=document.getElementById('b-exc').value;
+  let exA=0;if(exM>0){const h=exM/60;if(exC==='full')exA=Math.round(h*RATE);else if(exC==='half')exA=Math.round(h*RATE/2);}
+  const dT=document.getElementById('b-dt').value;
+  const dV=parseFloat(document.getElementById('b-dv').value)||0;
+  let dA=0;if(dT==='pct')dA=Math.round((base+exA)*dV/100);else if(dT==='flat')dA=Math.min(dV,base+exA);
+  const fin=Math.max(0,base+exA-dA);
+  document.getElementById('sb-base').textContent=Rs(base);
+  document.getElementById('sb-ex').textContent=exM>0&&exC==='free'?'Free 🎁':Rs(exA);
+  document.getElementById('sb-disc').textContent='-'+Rs(dA);
+  document.getElementById('sb-final').textContent=Rs(fin);
+  calcAdvance();return{base,exM,exC,exA,dT,dV,dA,fin};
+}
+function calcAdvance(){
+  const fin=parseFloat(document.getElementById('sb-final').textContent.replace(/[^0-9.]/g,''))||0;
+  const adv=parseFloat(document.getElementById('adv-amt').value)||0;
+  const due=Math.max(0,fin-adv);
+  document.getElementById('adv-final').textContent=Rs(fin);
+  document.getElementById('adv-show').textContent=Rs(adv);
+  document.getElementById('adv-due').textContent=due>0?Rs(due):'All Received ✅';
+  document.getElementById('adv-due').style.color=due>0?'var(--purple)':'var(--green)';
+}
+
+// ─── CUSTOMER SEARCH ───
+function custSearch(val){
+  const dd=document.getElementById('custDD');
+  if(!val||val.length<2){dd.style.display='none';return;}
+  const m=allCustomers.filter(c=>c.nm.toLowerCase().includes(val.toLowerCase())||c.ph.includes(val));
+  if(!m.length){dd.style.display='none';return;}
+  dd.style.display='block';
+  dd.innerHTML=m.slice(0,5).map(c=>`<div onclick="fillCust('${c.nm}','${c.ph}','${c.type}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;font-weight:700;">${c.type==='vip'?'⭐ ':''}<b>${c.nm}</b> <span style="color:var(--muted);">${c.ph}</span></div>`).join('');
+}
+function fillCust(nm,ph,type){document.getElementById('b-nm').value=nm;document.getElementById('b-ph').value=ph;document.getElementById('b-vip').value=type;document.getElementById('custDD').style.display='none';}
+
+// ─── SAVE PRE-MATCH ───
+async function savePreMatch(){
+  const date=document.getElementById('b-date').value;
+  const st=document.getElementById('b-st').value.trim();
+  const hrs=parseFloat(document.getElementById('b-hr').value)||0;
+  const nm=document.getElementById('b-nm').value.trim();
+  const ph=document.getElementById('b-ph').value.trim();
+  const vip=document.getElementById('b-vip').value;
+  const exM=parseFloat(document.getElementById('b-ex').value)||0;
+  const exC=document.getElementById('b-exc').value;
+  const dT=document.getElementById('b-dt').value;
+  const dV=parseFloat(document.getElementById('b-dv').value)||0;
+  const nt=document.getElementById('b-nt').value.trim();
+  const advAmt=parseFloat(document.getElementById('adv-amt').value)||0;
+  const advMode=document.getElementById('adv-mode').value;
+  const advNote=document.getElementById('adv-note').value.trim();
+  if(!date||!nm||!st||!hrs){toast('Date, Time, Hours and Name are required!','err');return;}
+  const{base,exA,dA,fin}=calcAmt();
+  const due=Math.max(0,fin-advAmt);
+  const bk={date,st,hrs,nm,ph,vip,exM,exC,dT,dV,dA,base,exA,fin,advAmt,advMode,advNote,afterCash:0,afterAcc:0,afterAccType:'',afterCashNote:'',afterAccNote:'',totalPaid:advAmt,due,status:'pre',nt,createdAt:new Date().toISOString()};
+  showSync(true);
+  try{
+    await db.collection('bookings').add(bk);
+    if(ph&&!allCustomers.find(c=>c.ph===ph))await db.collection('customers').add({nm,ph,type:vip,note:'',joined:date,createdAt:new Date().toISOString()});
+    sendAlert(bk);
+    ['b-nm','b-ph','b-nt','adv-amt','adv-note','b-hr','b-st','b-ex','b-dv'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('b-exc').value='free';document.getElementById('b-dt').value='none';document.getElementById('custDD').style.display='none';
+    calcAmt();toast('Booking saved! ✅','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  showSync(false);
+}
+
+// ─── EMAIL ALERTS ───
+function sendAlert(bk){emailjs.send(EJ_SVC,EJ_TPL,{customer_name:bk.nm,customer_phone:bk.ph||'N/A',date:bk.date,time:bk.st+'('+bk.hrs+'hr)',hours:bk.hrs+' hrs',payment_mode:bk.advMode,final_amount:Rs(bk.fin),paid:Rs(bk.advAmt),discount:bk.dA>0?Rs(bk.dA):'None',extra_time:bk.exM>0?bk.exM+'min':'None',notes:'[PRE-MATCH] Adv:'+Rs(bk.advAmt)+'|Due:'+Rs(bk.due)+'|'+bk.nt,to_email:EJ_TO}).catch(()=>{});}
+function sendCompleteAlert(bk){emailjs.send(EJ_SVC,EJ_TPL,{customer_name:bk.nm,customer_phone:bk.ph||'N/A',date:bk.date,time:bk.st,hours:bk.hrs+' hrs',payment_mode:'Multiple',final_amount:Rs(bk.fin),paid:Rs(bk.totalPaid),discount:bk.dA>0?Rs(bk.dA):'None',extra_time:bk.exM>0?bk.exM+'min':'None',notes:'[COMPLETE] Adv:'+Rs(bk.advAmt)+'('+bk.advMode+')|Cash:'+Rs(bk.afterCash)+'|Acc:'+Rs(bk.afterAcc)+(bk.afterAccType?'('+accName(bk.afterAccType)+')':'')+'|Due:'+Rs(bk.due),to_email:EJ_TO}).catch(()=>{});}
+
+// ─── INVOICE MODAL ───
+function openInv(id){
+  const b=allBookings.find(bk=>bk.id===id);if(!b)return;
+  currentInvBooking=b;
+  const status=b.status==='paid'?'✅ FULLY PAID — THANK YOU!':b.status==='partial'?'💛 PARTIAL PAYMENT — Balance Due':b.status==='pre'?'⏳ PRE-MATCH — Advance Received':'';
+  const statusColor=b.status==='paid'?'#dcfce7;color:#15803d;border:1px solid #86efac':b.status==='partial'?'#fef9c3;color:#854d0e;border:1px solid #fde047':'#fff7ed;color:#c2410c;border:1px solid #fdba74';
+  document.getElementById('invContent').innerHTML=`
+    <div class="inv-header">
+      <div style="font-size:26px;">🏏</div>
+      <div style="font-size:18px;font-weight:bold;letter-spacing:2px;">THE SULTANS</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Indoor Cricket Club — Multan</div>
+      <div style="font-size:10px;color:#94a3b8;">0300-9634880 | 0319-3510870</div>
+    </div>
+    <div class="inv-title-row"><span>📄 BOOKING RECEIPT</span><span style="font-size:10px;">${new Date().toLocaleDateString('en-PK')}</span></div>
+    <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:10px;">
+      <div class="inv-row"><span style="color:#64748b;">👤 Customer</span><span style="font-weight:bold;">${b.nm}</span></div>
+      <div class="inv-row"><span style="color:#64748b;">📞 Phone</span><span>${b.ph||'—'}</span></div>
+      <div class="inv-row"><span style="color:#64748b;">📅 Date</span><span>${b.date}</span></div>
+      <div class="inv-row"><span style="color:#64748b;">⏰ Time</span><span>${b.st||'—'} (${b.hrs} hrs${b.exM>0?' + '+b.exM+' min':''})</span></div>
+      <div class="inv-row"><span style="color:#64748b;">💰 Rate</span><span>Rs.2000/hr</span></div>
+      ${b.dA>0?`<div class="inv-row"><span style="color:#64748b;">🎁 Discount</span><span style="color:#ef4444;font-weight:bold;">-${Rs(b.dA)}</span></div>`:''}
+    </div>
+    <div class="inv-total"><span>TOTAL AMOUNT</span><span>${Rs(b.fin)}</span></div>
+    <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:10px;">
+      <div class="inv-row"><span style="color:#f97316;font-weight:bold;">💰 Advance (${b.advMode})</span><span style="color:#f97316;font-weight:bold;">${Rs(b.advAmt)}</span></div>
+      ${b.status!=='pre'?`<div class="inv-row"><span style="color:#22c55e;font-weight:bold;">💵 Cash (After Match)</span><span style="color:#22c55e;font-weight:bold;">${Rs(b.afterCash||0)}</span></div>
+      <div class="inv-row"><span style="color:#3b82f6;font-weight:bold;">🏦 Account (After Match)</span><span style="color:#3b82f6;font-weight:bold;">${Rs(b.afterAcc||0)}</span></div>`:''}
+      <div class="inv-row" style="border-top:2px solid #e2e8f0;"><span style="font-weight:bold;">REMAINING DUE</span><span style="font-weight:bold;color:${(b.due||0)>0?'#ef4444':'#22c55e'};">${(b.due||0)>0?Rs(b.due):'CLEAR ✅'}</span></div>
+    </div>
+    <div style="background:${statusColor};padding:10px;border-radius:8px;text-align:center;font-weight:bold;font-size:12px;margin-bottom:10px;">${status}</div>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-bottom:10px;font-size:11px;">
+      <div style="font-weight:bold;font-size:10px;color:#64748b;letter-spacing:1px;margin-bottom:6px;">PAYMENT ACCOUNTS</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>🟣 JazzCash:</span><span><b>0300-3510175 (Abdul Gaffar)</b></span></div>
+      <div style="display:flex;justify-content:space-between;"><span>🏦 Bank Alfalah:</span><span><b>83721010111101 (Mehboob Ahmad)</b></span></div>
+    </div>
+    <div class="inv-footer">
+      <p><b>The Sultans Indoor Cricket Club, Multan</b></p>
+      <p>System by Jahanzeb Baloch — 0306-0711529</p>
+      <p style="margin-top:4px;">Thank you! Please come again 🏏</p>
+    </div>`;
+  document.getElementById('invModal').classList.add('on');
+}
+function closeInv(){document.getElementById('invModal').classList.remove('on');currentInvBooking=null;}
+
+function downloadInvPDF(){
+  if(!currentInvBooking)return;
+  const b=currentInvBooking;
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'mm',format:'a6'});
+    const W=105;let y=10;
+    // Header
+    doc.setFillColor(6,14,26);doc.rect(0,0,W,30,'F');
+    doc.setTextColor(240,180,41);doc.setFontSize(14);doc.setFont('helvetica','bold');
+    doc.text('THE SULTANS',W/2,12,{align:'center'});
+    doc.setFontSize(8);doc.setTextColor(148,163,184);
+    doc.text('Indoor Cricket Club — Multan',W/2,18,{align:'center'});
+    doc.text('0300-9634880 | 0319-3510870',W/2,23,{align:'center'});
+    y=36;
+    // Title
+    doc.setFillColor(240,180,41);doc.rect(8,y-5,W-16,8,'F');
+    doc.setTextColor(0,0,0);doc.setFontSize(10);doc.setFont('helvetica','bold');
+    doc.text('BOOKING RECEIPT',W/2,y,{align:'center'});
+    y+=8;
+    // Details
+    doc.setTextColor(0,0,0);doc.setFontSize(9);
+    const rows=[['Customer',b.nm],['Phone',b.ph||'—'],['Date',b.date],['Time',b.st+' ('+b.hrs+' hrs'+( b.exM>0?' + '+b.exM+' min':'')+')'],['Rate','Rs.2000/hr']];
+    if(b.dA>0)rows.push(['Discount','-'+Rs(b.dA)]);
+    rows.forEach(([l,v],i)=>{
+      if(i%2===0)doc.setFillColor(248,250,252);else doc.setFillColor(255,255,255);
+      doc.rect(8,y-4,W-16,7,'F');
+      doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);doc.text(l,11,y);
+      doc.setFont('helvetica','bold');doc.setTextColor(0,0,0);doc.text(v,W-11,y,{align:'right'});
+      y+=7;
+    });
+    y+=3;
+    // Total
+    doc.setFillColor(6,14,26);doc.rect(8,y-5,W-16,9,'F');
+    doc.setTextColor(240,180,41);doc.setFontSize(11);doc.setFont('helvetica','bold');
+    doc.text('TOTAL: '+Rs(b.fin),W/2,y,{align:'center'});
+    y+=11;
+    // Payment
+    const pays=[['Advance ('+b.advMode+')',Rs(b.advAmt)]];
+    if(b.status!=='pre'){pays.push(['Cash (After Match)',Rs(b.afterCash||0)]);pays.push(['Account (After Match)',Rs(b.afterAcc||0)]);}
+    pays.push(['DUE REMAINING',(b.due||0)>0?Rs(b.due):'CLEAR ✅']);
+    pays.forEach(([l,v],i)=>{
+      if(i%2===0)doc.setFillColor(248,250,252);else doc.setFillColor(255,255,255);
+      doc.rect(8,y-4,W-16,7,'F');
+      doc.setFont('helvetica','normal');doc.setFontSize(9);
+      const isLast=i===pays.length-1;
+      doc.setTextColor(isLast&&(b.due||0)>0?239:isLast?34:0,isLast&&(b.due||0)>0?68:isLast?197:0,isLast&&(b.due||0)>0?68:isLast?94:0);
+      if(isLast)doc.setFont('helvetica','bold');
+      doc.text(l,11,y);doc.text(v,W-11,y,{align:'right'});
+      y+=7;
+    });
+    y+=3;
+    // Accounts
+    doc.setFillColor(248,250,252);doc.rect(8,y-4,W-16,16,'F');
+    doc.setTextColor(100,116,130);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('JazzCash: 0300-3510175 (Abdul Gaffar)',11,y);y+=5;
+    doc.text('Bank Alfalah: 83721010111101 (Mehboob Ahmad)',11,y);y+=5;
+    // Footer
+    doc.setTextColor(148,163,184);doc.setFontSize(7);
+    doc.text('System by Jahanzeb Baloch — 0306-0711529',W/2,y+4,{align:'center'});
+    doc.text('Thank you! Please come again 🏏',W/2,y+9,{align:'center'});
+    doc.save(`Sultans-Receipt-${b.nm}-${b.date}.pdf`);
+    toast('PDF downloading! ✅','ok');
+  }catch(e){
+    toast('PDF error — try WhatsApp share','err');
+  }
+}
+
+function shareInvWA(){
+  if(!currentInvBooking)return;
+  const b=currentInvBooking;
+  if(b.ph){
+    window.open(waLink(b.ph,waInvoiceText(b)),'_blank');
+  } else {
+    const msg=waInvoiceText(b);
+    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  }
+}
+
+function waInvoiceText(b){
+  const status=b.status==='paid'?'✅ FULLY PAID':b.status==='partial'?'💛 PARTIAL PAYMENT':'⏳ PRE-MATCH';
+  return `🏏 *THE SULTANS INDOOR CRICKET CLUB*\n📍 Multan, Pakistan\n\n━━━━━━━━━━━━━━\n📄 *BOOKING RECEIPT*\n━━━━━━━━━━━━━━\n👤 *Name:* ${b.nm}\n📞 *Phone:* ${b.ph||'—'}\n📅 *Date:* ${b.date}\n⏰ *Time:* ${b.st||'—'} (${b.hrs} hrs${b.exM>0?' + '+b.exM+' min':''})\n💰 *Rate:* Rs.2000/hr${b.dA>0?'\n🎁 *Discount:* -'+Rs(b.dA):''}\n\n━━━━━━━━━━━━━━\n💵 *PAYMENT DETAILS*\n━━━━━━━━━━━━━━\n*Total: ${Rs(b.fin)}*\nAdvance (${b.advMode}): ${Rs(b.advAmt)}${b.status!=='pre'?'\nCash (After Match): '+Rs(b.afterCash||0)+'\nAccount (After Match): '+Rs(b.afterAcc||0):''}\n*Due: ${(b.due||0)>0?Rs(b.due):'CLEAR ✅'}*\n*Status: ${status}*\n\n━━━━━━━━━━━━━━\n🏦 *PAYMENT ACCOUNTS*\n━━━━━━━━━━━━━━\n🟣 JazzCash: 0300-3510175\n   (Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101\n   (Mehboob Ahmad)\n\n📞 0300-9634880\n*Thank you! 🙏*`;}
+
+// ─── DASHBOARD ───
+function renderDash(){
+  const td=today();
+  const tB=allBookings.filter(b=>b.date===td);
+  const tE=allExpenses.filter(e=>e.date===td);
+  const inc=tB.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+  const exp=tE.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const prf=inc-exp;
+  const adv=tB.reduce((s,b)=>s+(parseFloat(b.advAmt)||0),0);
+  const due=tB.reduce((s,b)=>s+(parseFloat(b.due)||0),0);
+  document.getElementById('d-inc').textContent=Rs(inc);document.getElementById('d-inc-s').textContent=tB.filter(b=>b.status!=='pre').length+' complete';
+  document.getElementById('d-exp').textContent=Rs(exp);document.getElementById('d-exp-s').textContent=tE.length+' entries';
+  document.getElementById('d-prf').textContent=Rs(prf);document.getElementById('d-prf').style.color=prf>=0?'var(--gold)':'var(--red)';
+  document.getElementById('d-prf-s').textContent=prf>=0?'Profit 📈':'Loss 📉';
+  document.getElementById('d-sl').textContent=tB.length;document.getElementById('d-sl-s').textContent=tB.filter(b=>b.status==='pre').length+' pending';
+  document.getElementById('d-adv').textContent=Rs(adv);document.getElementById('d-due').textContent=Rs(due);
+  updateTarget();
+  // Slot map
+  const sm=document.getElementById('slotMap');sm.innerHTML='';
+  const ts={};
+  tB.forEach(b=>{
+    if(!b.st)return;
+    const startMins=parseTimeToMinutes(b.st);
+    const hrs=parseFloat(b.hrs)||1;
+    for(let i=0;i<Math.ceil(hrs);i++){
+      const slotMins=startMins+(i*60);
+      const slotH=Math.floor(slotMins/60)%24;
+      if(slotH>=8&&slotH<=23){
+        ts[slotH]=b.status==='pre'?'pre-match':'bkd';
+      }
+    }
+  });
+  for(let h=8;h<=23;h++){const ap=h>=12?'PM':'AM';const d=h>12?h-12:h===0?12:h;const div=document.createElement('div');div.className='slot '+(ts[h]||'free');div.textContent=d+':00 '+ap;sm.appendChild(div);}
+  // Analytics
+  renderAnalytics();
+  // Recent
+  const recent=tB.slice(0,6);
+  document.getElementById('dash-bks').innerHTML=!recent.length
+    ?'<tr><td colspan="8" class="empty"><div class="empty-ic">📅</div>No bookings today</td></tr>'
+    :recent.map(b=>`<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;">${b.st||'—'}<br><span style="color:var(--muted);font-size:10px;">${b.hrs}hr</span></td>
+      <td><b>${b.nm}</b></td><td style="color:var(--blue);font-size:11px;">${b.ph||'—'}</td>
+      <td style="color:var(--gold);">${Rs(b.fin)}</td>
+      <td style="color:var(--orange);">${Rs(b.advAmt)}<br>${pmbadge(b.advMode)}</td>
+      <td style="color:${(b.due||0)>0?'var(--red)':'var(--green)'};">${(b.due||0)>0?Rs(b.due):'✅'}</td>
+      <td>${sbadge(b.status)}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾 Receipt</button>
+        ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
+      </td>
+    </tr>`).join('');
+}
+
+// ─── ANALYTICS ───
+function renderAnalytics(){
+  const hourCount={};for(let h=8;h<=23;h++)hourCount[h]=0;
+  allBookings.forEach(b=>{const m=b.st&&b.st.match(/(\d+)/);if(!m)return;let h=parseInt(m[1]);if(b.st&&b.st.toLowerCase().includes('pm')&&h<12)h+=12;if(b.st&&b.st.toLowerCase().includes('am')&&h===12)h=0;for(let i=0;i<Math.ceil(parseFloat(b.hrs)||1);i++){if(hourCount[h+i]!==undefined)hourCount[h+i]++;}});
+  const maxH=Math.max(...Object.values(hourCount),1);
+  const pc=document.getElementById('peakChart'),pl=document.getElementById('peakLabels');
+  if(pc){pc.innerHTML='';pl.innerHTML='';[8,10,12,14,16,18,20,22].forEach(h=>{const cnt=hourCount[h]||0;const pct=Math.max(4,(cnt/maxH)*100);const ap=h>=12?'PM':'AM';const d=h>12?h-12:h===0?12:h;pc.innerHTML+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;"><div style="font-size:7px;color:var(--gold);margin-bottom:1px;">${cnt||''}</div><div style="width:100%;height:${pct}%;background:linear-gradient(180deg,var(--gold),var(--gold2));border-radius:2px 2px 0 0;"></div></div>`;pl.innerHTML+=`<div style="flex:1;text-align:center;font-size:7px;color:var(--muted);font-weight:700;">${d}${ap.toLowerCase()}</div>`;});}
+  const dayCount={0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+  allBookings.forEach(b=>{if(b.date){const d=new Date(b.date).getDay();dayCount[d]++;}});
+  const maxD=Math.max(...Object.values(dayCount),1);
+  const dc=document.getElementById('daysChart'),dl=document.getElementById('daysLabels');
+  if(dc){dc.innerHTML='';dl.innerHTML='';DAYS.forEach((day,i)=>{const cnt=dayCount[i]||0;const pct=Math.max(4,(cnt/maxD)*100);dc.innerHTML+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;"><div style="font-size:7px;color:var(--blue);margin-bottom:1px;">${cnt||''}</div><div style="width:100%;height:${pct}%;background:linear-gradient(180deg,var(--blue),#1d4ed8);border-radius:2px 2px 0 0;"></div></div>`;dl.innerHTML+=`<div style="flex:1;text-align:center;font-size:7px;color:var(--muted);font-weight:700;">${day}</div>`;});}
+  const now=new Date(),mc=document.getElementById('monthComp');
+  if(mc){mc.innerHTML='';for(let i=2;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const m=d.getMonth()+1,y=d.getFullYear();const mB=allBookings.filter(b=>{const bd=new Date(b.date);return bd.getMonth()+1===m&&bd.getFullYear()===y;});const inc=mB.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);const allIncs=[0,1,2].map(j=>{const dd=new Date(now.getFullYear(),now.getMonth()-j,1);const mm=dd.getMonth()+1,yy=dd.getFullYear();return allBookings.filter(b=>{const bd=new Date(b.date);return bd.getMonth()+1===mm&&bd.getFullYear()===yy;}).reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);});const mx=Math.max(...allIncs,1);mc.innerHTML+=`<div class="br"><div class="br-lbl" style="width:32px;font-size:9px;">${MONTHS[m-1].slice(0,3)}</div><div class="br-track" style="flex:1;"><div class="br-fill bi" style="width:${inc>0?((inc/mx)*100).toFixed(0):0}%"></div></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);width:65px;text-align:right;">${Rs(inc)}</div></div>`;}}
+  const bestDayIdx=Object.entries(dayCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('ana-best').textContent=DAYS[bestDayIdx[0]];
+  const activeDays=new Set(allBookings.map(b=>b.date)).size;
+  const totalInc=allBookings.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+  document.getElementById('ana-avg').textContent=activeDays>0?Rs(Math.round(totalInc/activeDays)):Rs(0);
+  document.getElementById('ana-custs').textContent=allCustomers.length;
+}
+
+// ─── PRE TABLE ───
+function renderPreTable(){
+  const bks=allBookings.filter(b=>b.status==='pre');
+  document.getElementById('pre-tbl').innerHTML=!bks.length
+    ?'<tr><td colspan="9" class="empty"><div class="empty-ic">📋</div>No pre-match bookings pending</td></tr>'
+    :bks.map(b=>{
+      const {endTime,crossesMidnight}=getEndInfo(b.st,b.hrs);
+      return`<tr>
+        <td style="font-size:10px;color:var(--muted);">${b.date}</td>
+        <td style="font-size:11px;">${b.st||'—'}</td>
+        <td style="font-size:11px;color:${crossesMidnight?'var(--purple)':'var(--muted)'};">${endTime}${crossesMidnight?'<br><span style="font-size:9px;">🌙 Next Day</span>':''}</td>
+        <td><b>${b.nm}</b></td>
+        <td style="color:var(--blue);font-size:11px;">${b.ph||'—'}</td>
+        <td>${b.hrs}hr${b.exM>0?'+'+b.exM+'m':''}</td>
+        <td style="color:var(--gold);">${Rs(b.fin)}</td>
+        <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
+        <td style="color:var(--purple);font-weight:800;">${Rs(b.due)}</td>
+        <td style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="btn-orange" onclick="openComplete('${b.id}')">✅</button>
+          <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+          <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
+          ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank">💬</a>`:''}
+          <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
+        </td>
+      </tr>`;
+    }).join('');
+}
+
+// ─── COMPLETE MODAL ───
+function openComplete(id){
+  activeBookingId=id;
+  const bk=allBookings.find(b=>b.id===id);if(!bk)return;
+  ['m-cash','m-acc','m-cash-note','m-acc-note','m-extra-min','m-disc','m-disc-note'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('m-acc-type').value='';
+  document.getElementById('m-status').value='paid';
+  document.getElementById('m-extra-rate').value='free';
+  document.getElementById('modal-info').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+    <div><b style="color:var(--muted);">Customer:</b> ${bk.nm}</div>
+    <div><b style="color:var(--muted);">Phone:</b> ${bk.ph||'—'}</div>
+    <div><b style="color:var(--muted);">Date:</b> ${bk.date}</div>
+    <div><b style="color:var(--muted);">Time:</b> ${bk.st} (${bk.hrs}hr)</div>
+    <div><b style="color:var(--muted);">Total:</b> <span style="color:var(--gold);font-weight:800;">${Rs(bk.fin)}</span></div>
+    <div><b style="color:var(--muted);">Advance:</b> <span style="color:var(--orange);">${Rs(bk.advAmt)}</span></div>
+    <div style="grid-column:1/-1;"><b style="color:var(--purple);">Due:</b> <span style="color:var(--purple);font-size:16px;font-weight:800;">${Rs(bk.due)}</span></div>
+  </div>`;
+  document.getElementById('m-total').textContent=Rs(bk.fin);
+  document.getElementById('m-adv').textContent=Rs(bk.advAmt);
+  calcModal();document.getElementById('completeModal').classList.add('on');
+}
+function closeModal(){document.getElementById('completeModal').classList.remove('on');activeBookingId=null;}
+function calcModal(){
+  if(!activeBookingId)return;
+  const bk=allBookings.find(b=>b.id===activeBookingId);if(!bk)return;
+
+  // Extra time
+  const extraMin=parseFloat(document.getElementById('m-extra-min').value)||0;
+  const extraRate=document.getElementById('m-extra-rate').value;
+  let extraCharge=0;
+  if(extraMin>0){
+    const h=extraMin/60;
+    if(extraRate==='full')extraCharge=Math.round(h*2000);
+    else if(extraRate==='half')extraCharge=Math.round(h*1000);
+  }
+
+  // Extra discount
+  const extraDisc=parseFloat(document.getElementById('m-disc').value)||0;
+
+  // New total
+  const newTotal=Math.max(0,(bk.fin||0)+extraCharge-extraDisc);
+
+  // Payment
+  const cash=parseFloat(document.getElementById('m-cash').value)||0;
+  const acc=parseFloat(document.getElementById('m-acc').value)||0;
+  const totalPaid=(bk.advAmt||0)+cash+acc;
+  const due=Math.max(0,newTotal-totalPaid);
+
+  // Update UI
+  document.getElementById('m-orig').textContent=Rs(bk.fin);
+  document.getElementById('m-extra-show').textContent=extraMin>0&&extraRate==='free'?'Free 🎁':Rs(extraCharge);
+  document.getElementById('m-disc-show').textContent='-'+Rs(extraDisc);
+  document.getElementById('m-total').textContent=Rs(newTotal);
+  document.getElementById('m-adv').textContent=Rs(bk.advAmt||0);
+  document.getElementById('m-cash-show').textContent=Rs(cash);
+  document.getElementById('m-acc-show').textContent=Rs(acc);
+  document.getElementById('m-due').textContent=due>0?Rs(due):'All Clear ✅';
+  document.getElementById('m-due').style.color=due>0?'var(--red)':'var(--green)';
+  document.getElementById('m-status').value=due>0?'partial':'paid';
+}
+async function saveComplete(){
+  if(!activeBookingId)return;
+  const bk=allBookings.find(b=>b.id===activeBookingId);if(!bk)return;
+
+  const cash=parseFloat(document.getElementById('m-cash').value)||0;
+  const acc=parseFloat(document.getElementById('m-acc').value)||0;
+  const accType=document.getElementById('m-acc-type').value;
+  const cashNote=document.getElementById('m-cash-note').value.trim();
+  const accNote=document.getElementById('m-acc-note').value.trim();
+  const status=document.getElementById('m-status').value;
+
+  // Extra time
+  const extraMin=parseFloat(document.getElementById('m-extra-min').value)||0;
+  const extraRate=document.getElementById('m-extra-rate').value;
+  let extraCharge=0;
+  if(extraMin>0){const h=extraMin/60;if(extraRate==='full')extraCharge=Math.round(h*2000);else if(extraRate==='half')extraCharge=Math.round(h*1000);}
+
+  // Extra discount
+  const extraDisc=parseFloat(document.getElementById('m-disc').value)||0;
+  const discNote=document.getElementById('m-disc-note').value.trim();
+
+  // Recalculate total
+  const newFin=Math.max(0,(bk.fin||0)+extraCharge-extraDisc);
+  const totalPaid=(bk.advAmt||0)+cash+acc;
+  const due=Math.max(0,newFin-totalPaid);
+
+  showSync(true);
+  try{
+    const updates={
+      afterCash:cash,afterAcc:acc,afterAccType:accType,
+      afterCashNote:cashNote,afterAccNote:accNote,
+      totalPaid,due,status,
+      completedAt:new Date().toISOString()
+    };
+    // If adjusted
+    if(extraMin>0||extraDisc>0){
+      updates.fin=newFin;
+      updates.extraMinAdded=extraMin;
+      updates.extraChargeAdded=extraCharge;
+      updates.extraDiscAdded=extraDisc;
+      updates.discNote=discNote;
+    }
+    await db.collection('bookings').doc(activeBookingId).update(updates);
+    sendCompleteAlert({...bk,...updates});
+    closeModal();
+    toast('Match complete! ✅','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  showSync(false);
+}
+
+// ─── POST TAB ───
+function renderPostTab(){
+  const pending=allBookings.filter(b=>b.status==='pre');
+  document.getElementById('post-tbl').innerHTML=!pending.length
+    ?'<tr><td colspan="8" class="empty"><div class="empty-ic">🎉</div>All bookings complete!</td></tr>'
+    :pending.map(b=>`<tr>
+      <td style="font-size:10px;color:var(--muted);">${b.date}</td>
+      <td>${b.st||'—'}</td><td><b>${b.nm}</b></td>
+      <td style="color:var(--blue);">${b.ph||'—'}</td>
+      <td style="color:var(--gold);">${Rs(b.fin)}</td>
+      <td style="color:var(--orange);">${Rs(b.advAmt)}<br>${pmbadge(b.advMode)}</td>
+      <td style="color:var(--purple);font-weight:800;">${Rs(b.due)}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="btn-orange" onclick="openComplete('${b.id}')">✅ Complete</button>
+        ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waDue(b))}" target="_blank">💬 Due</a>`:''}
+      </td>
+    </tr>`).join('');
+  const fd=document.getElementById('comp-filter').value;
+  let done=allBookings.filter(b=>b.status!=='pre');
+  if(fd)done=done.filter(b=>b.date===fd);
+  document.getElementById('comp-tbl').innerHTML=!done.length
+    ?'<tr><td colspan="10" class="empty">No completed bookings</td></tr>'
+    :done.map(b=>`<tr>
+      <td style="font-size:10px;color:var(--muted);">${b.date}</td>
+      <td><b>${b.nm}</b></td>
+      <td style="font-size:11px;">${b.st||'—'} (${b.hrs}hr)</td>
+      <td style="color:var(--gold);">${Rs(b.fin)}</td>
+      <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
+      <td style="color:var(--green);">${Rs(b.afterCash||0)}</td>
+      <td style="color:var(--blue);">${Rs(b.afterAcc||0)}<br>${b.afterAccType?pmbadge(b.afterAccType):''}</td>
+      <td style="color:${(b.due||0)>0?'var(--red)':'var(--green)'};font-weight:800;">${(b.due||0)>0?Rs(b.due):'✅'}</td>
+      <td>${sbadge(b.status)}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+        ${(b.due||0)>0?`<button class="btn-orange" onclick="openAddPay('${b.id}')" style="font-size:9px;padding:4px 8px;">💰 Add Pay</button>`:''}
+        <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
+        <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+}
+async function delBk(id){if(!confirm('Delete?'))return;await db.collection('bookings').doc(id).delete();toast('Deleted','err');}
+
+// ─── CALENDAR ───
+function renderCal(){
+  document.getElementById('calTitle').textContent=MONTHS[calMonth]+' '+calYear;
+  const first=new Date(calYear,calMonth,1).getDay();
+  const days=new Date(calYear,calMonth+1,0).getDate();
+  const td=today();
+  const grid=document.getElementById('calGrid');grid.innerHTML='';
+  ['S','M','T','W','T','F','S'].forEach(d=>{grid.innerHTML+=`<div class="cal-day-lbl">${d}</div>`;});
+  for(let i=0;i<first;i++)grid.innerHTML+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayBks=allBookings.filter(b=>b.date===ds);
+    const hasPre=dayBks.some(b=>b.status==='pre');
+    const hasDone=dayBks.some(b=>b.status!=='pre');
+    let cls=dayBks.length?(hasDone?'has-bk':'has-pre'):'no-bk';
+    grid.innerHTML+=`<div class="cal-day ${cls}${ds===td?' today':''}" onclick="showCalDay('${ds}')">${d}${dayBks.length?`<div class="cal-bk-ct">${dayBks.length}</div>`:''}</div>`;
+  }
+}
+function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCal();}
+function showCalDay(ds){
+  const bks=allBookings.filter(b=>b.date===ds);
+  document.getElementById('calDayTitle').textContent=ds+' Bookings ('+bks.length+')';
+  document.getElementById('cal-bks').innerHTML=!bks.length
+    ?'<tr><td colspan="8" class="empty">No bookings on this date</td></tr>'
+    :bks.map(b=>`<tr>
+      <td>${b.st||'—'} (${b.hrs}hr)</td><td><b>${b.nm}</b></td>
+      <td style="color:var(--blue);">${b.ph||'—'}</td>
+      <td style="color:var(--gold);">${Rs(b.fin)}</td>
+      <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
+      <td style="color:${(b.due||0)>0?'var(--red)':'var(--green)'};">${(b.due||0)>0?Rs(b.due):'✅'}</td>
+      <td>${sbadge(b.status)}</td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+        ${b.status==='pre'?`<button class="btn-orange" onclick="openComplete('${b.id}')" style="font-size:9px;padding:4px 8px;">✅</button>`:''}
+      </td>
+    </tr>`).join('');
+}
+
+// ─── CUSTOMERS ───
+async function saveCust(){
+  const nm=document.getElementById('c-nm').value.trim();
+  const ph=document.getElementById('c-ph').value.trim();
+  const type=document.getElementById('c-type').value;
+  const note=document.getElementById('c-note').value.trim();
+  if(!nm){toast('Name is required!','err');return;}
+  try{await db.collection('customers').add({nm,ph,type,note,joined:today(),createdAt:new Date().toISOString()});['c-nm','c-ph','c-note'].forEach(id=>document.getElementById(id).value='');toast('Customer saved! ✅','ok');}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+function renderCustTable(q){
+  let custs=allCustomers;
+  if(q)custs=custs.filter(c=>c.nm.toLowerCase().includes(q.toLowerCase())||c.ph.includes(q));
+  document.getElementById('c-tbl').innerHTML=!custs.length
+    ?'<tr><td colspan="9" class="empty"><div class="empty-ic">👥</div>No customers</td></tr>'
+    :custs.map(c=>{
+      const cBks=allBookings.filter(b=>b.ph===c.ph||b.nm===c.nm);
+      const spent=cBks.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+      const due=cBks.reduce((s,b)=>s+(parseFloat(b.due)||0),0);
+      const last=cBks.length?[...cBks].sort((a,b)=>b.date.localeCompare(a.date))[0].date:'—';
+      return`<tr>
+        <td><b>${c.nm}</b></td>
+        <td style="color:var(--blue);">${c.ph||'—'}</td>
+        <td>${vipbadge(c.type)}</td>
+        <td style="color:var(--blue);font-family:'JetBrains Mono',monospace;">${cBks.length}</td>
+        <td style="color:var(--green);font-family:'JetBrains Mono',monospace;">${Rs(spent)}</td>
+        <td style="font-size:11px;color:var(--muted);">${last}</td>
+        <td style="color:${due>0?'var(--red)':'var(--green)'};">${due>0?Rs(due):'✅'}</td>
+        <td style="font-size:11px;color:var(--soft);">${c.note||'—'}</td>
+        <td style="display:flex;gap:4px;">
+          ${c.ph?`<a class="btn-wa" href="${waLink(c.ph,'Assalam o Alaikum '+c.nm+'! 🏏 The Sultans Indoor Cricket Club — Multan.')}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
+          ${c.ph&&due>0?`<a class="btn-wa" href="${waLink(c.ph,waDue({nm:c.nm,ph:c.ph,date:'—',st:'—',fin:spent,due}))}" target="_blank" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--red),#b91c1c);">💬 Due</a>`:''}
+          <button class="btn-del" onclick="delCust('${c.id}')">Del</button>
+        </td>
+      </tr>`;
+    }).join('');
+}
+async function delCust(id){if(!confirm('Delete?'))return;await db.collection('customers').doc(id).delete();toast('Deleted','err');}
+
+// ─── BULK WHATSAPP ───
+function bulkWAReminder(){
+  const dueCustomers=allBookings.filter(b=>(b.due||0)>0&&b.ph);
+  if(!dueCustomers.length){toast('No pending dues! 🎉','ok');return;}
+  let sent=0;
+  dueCustomers.forEach((b,i)=>{
+    setTimeout(()=>{
+      window.open(waLink(b.ph,waDue(b)),'_blank');
+      sent++;
+      if(sent===dueCustomers.length)toast(`Reminder sent to ${sent} customers! ✅`,'ok');
+    },i*1000);
+  });
+  toast(`Opening ${dueCustomers.length} WhatsApp chats...`,'info');
+}
+
+// ─── EXPENSE ───
+function checkExpCat(){document.getElementById('e-other-wrap').style.display=document.getElementById('e-c').value==='Other'?'block':'none';}
+async function saveExp(){
+  const d=document.getElementById('e-d').value;
+  let c=document.getElementById('e-c').value;
+  if(c==='Other')c=document.getElementById('e-other').value.trim()||'Other';
+  const a=document.getElementById('e-a').value;
+  const pay=document.getElementById('e-pay').value;
+  const desc=document.getElementById('e-desc').value.trim();
+  if(!d||!a){toast('Date and amount are required!','err');return;}
+  try{await db.collection('expenses').add({date:d,cat:c,amount:parseFloat(a),pay,desc,createdAt:new Date().toISOString()});['e-a','e-desc','e-other'].forEach(id=>document.getElementById(id).value='');document.getElementById('e-other-wrap').style.display='none';document.getElementById('e-c').value='Electricity';toast('Expense saved! ✅','ok');}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+function renderET(){
+  const fd=document.getElementById('ef-d').value;const fc=document.getElementById('ef-c').value;
+  let f=allExpenses;if(fd)f=f.filter(e=>e.date===fd);if(fc)f=f.filter(e=>e.cat===fc);
+  document.getElementById('e-tbl').innerHTML=!f.length
+    ?'<tr><td colspan="6" class="empty"><div class="empty-ic">💸</div>No expenses</td></tr>'
+    :f.map(e=>`<tr>
+      <td style="font-size:10px;color:var(--muted);">${e.date}</td>
+      <td><span class="bx bx-r">${e.cat}</span></td>
+      <td style="color:var(--soft);font-size:11px;">${e.desc||'—'}</td>
+      <td>${pmbadge(e.pay||'cash')}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--red);">${Rs(e.amount)}</td>
+      <td><button class="btn-del" onclick="delEx('${e.id}')">Del</button></td>
+    </tr>`).join('');
+}
+async function delEx(id){if(!confirm('Delete?'))return;await db.collection('expenses').doc(id).delete();toast('Deleted','err');}
+function clrEF(){document.getElementById('ef-d').value='';document.getElementById('ef-c').value='';renderET();}
+
+// ─── REPORTS ───
+function renderRep(){
+  const month=parseInt(document.getElementById('r-m').value);
+  const year=parseInt(document.getElementById('r-y').value);
+  const mB=allBookings.filter(b=>{const d=new Date(b.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  const mE=allExpenses.filter(e=>{const d=new Date(e.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  const tInc=mB.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+  const tExp=mE.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const prf=tInc-tExp;
+  const tDisc=mB.reduce((s,b)=>s+(parseFloat(b.dA)||0),0);
+  const tAdv=mB.reduce((s,b)=>s+(parseFloat(b.advAmt)||0),0);
+  const tDue=mB.reduce((s,b)=>s+(parseFloat(b.due)||0),0);
+  let cashT=0,jazzT=0,bankT=0,easyT=0;
+  mB.forEach(b=>{if(b.advMode==='cash')cashT+=b.advAmt||0;if(b.advMode==='jazz')jazzT+=b.advAmt||0;if(b.advMode==='bank')bankT+=b.advAmt||0;if(b.advMode==='easy')easyT+=b.advAmt||0;cashT+=b.afterCash||0;if(b.afterAccType==='jazz')jazzT+=b.afterAcc||0;if(b.afterAccType==='bank')bankT+=b.afterAcc||0;if(b.afterAccType==='easy')easyT+=b.afterAcc||0;});
+  document.getElementById('r-inc').textContent=Rs(tInc);document.getElementById('r-inc-s').textContent=mB.length+' bookings';
+  document.getElementById('r-exp').textContent=Rs(tExp);document.getElementById('r-exp-s').textContent=mE.length+' entries';
+  document.getElementById('r-prf').textContent=Rs(prf);document.getElementById('r-prf').style.color=prf>=0?'var(--green)':'var(--red)';
+  document.getElementById('r-prf-s').textContent=prf>=0?'Profit':'Loss';
+  document.getElementById('r-disc').textContent=Rs(tDisc);document.getElementById('r-adv').textContent=Rs(tAdv);document.getElementById('r-due').textContent=Rs(tDue);
+  document.getElementById('r-cash').textContent=Rs(cashT);document.getElementById('r-jazz').textContent=Rs(jazzT);document.getElementById('r-bank').textContent=Rs(bankT);document.getElementById('r-easy').textContent=Rs(easyT);
+  const dI={},dE={};
+  mB.forEach(b=>{const d=parseInt(b.date.split('-')[2]);dI[d]=(dI[d]||0)+(parseFloat(b.totalPaid)||0);});
+  mE.forEach(e=>{const d=parseInt(e.date.split('-')[2]);dE[d]=(dE[d]||0)+(parseFloat(e.amount)||0);});
+  const mx=Math.max(...Object.values(dI),...Object.values(dE),1);
+  const days=[...new Set([...Object.keys(dI),...Object.keys(dE)].map(Number))].filter(d=>dI[d]||dE[d]).sort((a,b)=>a-b);
+  document.getElementById('ch').innerHTML=!days.length?'<div class="empty">No data this month</div>':days.map(d=>`<div class="br"><div class="br-lbl">${String(d).padStart(2,'0')}</div><div style="flex:1;display:flex;flex-direction:column;gap:3px;"><div class="br-track"><div class="br-fill bi" style="width:${((dI[d]||0)/mx*100).toFixed(1)}%"></div></div><div class="br-track"><div class="br-fill be" style="width:${((dE[d]||0)/mx*100).toFixed(1)}%"></div></div></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;width:65px;text-align:right;"><div style="color:var(--green);">${dI[d]>0?Rs(dI[d]):''}</div><div style="color:var(--red);">${dE[d]>0?Rs(dE[d]):''}</div></div></div>`).join('');
+  const pd=mB.filter(b=>(b.due||0)>0);
+  document.getElementById('pd-tbl').innerHTML=!pd.length?'<tr><td colspan="8" class="empty">No pending payments 🎉</td></tr>'
+    :pd.map(b=>`<tr>
+      <td style="font-size:10px;color:var(--muted);">${b.date}</td><td><b>${b.nm}</b></td><td style="color:var(--blue);">${b.ph||'—'}</td>
+      <td>${Rs(b.fin)}</td><td style="color:var(--orange);">${Rs(b.advAmt)}</td>
+      <td style="color:var(--green);">${Rs((b.afterCash||0)+(b.afterAcc||0))}</td>
+      <td style="color:var(--red);font-weight:800;">${Rs(b.due)}</td>
+      <td>${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waDue(b))}" target="_blank">💬 Remind</a>`:'—'}</td>
+    </tr>`).join('');
+  const cT={};mE.forEach(e=>{cT[e.cat]=(cT[e.cat]||0)+parseFloat(e.amount);});
+  const br=Object.entries(cT).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('eb-tbl').innerHTML=!br.length?'<tr><td colspan="3" class="empty">No expenses</td></tr>'
+    :br.map(([c,a])=>`<tr><td><span class="bx bx-r">${c}</span></td><td style="font-family:'JetBrains Mono',monospace;color:var(--red);">${Rs(a)}</td><td style="color:var(--muted);">${tExp>0?(a/tExp*100).toFixed(1):0}%</td></tr>`).join('');
+}
+
+// ─── PDF REPORTS ───
+function printDaily(){
+  const td=today();
+  const bks=allBookings.filter(b=>b.date===td);
+  const exps=allExpenses.filter(e=>e.date===td);
+  const inc=bks.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+  const exp=exps.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Daily ${td}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial;padding:15px;font-size:11px;color:#000;}
+.pb{background:#e07b00;color:#fff;border:none;padding:10px;border-radius:6px;width:100%;cursor:pointer;font-size:14px;font-weight:bold;margin-bottom:14px;}
+h1{color:#e07b00;font-size:18px;border-bottom:2px solid #e07b00;padding-bottom:8px;margin-bottom:12px;}h2{font-size:13px;margin:14px 0 8px;}
+.boxes{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.box{padding:10px 14px;border:2px solid #ddd;border-radius:8px;text-align:center;flex:1;min-width:80px;}
+.bv{font-size:15px;font-weight:bold;display:block;}.bl{font-size:9px;color:#888;}
+.g{border-color:#22c55e;color:#22c55e;}.r{border-color:#ef4444;color:#ef4444;}.y{border-color:#e07b00;color:#e07b00;}.b{border-color:#3b82f6;color:#3b82f6;}
+table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+th{background:#060e1a;color:#f0b429;padding:6px 8px;text-align:left;font-size:9px;letter-spacing:1px;}
+td{padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;}tr:nth-child(even){background:#f8fafc;}
+.footer{text-align:center;font-size:10px;color:#888;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px;}
+@media print{.pb{display:none;}@page{margin:8mm;}}</style></head><body>
+<button class="pb" onclick="window.print()">🖨️ Print / Save as PDF</button>
+<h1>🏏 THE SULTANS — Daily Report (${td})</h1>
+<p style="color:#888;font-size:11px;margin-bottom:12px;">${new Date().toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+<div class="boxes">
+  <div class="box g"><span class="bv">${Rs(inc)}</span><span class="bl">Earning</span></div>
+  <div class="box r"><span class="bv">${Rs(exp)}</span><span class="bl">Expense</span></div>
+  <div class="box y"><span class="bv">${Rs(inc-exp)}</span><span class="bl">${inc-exp>=0?'Profit':'Loss'}</span></div>
+  <div class="box b"><span class="bv">${bks.length}</span><span class="bl">Bookings</span></div>
+</div>
+<h2>📅 Bookings</h2>
+<table><thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>Method</th><th>Cash(After)</th><th>Account(After)</th><th>Which</th><th>Due</th><th>Status</th></tr></thead><tbody>
+${!bks.length?'<tr><td colspan="11" style="text-align:center;color:#888;padding:12px;">No bookings</td></tr>':bks.map(b=>`<tr>
+  <td>${b.st||'—'} (${b.hrs}hr)</td><td><b>${b.nm}</b></td><td>${b.ph||'—'}</td>
+  <td><b>${Rs(b.fin)}</b></td><td>${Rs(b.advAmt)}</td><td>${b.advMode}</td>
+  <td>${Rs(b.afterCash||0)}</td><td>${Rs(b.afterAcc||0)}</td>
+  <td>${b.afterAccType?accName(b.afterAccType):'—'}</td>
+  <td style="color:${(b.due||0)>0?'#ef4444':'#22c55e'};font-weight:bold;">${(b.due||0)>0?Rs(b.due):'Clear ✅'}</td>
+  <td>${b.status==='pre'?'PRE-MATCH':'COMPLETE'}</td>
+</tr>`).join('')}</tbody></table>
+<h2>💸 Expenses</h2>
+<table><thead><tr><th>Category</th><th>Details</th><th>Paid Via</th><th>Amount</th></tr></thead><tbody>
+${!exps.length?'<tr><td colspan="4" style="text-align:center;color:#888;padding:12px;">No expenses</td></tr>':exps.map(e=>`<tr><td>${e.cat}</td><td>${e.desc||'—'}</td><td>${e.pay}</td><td>${Rs(e.amount)}</td></tr>`).join('')}
+</tbody></table>
+<div class="footer">
+  <p><b>The Sultans Indoor Cricket Club, Multan</b> | 0300-9634880 | 0319-3510870</p>
+  <p>JazzCash: 0300-3510175 (Abdul Gaffar) | Bank Alfalah: 83721010111101 (Mehboob Ahmad)</p>
+  <p style="margin-top:4px;"><b>System by Jahanzeb Baloch — 0306-0711529</b></p>
+</div>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+</script>
+</body></html>`);w.document.close();
+}
+
+function printReport(){
+  const month=parseInt(document.getElementById('r-m').value);
+  const year=parseInt(document.getElementById('r-y').value);
+  const bks=allBookings.filter(b=>{const d=new Date(b.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  const exps=allExpenses.filter(e=>{const d=new Date(e.date);return d.getMonth()+1===month&&d.getFullYear()===year;});
+  const tInc=bks.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+  const tExp=exps.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${MONTHS[month-1]} ${year}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:Arial;padding:15px;font-size:11px;color:#000;}
+.pb{background:#e07b00;color:#fff;border:none;padding:10px;border-radius:6px;width:100%;cursor:pointer;font-size:14px;font-weight:bold;margin-bottom:14px;}
+h1{color:#e07b00;font-size:18px;border-bottom:2px solid #e07b00;padding-bottom:8px;margin-bottom:12px;}h2{font-size:13px;margin:14px 0 8px;}
+.boxes{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.box{padding:10px 14px;border:2px solid #ddd;border-radius:8px;text-align:center;flex:1;min-width:80px;}
+.bv{font-size:14px;font-weight:bold;display:block;}.bl{font-size:9px;color:#888;}
+.g{border-color:#22c55e;color:#22c55e;}.r{border-color:#ef4444;color:#ef4444;}.y{border-color:#e07b00;color:#e07b00;}.b{border-color:#3b82f6;color:#3b82f6;}
+table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+th{background:#060e1a;color:#f0b429;padding:5px 7px;text-align:left;font-size:9px;letter-spacing:1px;}
+td{padding:5px 7px;border-bottom:1px solid #e2e8f0;font-size:10px;}tr:nth-child(even){background:#f8fafc;}
+.footer{text-align:center;font-size:10px;color:#888;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px;}
+@media print{.pb{display:none;}@page{margin:8mm;size:A4 landscape;}}</style></head><body>
+<button class="pb" onclick="window.print()">🖨️ Print / Save as PDF</button>
+<h1>🏏 THE SULTANS — ${MONTHS[month-1]} ${year}</h1>
+<p style="color:#888;font-size:11px;margin-bottom:12px;">Generated: ${new Date().toLocaleString('en-PK')}</p>
+<div class="boxes">
+  <div class="box g"><span class="bv">${Rs(tInc)}</span><span class="bl">Monthly Earning</span></div>
+  <div class="box r"><span class="bv">${Rs(tExp)}</span><span class="bl">Monthly Expense</span></div>
+  <div class="box y"><span class="bv">${Rs(tInc-tExp)}</span><span class="bl">${tInc-tExp>=0?'Profit':'Loss'}</span></div>
+  <div class="box b"><span class="bv">${bks.length}</span><span class="bl">Bookings</span></div>
+</div>
+<h2>📅 All Bookings</h2>
+<table><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Time</th><th>Hrs</th><th>Total</th><th>Advance</th><th>Method</th><th>Cash</th><th>Account</th><th>Which</th><th>Due</th><th>Status</th></tr></thead><tbody>
+${bks.map(b=>`<tr>
+  <td>${b.date}</td><td><b>${b.nm}</b></td><td>${b.ph||'—'}</td><td>${b.st||'—'}</td><td>${b.hrs}hr</td>
+  <td><b>${Rs(b.fin)}</b></td><td>${Rs(b.advAmt)}</td><td>${b.advMode}</td>
+  <td>${Rs(b.afterCash||0)}</td><td>${Rs(b.afterAcc||0)}</td>
+  <td>${b.afterAccType?accName(b.afterAccType):'—'}</td>
+  <td style="color:${(b.due||0)>0?'#ef4444':'#22c55e'};">${(b.due||0)>0?Rs(b.due):'✅'}</td>
+  <td>${b.status==='pre'?'PRE':'DONE'}</td>
+</tr>`).join('')}</tbody></table>
+<h2>💸 All Expenses</h2>
+<table><thead><tr><th>Date</th><th>Category</th><th>Details</th><th>Paid Via</th><th>Amount</th></tr></thead><tbody>
+${exps.map(e=>`<tr><td>${e.date}</td><td>${e.cat}</td><td>${e.desc||'—'}</td><td>${e.pay}</td><td>${Rs(e.amount)}</td></tr>`).join('')}
+</tbody></table>
+<div class="footer">
+  <p><b>The Sultans Indoor Cricket Club, Multan</b> | 0300-9634880 | 0319-3510870</p>
+  <p>JazzCash: 0300-3510175 (Abdul Gaffar) | Bank Alfalah: 83721010111101 (Mehboob Ahmad)</p>
+  <p style="margin-top:4px;"><b>System by Jahanzeb Baloch — 0306-0711529</b></p>
+</div>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+</script>
+</body></html>`);w.document.close();
+}
+
+
+// ─── ADD PAYMENT (for partial bookings) ───
+let activeAddPayId=null;
+function openAddPay(id){
+  activeAddPayId=id;
+  const bk=allBookings.find(b=>b.id===id);if(!bk)return;
+  ['ap-cash','ap-acc','ap-cash-note','ap-acc-note'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('ap-acc-type').value='';
+  document.getElementById('ap-status').value=(bk.due||0)>0?'partial':'paid';
+  document.getElementById('addpay-info').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+      <div><b style="color:var(--muted);">Customer:</b> ${bk.nm}</div>
+      <div><b style="color:var(--muted);">Phone:</b> ${bk.ph||'—'}</div>
+      <div><b style="color:var(--muted);">Date:</b> ${bk.date}</div>
+      <div><b style="color:var(--muted);">Time:</b> ${bk.st||'—'}</div>
+      <div><b style="color:var(--muted);">Total:</b> <span style="color:var(--gold);font-weight:800;">${Rs(bk.fin)}</span></div>
+      <div><b style="color:var(--muted);">Paid So Far:</b> <span style="color:var(--green);">${Rs(bk.totalPaid||0)}</span></div>
+      <div style="grid-column:1/-1;"><b style="color:var(--purple);">Still Due:</b> <span style="color:var(--purple);font-size:16px;font-weight:800;">${Rs(bk.due)}</span></div>
+    </div>`;
+  document.getElementById('ap-total').textContent=Rs(bk.fin);
+  document.getElementById('ap-paid').textContent=Rs(bk.totalPaid||0);
+  calcAddPay();
+  document.getElementById('addPayModal').classList.add('on');
+}
+function closeAddPay(){document.getElementById('addPayModal').classList.remove('on');activeAddPayId=null;}
+function calcAddPay(){
+  if(!activeAddPayId)return;
+  const bk=allBookings.find(b=>b.id===activeAddPayId);if(!bk)return;
+  const cash=parseFloat(document.getElementById('ap-cash').value)||0;
+  const acc=parseFloat(document.getElementById('ap-acc').value)||0;
+  const newPay=cash+acc;
+  const newTotal=(bk.totalPaid||0)+newPay;
+  const remaining=Math.max(0,bk.fin-newTotal);
+  document.getElementById('ap-new').textContent=Rs(newPay);
+  document.getElementById('ap-remaining').textContent=remaining>0?Rs(remaining):'Sab Clear ✅';
+  document.getElementById('ap-remaining').style.color=remaining>0?'var(--red)':'var(--green)';
+  document.getElementById('ap-status').value=remaining>0?'partial':'paid';
+}
+async function saveAddPay(){
+  if(!activeAddPayId)return;
+  const bk=allBookings.find(b=>b.id===activeAddPayId);if(!bk)return;
+  const cash=parseFloat(document.getElementById('ap-cash').value)||0;
+  const acc=parseFloat(document.getElementById('ap-acc').value)||0;
+  const accType=document.getElementById('ap-acc-type').value;
+  const cashNote=document.getElementById('ap-cash-note').value.trim();
+  const accNote=document.getElementById('ap-acc-note').value.trim();
+  const status=document.getElementById('ap-status').value;
+  if(cash===0&&acc===0){toast('Koi amount enter karo!','err');return;}
+  const newAfterCash=(bk.afterCash||0)+cash;
+  const newAfterAcc=(bk.afterAcc||0)+acc;
+  const newTotalPaid=(bk.totalPaid||0)+cash+acc;
+  const newDue=Math.max(0,bk.fin-newTotalPaid);
+  showSync(true);
+  try{
+    await db.collection('bookings').doc(activeAddPayId).update({
+      afterCash:newAfterCash,
+      afterAcc:newAfterAcc,
+      afterAccType:accType||bk.afterAccType||'',
+      afterCashNote:(bk.afterCashNote||'')+( cashNote?' | '+cashNote:''),
+      afterAccNote:(bk.afterAccNote||'')+(accNote?' | '+accNote:''),
+      totalPaid:newTotalPaid,
+      due:newDue,
+      status:status,
+      lastPaymentAt:new Date().toISOString()
+    });
+    closeAddPay();
+    toast('Payment add ho gaya! ✅','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  showSync(false);
+}
+
+
+// ─── HELPERS ─────────────────────────────
+function parseTimeToMinutes(timeStr){
+  if(!timeStr) return 0;
+  const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+  if(!match) return 0;
+  let h = parseInt(match[1]);
+  const m = parseInt(match[2]||0);
+  const ap = (match[3]||'').toUpperCase();
+  if(ap==='PM' && h<12) h+=12;
+  if(ap==='AM' && h===12) h=0;
+  if(!ap && h<8) h+=12;
+  return h*60+m;
+}
+
+function minutesToTime(mins){
+  const totalMins = mins % 1440; // wrap 24hr
+  const h24 = Math.floor(totalMins/60);
+  const m = totalMins%60;
+  const ap = h24>=12?'PM':'AM';
+  const h12 = h24>12?h24-12:h24===0?12:h24;
+  return h12+':'+(m<10?'0':'')+m+' '+ap;
+}
+
+function getEndInfo(startTimeStr, hrs){
+  const startMins = parseTimeToMinutes(startTimeStr);
+  const endMins = startMins + Math.round((parseFloat(hrs)||0)*60);
+  const crossesMidnight = endMins >= 1440;
+  const endTime = minutesToTime(endMins);
+  return {endTime, crossesMidnight, endMins};
+}
+
+// ─── TIME PICKER ─────────────────────────
+function buildTime(){
+  const h = document.getElementById('b-hour').value;
+  const m = document.getElementById('b-min').value;
+  const ap = document.getElementById('b-ampm').value;
+  const timeStr = h+':'+m+' '+ap;
+  document.getElementById('b-st').value = timeStr;
+  document.getElementById('b-st-preview').textContent = '⏰ '+timeStr;
+  onTimeChange();
+}
+
+function onDateChange(){
+  checkDateWarning();
+  updateDayPreview();
+  checkConflict();
+}
+function onHrChange(){
+  calcAmt();
+  updateDayPreview();
+  checkMidnight();
+  checkConflict();
+}
+function onTimeChange(){
+  updateDayPreview();
+  checkMidnight();
+  checkConflict();
+}
+
+// ─── DATE WARNING ─────────────────────────
+function checkDateWarning(){
+  const date = document.getElementById('b-date').value;
+  const dw = document.getElementById('dateWarn');
+  if(!date){dw.style.display='none';return;}
+  dw.style.display = date < today() ? 'block' : 'none';
+}
+
+// ─── MIDNIGHT CHECK ──────────────────────
+function checkMidnight(){
+  const st = document.getElementById('b-st').value;
+  const hrs = parseFloat(document.getElementById('b-hr').value)||0;
+  const mw = document.getElementById('midnightWarn');
+  if(!st||!hrs){mw.style.display='none';return;}
+  const {endTime, crossesMidnight} = getEndInfo(st, hrs);
+  if(crossesMidnight){
+    mw.style.display='block';
+    mw.textContent = '🌙 Midnight crossing! Booking ends at '+endTime+' next day. Agle din ka slot bhi block ho jayega.';
+  } else {
+    mw.style.display='none';
+  }
+}
+
+// ─── DAY PREVIEW ─────────────────────────
+function updateDayPreview(){
+  const date = document.getElementById('b-date').value;
+  const dp = document.getElementById('dayPreview');
+  if(!date){dp.style.display='none';return;}
+  const d = new Date(date+'T00:00:00');
+  const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dayEmojis=['☀️','🌙','🌙','🌙','🌙','🌙','🟢'];
+  const idx=d.getDay();
+  const isToday=date===today();
+  const isTomorrow=date===new Date(Date.now()+86400000).toISOString().slice(0,10);
+  let lbl='';
+  if(isToday)lbl=' — Today';
+  if(isTomorrow)lbl=' — Tomorrow';
+  if(idx===5)lbl+=' (Friday)';
+  if(idx===0)lbl+=' (Sunday)';
+  // End time
+  const st=document.getElementById('b-st').value;
+  const hrs=parseFloat(document.getElementById('b-hr').value)||0;
+  let endLbl='';
+  if(st&&hrs){
+    const {endTime,crossesMidnight}=getEndInfo(st,hrs);
+    endLbl=' | End: '+endTime+(crossesMidnight?' (Next Day)':'');
+  }
+  dp.style.display='block';
+  dp.textContent=dayEmojis[idx]+' '+dayNames[idx]+', '+d.getDate()+' '+monthNames[d.getMonth()]+' '+d.getFullYear()+lbl+endLbl;
+}
+
+// ─── CONFLICT CHECK (Midnight-aware) ─────
+function checkConflict(){
+  calcAmt();
+  const date=document.getElementById('b-date').value;
+  if(!date){document.getElementById('conflictWarn').style.display='none';return;}
+  const stVal=document.getElementById('b-st').value;
+  const hrs=parseFloat(document.getElementById('b-hr').value)||0;
+  if(!stVal||!hrs){document.getElementById('conflictWarn').style.display='none';return;}
+  
+  const newStart=parseTimeToMinutes(stVal);
+  const newEnd=newStart+(hrs*60);
+  
+  // Check same date bookings
+  let conflicts=[];
+  allBookings.forEach(b=>{
+    if(!b.st||!b.hrs) return;
+    // Check if booking dates overlap (same day or midnight from prev day)
+    const sameDate=b.date===date;
+    const prevDate=b.date===getPrevDate(date);
+    if(!sameDate&&!prevDate) return;
+    
+    let bStart=parseTimeToMinutes(b.st);
+    const bEnd=bStart+((parseFloat(b.hrs)||1)*60);
+    
+    // If checking prev day booking that crosses midnight
+    if(prevDate){
+      if(bEnd<1440) return; // prev day booking doesnt cross midnight, skip
+      const overlapIntoNewDay=bEnd-1440;
+      if(newStart<overlapIntoNewDay){
+        conflicts.push({nm:b.nm,st:b.st,hrs:b.hrs,note:'(from previous day, crosses midnight)'});
+      }
+      return;
+    }
+    
+    if(newStart<bEnd&&newEnd>bStart){
+      conflicts.push({nm:b.nm,st:b.st,hrs:b.hrs,note:''});
+    }
+  });
+  
+  const warn=document.getElementById('conflictWarn');
+  if(conflicts.length){
+    warn.textContent='🚫 CONFLICT! '+conflicts.map(c=>'"'+c.nm+'" ki '+c.st+' ('+c.hrs+'hr) booking '+c.note).join(', ');
+    warn.style.cssText='display:block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px;';
+  } else if(allBookings.filter(b=>b.date===date).length>0){
+    const cnt=allBookings.filter(b=>b.date===date).length;
+    warn.textContent='ℹ️ '+cnt+' booking(s) on this date — No time conflict ✅';
+    warn.style.cssText='display:block;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--green);margin-bottom:8px;';
+  } else {
+    warn.style.display='none';
+  }
+}
+
+function getPrevDate(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()-1);
+  return d.toISOString().slice(0,10);
+}
+function getNextDate(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+1);
+  return d.toISOString().slice(0,10);
+}
+
+// ─── ADVANCE WARNING ─────────────────────
+function checkAdvWarn(){
+  const adv=parseFloat(document.getElementById('adv-amt').value)||0;
+  document.getElementById('advWarn').style.display=adv===0?'block':'none';
+  calcAdvance();
+}
+
+// ─── SMART PASTE ─────────────────────────
+const WA_TEMPLATE=`THE SULTANS INDOOR CRICKET CLUB 🏏
+Booking Request - Yeh fill kar ke bhejein:
+
+NAME: 
+PHONE: 
+DATE: 
+TIME: (e.g. 6:00 PM)
+HOURS: (e.g. 2)
+ADVANCE: (e.g. 1000)`;
+
+function copyTemplate(){
+  navigator.clipboard.writeText(WA_TEMPLATE).then(()=>{
+    toast('Template copied! Customer ko bhejo 📋','ok');
+  }).catch(()=>{
+    // Fallback
+    const ta=document.createElement('textarea');
+    ta.value=WA_TEMPLATE;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    toast('Template copied! ✅','ok');
+  });
+}
+
+function smartPasteLive(val){
+  // Just show hint if something is pasted
+  const pr=document.getElementById('paste-result');
+  if(val.length>10){
+    pr.style.display='block';
+    pr.style.color='var(--gold)';
+    pr.textContent='👆 "Auto Fill" button click karo form fill karne ke liye';
+  } else {
+    pr.style.display='none';
+  }
+}
+
+function autofillFromPaste(){
+  const txt=document.getElementById('pastebox').value;
+  if(!txt.trim()){toast('Pehle message paste karo!','err');return;}
+  
+  const pr=document.getElementById('paste-result');
+  let filled=[];
+  
+  // Parse NAME
+  const nameMatch=txt.match(/NAME\s*:\s*(.+)/i);
+  if(nameMatch&&nameMatch[1].trim()){
+    document.getElementById('b-nm').value=nameMatch[1].trim();
+    filled.push('Name');
+  }
+  
+  // Parse PHONE
+  const phoneMatch=txt.match(/PHONE\s*:\s*([0-9\-\s]{10,13})/i);
+  if(phoneMatch&&phoneMatch[1].trim()){
+    document.getElementById('b-ph').value=phoneMatch[1].trim();
+    filled.push('Phone');
+  }
+  
+  // Parse DATE
+  const dateMatch=txt.match(/DATE\s*:\s*(.+)/i);
+  if(dateMatch&&dateMatch[1].trim()){
+    const parsedDate=parseDate(dateMatch[1].trim());
+    if(parsedDate){
+      document.getElementById('b-date').value=parsedDate;
+      filled.push('Date');
+      onDateChange();
+    }
+  }
+  
+  // Parse TIME
+  const timeMatch=txt.match(/TIME\s*:\s*(\d+):?(\d*)\s*(AM|PM)?/i);
+  if(timeMatch){
+    let h=parseInt(timeMatch[1]);
+    const m=timeMatch[2]?parseInt(timeMatch[2]):0;
+    let ap=(timeMatch[3]||'PM').toUpperCase();
+    if(h>12){ap='PM';h=h-12;}
+    if(h===0){h=12;ap='AM';}
+    document.getElementById('b-hour').value=h;
+    document.getElementById('b-min').value=m<10?'0'+m:''+m;
+    document.getElementById('b-ampm').value=ap;
+    buildTime();
+    filled.push('Time');
+  }
+  
+  // Parse HOURS
+  const hrsMatch=txt.match(/HOURS?\s*:\s*(\d+\.?\d*)/i);
+  if(hrsMatch){
+    document.getElementById('b-hr').value=hrsMatch[1];
+    onHrChange();
+    filled.push('Hours');
+  }
+  
+  // Parse ADVANCE
+  const advMatch=txt.match(/ADVANCE\s*:\s*(\d+)/i);
+  if(advMatch){
+    document.getElementById('adv-amt').value=advMatch[1];
+    calcAdvance();
+    filled.push('Advance');
+  }
+  
+  if(filled.length>0){
+    pr.style.display='block';
+    pr.style.color='var(--green)';
+    pr.textContent='✅ Auto filled: '+filled.join(', ')+' — Check karo aur Save karo!';
+    toast('Form fill ho gaya! ✅','ok');
+    document.getElementById('pastebox').value='';
+  } else {
+    pr.style.display='block';
+    pr.style.color='var(--red)';
+    pr.textContent='❌ Koi data nahi mila — Template format use karo!';
+    toast('Format match nahi hua!','err');
+  }
+}
+
+function parseDate(str){
+  // Try YYYY-MM-DD
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  // Try DD/MM/YYYY or DD-MM-YYYY
+  const dm=str.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(dm) return dm[3]+'-'+dm[2].padStart(2,'0')+'-'+dm[1].padStart(2,'0');
+  // Try "12 April" or "12 Apr"
+  const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12',january:'01',february:'02',march:'03',april:'04',june:'06',july:'07',august:'08',september:'09',october:'10',november:'11',december:'12'};
+  const nm=str.match(/(\d{1,2})\s+([a-zA-Z]+)/);
+  if(nm){
+    const mon=months[nm[2].toLowerCase()];
+    if(mon) return new Date().getFullYear()+'-'+mon+'-'+nm[1].padStart(2,'0');
+  }
+  return null;
+}
+
+// ─── EDIT BOOKING ─────────────────────────
+let activeEditId=null;
+function openEdit(id){
+  activeEditId=id;
+  const bk=allBookings.find(b=>b.id===id);if(!bk)return;
+  document.getElementById('ed-nm').value=bk.nm||'';
+  document.getElementById('ed-ph').value=bk.ph||'';
+  document.getElementById('ed-vip').value=bk.vip||'regular';
+  document.getElementById('ed-hrs').value=bk.hrs||'';
+  document.getElementById('ed-note').value=bk.nt||'';
+  if(bk.st){
+    const m=bk.st.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+    if(m){document.getElementById('ed-hour').value=m[1];document.getElementById('ed-min').value=m[2].padStart(2,'0');document.getElementById('ed-ampm').value=(m[3]||'PM').toUpperCase();}
+  }
+  document.getElementById('editModal').classList.add('on');
+}
+function closeEdit(){document.getElementById('editModal').classList.remove('on');activeEditId=null;}
+async function saveEdit(){
+  if(!activeEditId)return;
+  const nm=document.getElementById('ed-nm').value.trim();
+  const ph=document.getElementById('ed-ph').value.trim();
+  const vip=document.getElementById('ed-vip').value;
+  const hrs=parseFloat(document.getElementById('ed-hrs').value)||0;
+  const nt=document.getElementById('ed-note').value.trim();
+  const st=document.getElementById('ed-hour').value+':'+document.getElementById('ed-min').value+' '+document.getElementById('ed-ampm').value;
+  if(!nm){toast('Name required!','err');return;}
+  showSync(true);
+  try{
+    const updates={nm,ph,vip,nt,st};
+    if(hrs>0)updates.hrs=hrs;
+    const bk=allBookings.find(b=>b.id===activeEditId);
+    if(hrs>0&&bk&&hrs!==bk.hrs){const nf=Math.max(0,Math.round(hrs*2000)+(bk.exA||0)-(bk.dA||0));updates.fin=nf;updates.due=Math.max(0,nf-(bk.totalPaid||0));}
+    await db.collection('bookings').doc(activeEditId).update(updates);
+    if(ph&&bk&&!bk.ph&&!allCustomers.find(c=>c.ph===ph))await db.collection('customers').add({nm,ph,type:vip,note:'',joined:bk.date,createdAt:new Date().toISOString()});
+    closeEdit();toast('Updated! ✅','ok');
+  }catch(e){toast('Error: '+e.message,'err');}
+  showSync(false);
+}
+
+
+// ═══════════════════════════════════════════════════
+// LIVE TIMER SYSTEM
+// ═══════════════════════════════════════════════════
+let timerInterval = null;
+
+function startTimer(){
+  if(timerInterval) clearInterval(timerInterval);
+  renderTimer();
+  timerInterval = setInterval(renderTimer, 1000);
+}
+
+function renderTimer(){
+  const now = new Date();
+  const nowMins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  const todayStr = today();
+
+  // Update timer clock
+  const tc = document.getElementById('timerClock');
+  if(tc) tc.textContent = now.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // Get today's bookings sorted by start time
+  const todayBks = allBookings
+    .filter(b => b.date === todayStr && b.st)
+    .map(b => {
+      const startMins = parseTimeToMinutes(b.st);
+      const endMins = startMins + (parseFloat(b.hrs)||1)*60;
+      return {...b, startMins, endMins};
+    })
+    .sort((a,b) => a.startMins - b.startMins);
+
+  if(!todayBks.length){
+    const sec = document.getElementById('timerSection');
+    if(sec) sec.innerHTML = '<div class="no-bookings-timer">📅 Aaj koi booking nahi</div>';
+    return;
+  }
+
+  let html = '';
+
+  todayBks.forEach((b, idx) => {
+    const startMins = b.startMins;
+    const endMins = b.endMins;
+    const totalDuration = (endMins - startMins) * 60; // in seconds
+
+    if(nowMins >= endMins){
+      // DONE
+      html += `
+      <div class="timer-card done">
+        <div class="timer-badge done">✅ DONE</div>
+        <div class="timer-team" style="color:var(--muted);">${b.nm}</div>
+        <div class="timer-time">${b.st} → ${minutesToTime(endMins)} (${b.hrs}hr)</div>
+        <div class="timer-done-label">Finished ✓</div>
+        <div class="timer-amount" style="color:var(--muted);">
+          Total: ${Rs(b.fin)} | Paid: ${Rs(b.totalPaid||0)} 
+          ${(b.due||0)>0?'<span style="color:var(--red);">| Due: '+Rs(b.due)+'</span>':'<span style="color:var(--green);">| ✅ Clear</span>'}
+        </div>
+      </div>`;
+    } else if(nowMins >= startMins && nowMins < endMins){
+      // ACTIVE NOW
+      const remainSecs = Math.max(0, (endMins - nowMins) * 60);
+      const elapsed = totalDuration - remainSecs;
+      const pct = Math.min(100, (elapsed/totalDuration)*100);
+      const isUrgent = remainSecs < 600; // last 10 min
+      const countdownStr = formatCountdown(remainSecs);
+      const barClass = isUrgent ? 'urgent' : 'active';
+      const countClass = isUrgent ? 'urgent' : 'active';
+
+      html += `
+      <div class="timer-card active" style="${isUrgent?'border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.06);':''}">
+        <div class="timer-badge active">▶️ PLAYING NOW</div>
+        <div class="timer-team" style="color:var(--green);">${b.nm}</div>
+        <div class="timer-time">${b.st} → ${minutesToTime(endMins)} (${b.hrs}hr)</div>
+        <div class="timer-countdown ${countClass}">${countdownStr}</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">${isUrgent?'⚠️ Almost done!':'Time remaining'}</div>
+        <div class="timer-bar-track">
+          <div class="timer-bar-fill ${barClass}" style="width:${pct.toFixed(1)}%"></div>
+        </div>
+        <div class="timer-amount" style="color:var(--green);">
+          ${Rs(b.fin)} | Advance: ${Rs(b.advAmt)}
+          ${(b.due||0)>0?'<span style="color:var(--orange);"> | Due: '+Rs(b.due)+'</span>':''}
+        </div>
+      </div>`;
+    } else {
+      // UPCOMING
+      const waitSecs = Math.max(0, (startMins - nowMins) * 60);
+      const isNext = idx > 0 ? todayBks.slice(0,idx).every(x=>nowMins>=x.endMins) : true;
+      const cardClass = isNext ? 'next' : 'waiting';
+      const badgeText = isNext ? '⏭️ UP NEXT' : '⏳ WAITING';
+      const countdownStr = formatCountdown(waitSecs);
+      const countClass = isNext ? 'next' : '';
+
+      html += `
+      <div class="timer-card ${cardClass}">
+        <div class="timer-badge ${cardClass}">${badgeText}</div>
+        <div class="timer-team" style="color:${isNext?'var(--blue)':'var(--gold)'};">${b.nm}</div>
+        <div class="timer-time">${b.st} → ${minutesToTime(endMins)} (${b.hrs}hr)</div>
+        <div class="timer-countdown ${countClass}" style="font-size:22px;">${countdownStr}</div>
+        <div style="font-size:10px;color:var(--muted);">Starts in</div>
+        <div class="timer-amount" style="color:${isNext?'var(--blue)':'var(--gold)'};">
+          Total: ${Rs(b.fin)} | Advance: ${Rs(b.advAmt)}
+          ${(b.due||0)>0?'<span style="color:var(--purple);"> | Due: '+Rs(b.due)+'</span>':''}
+        </div>
+      </div>`;
+    }
+  });
+
+  const sec = document.getElementById('timerSection');
+  if(sec) sec.innerHTML = html || '<div class="no-bookings-timer">No bookings today</div>';
+}
+
+function formatCountdown(totalSecs){
+  const s = Math.floor(totalSecs);
+  const h = Math.floor(s/3600);
+  const m = Math.floor((s%3600)/60);
+  const sec = s%60;
+  if(h>0) return h+'h '+String(m).padStart(2,'0')+'m '+String(sec).padStart(2,'0')+'s';
+  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+// ─── INIT ───
+function init(){
+  tick();
+  const td=today();
+  ['b-date','e-d','ef-d'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=td;});
+  // Set default time to 6:00 PM
+  const hourEl=document.getElementById('b-hour');
+  const ampmEl=document.getElementById('b-ampm');
+  if(hourEl)hourEl.value='6';
+  if(ampmEl)ampmEl.value='PM';
+  buildTime();updateDayPreview();
+  document.getElementById('comp-filter').addEventListener('change',renderPostTab);
+  ['b-hr','b-ex','b-exc','b-dt'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('change',calcAmt);});
+  document.getElementById('adv-amt').addEventListener('input',checkAdvWarn);
+  document.getElementById('ef-d').addEventListener('change',renderET);
+  const now=new Date();
+  const mSel=document.getElementById('r-m');
+  if(mSel&&!mSel.options.length)MONTHS.forEach((m,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=m;if(i===now.getMonth())o.selected=true;mSel.appendChild(o);});
+  const ySel=document.getElementById('r-y');
+  if(ySel&&!ySel.options.length)for(let y=now.getFullYear();y>=now.getFullYear()-3;y--){const o=document.createElement('option');o.value=y;o.textContent=y;ySel.appendChild(o);}
+  const savedTarget=localStorage.getItem('daily_target');
+  if(savedTarget&&document.getElementById('targetInput'))document.getElementById('targetInput').value=savedTarget;
+  calcAmt();renderDash();startTimer();
+}
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+
+init();
+startListeners();
+</script>
+</body>
+</html>
