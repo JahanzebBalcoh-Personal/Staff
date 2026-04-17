@@ -11,7 +11,7 @@ const EJ_TO = 'jahanzebbaloch@example.com';
 const firebaseConfig={apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"};
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const RATE=2000;
+let RATE=2000;
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 let ADMIN_PASS=localStorage.getItem('admin_pass')||'jahanzebbaloch';
@@ -70,7 +70,7 @@ function waConfirm(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoo
 function waDue(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\nYour payment is pending:\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n💰 Total: ${Rs(b.fin)}\n❗ *Due Amount: ${Rs(b.due)}*\n\nPlease clear your payment:\n🟣 JazzCash: 0300-3510175 (Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101 (Mehboob Ahmad)\n\n*Thank you! 🙏*`;}
 function waInvoiceText(b){
   const status=b.status==='paid'?'✅ FULLY PAID':b.status==='partial'?'💛 PARTIAL PAYMENT':'⏳ PRE-MATCH';
-  return `🏏 *THE SULTANS INDOOR CRICKET CLUB*\n📍 Multan, Pakistan\n\n━━━━━━━━━━━━━━\n📄 *BOOKING RECEIPT*\n━━━━━━━━━━━━━━\n👤 *Name:* ${b.nm}\n📞 *Phone:* ${b.ph||'—'}\n📅 *Date:* ${b.date}\n⏰ *Time:* ${b.st||'—'} (${b.hrs} hrs${b.exM>0?' + '+b.exM+' min':''})\n💰 *Rate:* Rs.2000/hr${b.dA>0?'\n🎁 *Discount:* -'+Rs(b.dA):''}\n\n━━━━━━━━━━━━━━\n💵 *PAYMENT DETAILS*\n━━━━━━━━━━━━━━\n*Total: ${Rs(b.fin)}*\nAdvance (${b.advMode}): ${Rs(b.advAmt)}${b.status!=='pre'?'\nCash (After Match): '+Rs(b.afterCash||0)+'\nAccount (After Match): '+Rs(b.afterAcc||0):''}\n*Due Remaining: ${(b.due||0)>0?Rs(b.due):'CLEAR ✅'}*\n\n*Status: ${status}*\n\n━━━━━━━━━━━━━━\n🏦 *PAYMENT ACCOUNTS*\n━━━━━━━━━━━━━━\n🟣 JazzCash: 0300-3510175\n(Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101\n(Mehboob Ahmad)\n\n📞 0300-9634880\nThank you! 🙏`;}
+  return `🏏 *THE SULTANS INDOOR CRICKET CLUB*\n📍 Multan, Pakistan\n\n━━━━━━━━━━━━━━\n📄 *BOOKING RECEIPT*\n━━━━━━━━━━━━━━\n👤 *Name:* ${b.nm}\n📞 *Phone:* ${b.ph||'—'}\n📅 *Date:* ${b.date}\n⏰ *Time:* ${b.st||'—'} (${b.hrs} hrs${b.exM>0?' + '+b.exM+' min':''})\n💰 *Rate:* Rs.${RATE}/hr${b.dA>0?'\n🎁 *Discount:* -'+Rs(b.dA):''}\n\n━━━━━━━━━━━━━━\n💵 *PAYMENT DETAILS*\n━━━━━━━━━━━━━━\n*Total: ${Rs(b.fin)}*\nAdvance (${b.advMode}): ${Rs(b.advAmt)}${b.status!=='pre'?'\nCash (After Match): '+Rs(b.afterCash||0)+'\nAccount (After Match): '+Rs(b.afterAcc||0):''}\n*Due Remaining: ${(b.due||0)>0?Rs(b.due):'CLEAR ✅'}*\n\n*Status: ${status}*\n\n━━━━━━━━━━━━━━\n🏦 *PAYMENT ACCOUNTS*\n━━━━━━━━━━━━━━\n🟣 JazzCash: 0300-3510175\n(Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101\n(Mehboob Ahmad)\n\n📞 0300-9634880\nThank you! 🙏`;}
 
 // ─── TABS ───
 function go(tab){
@@ -1504,7 +1504,7 @@ function checkPin() {
     inp.value = '';
     err.textContent = '';
   } else {
-    err.textContent = '❌ Invalid PIN! Try again.';
+    err.textContent = '❌ Wrong password, contact Jahanzeb Baloch 0306-0711529';
     inp.value = '';
   }
 }
@@ -1524,13 +1524,22 @@ function init(){
     document.getElementById('mainApp').style.display = 'block';
   }
 
-  // Sync PIN from Admin Settings in Firebase
+  // Sync PIN & Rate from Admin Settings in Firebase
   db.collection('settings').doc('admin').onSnapshot(doc => {
-    if(doc.exists && doc.data().password){
-      APP_PIN = doc.data().password;
-      console.log("PIN Synced from Firebase:", APP_PIN);
+    if(doc.exists){
+      const data = doc.data();
+      if(data.password){
+        APP_PIN = data.password;
+        console.log("PIN Synced:", APP_PIN);
+      }
+      if(data.rate){
+        RATE = data.rate;
+        console.log("RATE Synced:", RATE);
+        // Refresh calculation if on dash/booking page
+        if(typeof calcAmt === 'function') calcAmt();
+      }
     }
-  }, err => console.error("Firebase PIN Sync Error:", err));
+  }, err => console.error("Firebase Sync Error:", err));
 
   tick();
   const td=today();

@@ -12,10 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
-firebase.initializeApp({apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"});
-const db=firebase.firestore();
-</script>
 <style>
 :root{--gold:#f0b429;--gold2:#e07b00;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;--teal:#14b8a6;--orange:#f97316;--bg:#060e1a;--card:#0f1c2e;--card2:#162035;--border:rgba(240,180,41,0.12);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;}
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -120,6 +116,18 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 </style>
 </head>
 <body>
+<!-- ERROR BANNER -->
+<div id="errBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#ef4444;color:#fff;padding:12px;font-size:12px;font-weight:800;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,0.5);"></div>
+<script>
+  window.onerror = function(msg, url, line) {
+    var eb = document.getElementById('errBanner');
+    if (eb) {
+      eb.style.display = 'block';
+      eb.innerHTML = '⚠️ JS CRASH: ' + msg + ' (Line: ' + line + ')';
+    }
+    return false;
+  };
+</script>
 
 <!-- EDIT MODAL -->
 <div class="modal-bg" id="editModal">
@@ -344,8 +352,18 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <!-- SETTINGS PAGE -->
 <div class="pg" id="pg-settings">
   <br>
+  <!-- SYSTEM SETTINGS -->
+  <div class="card" style="background:rgba(34,197,94,0.05);border-color:rgba(34,197,94,0.25);margin-top:12px;">
+    <div class="sh-t" style="margin-bottom:6px;">💰 Club Dynamic Rates</div>
+    <div style="font-size:11px;color:var(--soft);margin-bottom:14px;">Club app ki hourly rate yahan se manage karo.</div>
+    <div class="fl">
+      <label>Hourly Rate (Rs)</label>
+      <input type="number" id="hourlyRate" placeholder="e.g. 2000" style="font-size:18px;font-weight:800;color:var(--green);">
+    </div>
+  </div>
+
   <!-- PASSWORD CHANGE -->
-  <div class="card" style="background:rgba(240,180,41,0.05);border-color:rgba(240,180,41,0.25);">
+  <div class="card" style="background:rgba(240,180,41,0.05);border-color:rgba(240,180,41,0.25);margin-top:12px;">
     <div class="sh-t" style="margin-bottom:6px;">🔐 Club App Password Change</div>
     <div style="font-size:11px;color:var(--soft);margin-bottom:14px;">Club app ka login password yahan se badlo.</div>
     <div class="fl">
@@ -357,10 +375,18 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
       <input type="text" id="confPass" placeholder="Dobara likho..." style="font-size:16px;letter-spacing:2px;font-weight:800;">
     </div>
     <div id="passMsg" style="font-size:12px;font-weight:700;min-height:16px;margin-bottom:10px;padding:8px;border-radius:8px;display:none;"></div>
-    <button class="btn-gold" onclick="changePass()">🔐 Change Password</button>
+    <button class="btn-gold" onclick="saveSettings()">💾 Save All Settings</button>
     <div style="margin-top:12px;background:rgba(0,0,0,0.2);border-radius:8px;padding:10px 14px;">
-      <div style="font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Current Password:</div>
-      <div id="curPass" style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:var(--gold);">jahanzebbaloch</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">PIN:</div>
+          <div id="curPass" style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:var(--gold);">jahanzebbaloch</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Rate:</div>
+          <div id="curRateDisplay" style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:var(--green);">Rs 2000</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -394,11 +420,23 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── FIREBASE INIT ───
+if(!firebase.apps.length){firebase.initializeApp({apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645",databaseURL:""});}
+var db=firebase.firestore();
+
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var allBks=[],allExps=[],allCusts=[],feedItems=[];
 var editId=null,payId=null,timerInt=null;
 
-function tick(){var n=new Date();document.getElementById('clk').textContent=n.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});}
+function pad(n){return n<10?'0'+n:n;}
+
+function tick(){
+  try{
+    var n=new Date();
+    var el=document.getElementById('clk');
+    if(el){var h=n.getHours(),m=n.getMinutes();el.textContent=(h%12||12)+':'+pad(m)+' '+(h<12?'AM':'PM');}
+  }catch(e){}
+}
 setInterval(tick,1000);tick();
 
 var Rs=function(n){return 'Rs.'+Number(n||0).toLocaleString('en-PK');};
@@ -411,11 +449,13 @@ function waLink(ph,msg){var p=ph.replace(/[^0-9]/g,'');var i=p.startsWith('0')?'
 function waDue(b){return 'Assalam o Alaikum '+b.nm+'!\nThe Sultans Indoor Cricket Club — Multan\n\nYour payment is pending:\nDate: '+b.date+'\nTotal: '+Rs(b.fin)+'\nDue: '+Rs(b.due)+'\n\nJazzCash: 0300-3510175 (Abdul Gaffar)\nBank Alfalah: 83721010111101\n\nThank you!';}
 function ptm(t){if(!t)return 0;var m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i);if(!m)return 0;var h=parseInt(m[1]),mn=parseInt(m[2]||0),ap=(m[3]||'').toUpperCase();if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;if(!ap&&h<8)h+=12;return h*60+mn;}
 function mtt(mins){var t=mins%1440,h24=Math.floor(t/60),m=t%60,ap=h24>=12?'PM':'AM',h12=h24>12?h24-12:h24===0?12:h24;return h12+':'+(m<10?'0':'')+m+' '+ap;}
-function fcd(s){var sec=Math.floor(s),h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),sc=sec%60;if(h>0)return h+'h '+String(m).padStart(2,'0')+'m '+String(sc).padStart(2,'0')+'s';return String(m).padStart(2,'0')+':'+String(sc).padStart(2,'0');}
+function fcd(s){var sec=Math.floor(s),h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),sc=sec%60;if(h>0)return h+'h '+pad(m)+'m '+pad(sc)+'s';return pad(m)+':'+pad(sc);}
 
 // FIREBASE
 function startSync(){
-  document.getElementById('sdot').style.background='var(--orange)';
+  try{
+    document.getElementById('sdot').style.background='var(--orange)';
+  }catch(e){}
   db.collection('bookings').onSnapshot(function(snap){
     allBks=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'');});
     document.getElementById('sdot').style.background='var(--green)';
@@ -429,7 +469,12 @@ function startSync(){
       }
     });
     refreshActive();
-  },function(err){document.getElementById('sdot').style.background='var(--red)';console.log(err);});
+  },function(err){
+    try{document.getElementById('sdot').style.background='var(--red)';}catch(e){}
+    var eb=document.getElementById('errBanner');
+    if(eb){eb.style.display='block';eb.textContent='Firebase Error: '+err.code+' — '+err.message;}
+    console.log(err);
+  });
   db.collection('expenses').onSnapshot(function(snap){allExps=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});refreshActive();});
   db.collection('customers').onSnapshot(function(snap){allCusts=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (a.nm||'').localeCompare(b.nm||'');});refreshActive();});
 }
@@ -516,7 +561,7 @@ function renderDash(){
   mE.forEach(function(e){var d=parseInt(e.date.split('-')[2]);dE[d]=(dE[d]||0)+(parseFloat(e.amount)||0);});
   var mx=Math.max.apply(null,Object.values(dI).concat(Object.values(dE)).concat([1]));
   var days=[].concat(Object.keys(dI),Object.keys(dE)).map(Number).filter(function(v,i,a){return a.indexOf(v)===i;}).sort(function(a,b){return a-b;});
-  document.getElementById('dailyChart').innerHTML=!days.length?'<div class="empty">No data</div>':days.map(function(d){return '<div class="br"><div class="br-lbl" style="width:24px;">'+String(d).padStart(2,'0')+'</div><div style="flex:1;display:flex;flex-direction:column;gap:3px;"><div class="br-track"><div class="br-fill" style="width:'+((dI[d]||0)/mx*100).toFixed(0)+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><div class="br-track"><div class="br-fill" style="width:'+((dE[d]||0)/mx*100).toFixed(0)+'%;background:linear-gradient(90deg,var(--red),#fca5a5);"></div></div></div><div style="font-size:9px;width:70px;text-align:right;font-family:\'JetBrains Mono\',monospace;"><div style="color:var(--green);">'+(dI[d]>0?Rs(dI[d]):'')+'</div><div style="color:var(--red);">'+(dE[d]>0?Rs(dE[d]):'')+'</div></div></div>';}).join('');
+  document.getElementById('dailyChart').innerHTML=!days.length?'<div class="empty">No data</div>':days.map(function(d){return '<div class="br"><div class="br-lbl" style="width:24px;">'+pad(d)+'</div><div style="flex:1;display:flex;flex-direction:column;gap:3px;"><div class="br-track"><div class="br-fill" style="width:'+((dI[d]||0)/mx*100).toFixed(0)+'%;background:linear-gradient(90deg,var(--green),#86efac);"></div></div><div class="br-track"><div class="br-fill" style="width:'+((dE[d]||0)/mx*100).toFixed(0)+'%;background:linear-gradient(90deg,var(--red),#fca5a5);"></div></div></div><div style="font-size:9px;width:70px;text-align:right;font-family:\'JetBrains Mono\',monospace;"><div style="color:var(--green);">'+(dI[d]>0?Rs(dI[d]):'')+'</div><div style="color:var(--red);">'+(dE[d]>0?Rs(dE[d]):'')+'</div></div></div>';}).join('');
   var dues=allBks.filter(function(b){return (b.due||0)>0;}).sort(function(a,b){return b.date.localeCompare(a.date);});
   document.getElementById('duesTbl').innerHTML=!dues.length?'<tr><td colspan="7" class="empty">No pending dues!</td></tr>':dues.map(function(b){return '<tr><td style="font-size:10px;color:var(--muted);">'+b.date+'</td><td><b>'+b.nm+'</b></td><td style="color:var(--blue);">'+(b.ph||'—')+'</td><td>'+Rs(b.fin)+'</td><td style="color:var(--green);">'+Rs(b.totalPaid||0)+'</td><td style="color:var(--red);font-weight:800;">'+Rs(b.due)+'</td><td>'+(b.ph?'<a class="btn-wa" href="'+waLink(b.ph,waDue(b))+'" target="_blank">Remind</a>':'—')+'</td></tr>';}).join('');
 }
@@ -575,7 +620,7 @@ function renderNotes(){var notes=JSON.parse(localStorage.getItem('jb_notes')||'[
 function delNote(i){var n=JSON.parse(localStorage.getItem('jb_notes')||'[]');n.splice(i,1);localStorage.setItem('jb_notes',JSON.stringify(n));renderNotes();}
 
 // EDIT
-function openEdit(id){editId=id;var b=allBks.find(function(x){return x.id===id;});if(!b)return;document.getElementById('e-nm').value=b.nm||'';document.getElementById('e-ph').value=b.ph||'';document.getElementById('e-vip').value=b.vip||'regular';document.getElementById('e-hrs').value=b.hrs||'';document.getElementById('e-date').value=b.date||'';document.getElementById('e-nt').value=b.nt||'';var m=(b.st||'6:00 PM').match(/(\d+):(\d+)\s*(AM|PM)?/i);if(m){document.getElementById('e-hr').value=m[1];document.getElementById('e-mn').value=m[2].padStart(2,'0');document.getElementById('e-ap').value=(m[3]||'PM').toUpperCase();}document.getElementById('edit-info').innerHTML='<b>'+b.nm+'</b> — '+b.date+' — '+Rs(b.fin)+' — '+sbadge(b.status);document.getElementById('editModal').classList.add('on');}
+function openEdit(id){editId=id;var b=allBks.find(function(x){return x.id===id;});if(!b)return;document.getElementById('e-nm').value=b.nm||'';document.getElementById('e-ph').value=b.ph||'';document.getElementById('e-vip').value=b.vip||'regular';document.getElementById('e-hrs').value=b.hrs||'';document.getElementById('e-date').value=b.date||'';document.getElementById('e-nt').value=b.nt||'';var m=(b.st||'6:00 PM').match(/(\d+):(\d+)\s*(AM|PM)?/i);if(m){document.getElementById('e-hr').value=m[1];document.getElementById('e-mn').value=pad(m[2]);document.getElementById('e-ap').value=(m[3]||'PM').toUpperCase();}document.getElementById('edit-info').innerHTML='<b>'+b.nm+'</b> — '+b.date+' — '+Rs(b.fin)+' — '+sbadge(b.status);document.getElementById('editModal').classList.add('on');}
 function closeEdit(){document.getElementById('editModal').classList.remove('on');editId=null;}
 async function saveEdit(){if(!editId)return;var nm=document.getElementById('e-nm').value.trim();if(!nm){toast('Name required!','err');return;}var ph=document.getElementById('e-ph').value.trim(),vip=document.getElementById('e-vip').value,hrs=parseFloat(document.getElementById('e-hrs').value)||0,date=document.getElementById('e-date').value,nt=document.getElementById('e-nt').value.trim(),st=document.getElementById('e-hr').value+':'+document.getElementById('e-mn').value+' '+document.getElementById('e-ap').value;var b=allBks.find(function(x){return x.id===editId;});var upd={nm:nm,ph:ph,vip:vip,nt:nt,st:st,date:date};if(hrs>0&&b&&hrs!==b.hrs){upd.hrs=hrs;var nf=Math.max(0,Math.round(hrs*2000)+(b.exA||0)-(b.dA||0));upd.fin=nf;upd.due=Math.max(0,nf-(b.totalPaid||0));}try{await db.collection('bookings').doc(editId).update(upd);closeEdit();toast('Updated!','ok');}catch(e){toast('Error: '+e.message,'err');}}
 
@@ -644,37 +689,57 @@ function initSelectors(){
 }
 
 function loadSettings(){
-  var cur=localStorage.getItem('club_pass')||'jahanzebbaloch';
-  document.getElementById('curPass').textContent=cur;
-  // Also try Firebase
+  var curP=localStorage.getItem('club_pass')||'jahanzebbaloch';
+  var curR=localStorage.getItem('club_rate')||'2000';
+  document.getElementById('curPass').textContent=curP;
+  document.getElementById('curRateDisplay').textContent='Rs '+curR;
+  document.getElementById('hourlyRate').value=curR;
+  
   db.collection('settings').doc('admin').get().then(function(doc){
-    if(doc.exists&&doc.data()&&doc.data().password){
-      document.getElementById('curPass').textContent=doc.data().password;
+    if(doc.exists&&doc.data()){
+      var d=doc.data();
+      if(d.password){
+        document.getElementById('curPass').textContent=d.password;
+        localStorage.setItem('club_pass',d.password);
+      }
+      if(d.rate){
+        document.getElementById('curRateDisplay').textContent='Rs '+d.rate;
+        document.getElementById('hourlyRate').value=d.rate;
+        localStorage.setItem('club_rate',d.rate);
+      }
     }
   }).catch(function(){});
 }
 
-function changePass(){
+function saveSettings(){
   var np=document.getElementById('newPass').value.trim();
   var cp=document.getElementById('confPass').value.trim();
+  var rate=document.getElementById('hourlyRate').value;
   var msg=document.getElementById('passMsg');
-  if(!np){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Enter new password!';return;}
-  if(np.length<4){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Minimum 4 characters!';return;}
-  if(np!==cp){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Passwords do not match!';return;}
-  // Save to localStorage
-  localStorage.setItem('club_pass',np);
-  // Save to Firebase
-  db.collection('settings').doc('admin').set({password:np,updatedAt:new Date().toISOString()}).then(function(){
+  
+  var upd={updatedAt:new Date().toISOString()};
+  
+  if(np){
+    if(np.length<4){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Minimum 4 characters for password!';return;}
+    if(np!==cp){msg.style.display='block';msg.style.background='rgba(239,68,68,0.12)';msg.style.color='var(--red)';msg.textContent='Passwords do not match!';return;}
+    upd.password=np;
+  }
+  
+  if(rate){ upd.rate=parseInt(rate); }
+
+  db.collection('settings').doc('admin').set(upd,{merge:true}).then(function(){
+    if(upd.password) localStorage.setItem('club_pass',upd.password);
+    if(upd.rate) localStorage.setItem('club_rate',upd.rate);
     msg.style.display='block';msg.style.background='rgba(34,197,94,0.12)';msg.style.color='var(--green)';
-    msg.textContent='Password changed! Club app mein ab use karo: '+np;
-  }).catch(function(){
+    msg.textContent='Settings saved! Club app auto-sync ho jaye gi.';
+    loadSettings();
+    document.getElementById('newPass').value='';
+    document.getElementById('confPass').value='';
+    setTimeout(function(){msg.style.display='none';},6000);
+  }).catch(function(e){
     msg.style.display='block';msg.style.background='rgba(240,180,41,0.12)';msg.style.color='var(--gold)';
-    msg.textContent='Saved locally! New password: '+np;
+    msg.textContent='Error saving: '+e.message;
   });
-  document.getElementById('curPass').textContent=np;
-  document.getElementById('newPass').value='';
-  document.getElementById('confPass').value='';
-  setTimeout(function(){msg.style.display='none';},6000);
 }
 
 function exportCSV(type){
@@ -686,8 +751,7 @@ function exportCSV(type){
     headers='Date,Category,Details,Via,Amount';
     rows=allExps.map(function(e){return [e.date,e.cat,e.desc||'',e.pay||'',e.amount||0].join(',');});
   }
-  var csv=[headers].concat(rows).join('
-');
+  var csv=[headers].concat(rows).join('\n');
   var blob=new Blob([csv],{type:'text/csv'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');a.href=url;a.download='sultans-'+type+'.csv';a.click();
