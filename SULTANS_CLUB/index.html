@@ -20,7 +20,6 @@
 <body>
 
 
-
 <!-- INVOICE MODAL -->
 <div class="inv-modal" id="invModal">
   <div class="inv-box">
@@ -198,8 +197,18 @@
   </div>
 </div>
 
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+  <div class="pin-logo">🏏</div>
+  <div class="pin-title">SULTANS ADMIN</div>
+  <div class="pin-sub">Indoor Cricket Club</div>
+  <input type="password" class="pin-inp" id="pinInp" placeholder="Enter PIN" maxlength="4" autofocus>
+  <button class="pin-login-btn" onclick="checkPin()">LOGIN</button>
+  <div class="pin-err" id="pinErr"></div>
+</div>
+
 <!-- MAIN APP -->
-<div id="mainApp">
+<div id="mainApp" style="display:none;">
 <div class="sync-bar" id="syncBar">🔄 Sync ho raha hai...</div>
 <div class="hdr">
   <div class="hdr-top">
@@ -321,6 +330,8 @@
     <div class="sh-t" style="margin-bottom:4px;">📋 Pre-Match Booking</div>
     <div style="font-size:11px;color:var(--soft);margin-bottom:12px;">Add booking before match + collect advance. After match go to Complete tab.</div>
     <div class="conflict-warn" id="conflictWarn">⚠️ There may already be a booking on this date!</div>
+    <div id="dateWarn" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px;display:none;">⚠️ Careful! You are booking for a past date.</div>
+    <div id="midnightWarn" style="background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--orange);margin-bottom:8px;display:none;"></div>
     <div class="slbl">Match Details</div>
     <div class="row r3">
       <div class="fl">
@@ -350,7 +361,7 @@
         <input type="hidden" id="b-st" value="6:00 PM">
         <div id="b-st-preview" style="font-size:10px;color:var(--gold);font-weight:800;margin-top:3px;text-align:center;">⏰ 6:00 PM</div>
       </div>
-      <div class="fl"><label>Hours (Type manually)</label><input type="number" id="b-hr" placeholder="1, 2, 2.5..." min="0.5" step="0.5" oninput="calcAmt()"></div>
+      <div class="fl"><label>Hours (Type manually)</label><input type="number" id="b-hr" placeholder="1, 2, 2.5..." min="0.5" step="0.5" oninput="onHrChange()"></div>
     </div>
     <!-- Day name preview -->
     <div id="dayPreview" style="background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;color:var(--gold);margin-bottom:8px;display:none;text-align:center;"></div>

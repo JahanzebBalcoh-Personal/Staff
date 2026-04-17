@@ -1,10 +1,16 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+console.log('Sultans App Starting...');
 
-emailjs.init("WEicHOT9c6wtsaRt-");
+try {
+  emailjs.init({ publicKey: "WEicHOT9c6wtsaRt-" });
+} catch (e) {
+  console.warn("EmailJS failed to initialize:", e);
+}
+const EJ_SVC = 'default_service';
+const EJ_TPL = 'template_id';
+const EJ_TO = 'jahanzebbaloch@example.com';
 const firebaseConfig={apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 const RATE=2000;
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -16,10 +22,15 @@ let currentInvBooking=null;
 
 // ─── FIREBASE LISTENERS ───
 function startListeners(){
-  showSync(true);
-  onSnapshot(collection(db, 'bookings'), s=>{allBookings=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));showSync(false);refreshTab();},err=>{showSync(false);console.log('Bookings error:',err);});
-  onSnapshot(collection(db, 'expenses'), s=>{allExpenses=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('Expenses error:',err);});
-  onSnapshot(collection(db, 'customers'), s=>{allCustomers=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nm||'').localeCompare(b.nm||''));refreshTab();},err=>{console.log('Customers error:',err);});
+  try {
+    showSync(true);
+    db.collection('bookings').onSnapshot(s=>{allBookings=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));showSync(false);refreshTab();},err=>{showSync(false);console.log('Bookings error:',err);});
+    db.collection('expenses').onSnapshot(s=>{allExpenses=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('Expenses error:',err);});
+    db.collection('customers').onSnapshot(s=>{allCustomers=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nm||'').localeCompare(b.nm||''));refreshTab();},err=>{console.log('Customers error:',err);});
+  } catch (e) {
+    console.error("Firebase Listeners failed:", e);
+    showSync(false);
+  }
 }
 function showSync(on){document.getElementById('syncBar').className='sync-bar'+(on?' on':'');}
 function refreshTab(){
@@ -44,7 +55,8 @@ function tick(){
 setInterval(tick,1000);tick();
 
 // ─── HELPERS ───
-const Rs=n=>'Rs.'+Number(n||0).toLocaleString('en-PK');
+const Rs=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
+const fromRs = txt => parseFloat((txt||'').replace(/Rs|,/g, ''))||0;
 const today=()=>new Date().toISOString().slice(0,10);
 function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast on '+t;setTimeout(()=>el.className='toast',3000);}
 function pmbadge(m){const mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};const ml={cash:'💵 Cash',bank:'🏦 Alfalah',jazz:'🟣 Jazz',easy:'🩵 Easy'};return`<span class="bx ${mp[m]||'bx-g'}">${ml[m]||m}</span>`;}
@@ -112,7 +124,7 @@ function calcAmt(){
   calcAdvance();return{base,exM,exC,exA,dT,dV,dA,fin};
 }
 function calcAdvance(){
-  const fin=parseFloat(document.getElementById('sb-final').textContent.replace(/[^0-9.]/g,''))||0;
+  const fin=fromRs(document.getElementById('sb-final').textContent);
   const adv=parseFloat(document.getElementById('adv-amt').value)||0;
   const due=Math.max(0,fin-adv);
   document.getElementById('adv-final').textContent=Rs(fin);
@@ -148,19 +160,44 @@ async function savePreMatch(){
   const advAmt=parseFloat(document.getElementById('adv-amt').value)||0;
   const advMode=document.getElementById('adv-mode').value;
   const advNote=document.getElementById('adv-note').value.trim();
-  if(!date||!nm||!st||!hrs){toast('Date, Time, Hours and Name are required!','err');return;}
+  
+  if(!date||!nm||!st||!hrs){
+    toast('Date, Time, Hours and Name are required!','err');
+    return;
+  }
+  
   const{base,exA,dA,fin}=calcAmt();
   const due=Math.max(0,fin-advAmt);
   const bk={date,st,hrs,nm,ph,vip,exM,exC,dT,dV,dA,base,exA,fin,advAmt,advMode,advNote,afterCash:0,afterAcc:0,afterAccType:'',afterCashNote:'',afterAccNote:'',totalPaid:advAmt,due,status:'pre',nt,createdAt:new Date().toISOString()};
+  
   showSync(true);
   try{
-    await addDoc(collection(db, 'bookings'), bk);
-    if(ph&&!allCustomers.find(c=>c.ph===ph))await addDoc(collection(db, 'customers'), {nm,ph,type:vip,note:'',joined:date,createdAt:new Date().toISOString()});
+    console.log("Saving booking:", bk);
+    await db.collection('bookings').add(bk);
+    
+    // Add to customers if new
+    if(ph && !allCustomers.find(c=>c.ph===ph)) {
+      await db.collection('customers').add({nm,ph,type:vip,note:'',joined:date,createdAt:new Date().toISOString()});
+    }
+    
     sendAlert(bk);
-    ['b-nm','b-ph','b-nt','adv-amt','adv-note','b-hr','b-st','b-ex','b-dv'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('b-exc').value='free';document.getElementById('b-dt').value='none';document.getElementById('custDD').style.display='none';
-    calcAmt();toast('Booking saved! ✅','ok');
-  }catch(e){toast('Error: '+e.message,'err');}
+    
+    // Clear form
+    ['b-nm','b-ph','b-nt','adv-amt','adv-note','b-hr','b-st','b-ex','b-dv'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.value='';
+    });
+    document.getElementById('b-exc').value='free';
+    document.getElementById('b-dt').value='none';
+    const dd = document.getElementById('custDD');
+    if(dd) dd.style.display='none';
+    
+    calcAmt();
+    toast('Booking saved successfully! ✅','ok');
+  }catch(e){
+    console.error("Firebase Save Error (Pre-match):", e);
+    toast('Error: ' + e.message, 'err');
+  }
   showSync(false);
 }
 
@@ -322,12 +359,24 @@ function renderDash(){
     for(let i=0;i<Math.ceil(hrs);i++){
       const slotMins=startMins+(i*60);
       const slotH=Math.floor(slotMins/60)%24;
-      if(slotH>=8&&slotH<=23){
-        ts[slotH]=b.status==='pre'?'pre-match':'bkd';
+      if(slotH>=0&&slotH<=23){
+        ts[slotH]={type:b.status==='pre'?'pre-match':'bkd',bk:b};
       }
     }
   });
-  for(let h=8;h<=23;h++){const ap=h>=12?'PM':'AM';const d=h>12?h-12:h===0?12:h;const div=document.createElement('div');div.className='slot '+(ts[h]||'free');div.textContent=d+':00 '+ap;sm.appendChild(div);}
+  for(let h=0;h<=23;h++){
+    const ap=h>=12?'PM':'AM';const d=h>12?h-12:h===0?12:h;
+    const info=ts[h];
+    const div=document.createElement('div');
+    div.className='slot '+(info?info.type:'free');
+    div.textContent=d+':00 '+ap;
+    if(info){
+      div.style.cursor='pointer';
+      div.title=`Booked by ${info.bk.nm}`;
+      div.onclick=()=>showSlotLink(info.bk.id);
+    }
+    sm.appendChild(div);
+  }
   // Analytics
   renderAnalytics();
   // Recent
@@ -342,10 +391,18 @@ function renderDash(){
       <td style="color:${(b.due||0)>0?'var(--red)':'var(--green)'};">${(b.due||0)>0?Rs(b.due):'✅'}</td>
       <td>${sbadge(b.status)}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap;">
-        <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾 Receipt</button>
+        <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+        <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
+        <button class="btn-del" onclick="delBk('${b.id}')" style="font-size:9px;padding:4px 8px;">🗑️</button>
         ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
       </td>
     </tr>`).join('');
+}
+
+function showSlotLink(id){
+  const b=allBookings.find(x=>x.id===id);
+  if(!b)return;
+  toast(`${b.nm} (${b.st}) - ${b.status==='pre'?'Pending':'Paid'} 🏏`,'ok');
 }
 
 // ─── ANALYTICS ───
@@ -500,11 +557,15 @@ async function saveComplete(){
       updates.extraDiscAdded=extraDisc;
       updates.discNote=discNote;
     }
-    await updateDoc(doc(db, 'bookings', activeBookingId), updates);
+    console.log("Updating booking (Complete):", activeBookingId, updates);
+    await db.collection('bookings').doc(activeBookingId).update(updates);
     sendCompleteAlert({...bk,...updates});
     closeModal();
     toast('Match complete! ✅','ok');
-  }catch(e){toast('Error: '+e.message,'err');}
+  }catch(e){
+    console.error("Firebase Update Error (Complete):", e);
+    toast('Error: '+e.message,'err');
+  }
   showSync(false);
 }
 
@@ -548,7 +609,7 @@ function renderPostTab(){
       </td>
     </tr>`).join('');
 }
-async function delBk(id){if(!confirm('Delete?'))return;await deleteDoc(doc(db, 'bookings', id));toast('Deleted','err');}
+async function delBk(id){if(!confirm('Delete?'))return;await db.collection('bookings').doc(id).delete();toast('Deleted','err');}
 
 // ─── CALENDAR ───
 function renderCal(){
@@ -571,7 +632,7 @@ function renderCal(){
 function calNav(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCal();}
 function showCalDay(ds){
   const bks=allBookings.filter(b=>b.date===ds);
-  document.getElementById('calDayTitle').textContent=ds+' Bookings ('+bks.length+')';
+  document.getElementById('calDayTitle').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;width:100%;">${ds} Bookings (${bks.length}) <button class="btn-sm" onclick="goPreWithDate('${ds}')" style="background:var(--gold);color:var(--bg);font-size:10px;padding:4px 10px;border-radius:6px;font-weight:800;">➕ Add Booking</button></div>`;
   document.getElementById('cal-bks').innerHTML=!bks.length
     ?'<tr><td colspan="8" class="empty">No bookings on this date</td></tr>'
     :bks.map(b=>`<tr>
@@ -584,6 +645,8 @@ function showCalDay(ds){
       <td style="display:flex;gap:4px;">
         <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
         ${b.status==='pre'?`<button class="btn-orange" onclick="openComplete('${b.id}')" style="font-size:9px;padding:4px 8px;">✅</button>`:''}
+        <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
+        <button class="btn-del" onclick="delBk('${b.id}')" style="font-size:9px;padding:4px 8px;">🗑️</button>
       </td>
     </tr>`).join('');
 }
@@ -594,9 +657,20 @@ async function saveCust(){
   const ph=document.getElementById('c-ph').value.trim();
   const type=document.getElementById('c-type').value;
   const note=document.getElementById('c-note').value.trim();
-  if(!nm){toast('Name is required!','err');return;}
-  try{await addDoc(collection(db, 'customers'), {nm,ph,type,note,joined:today(),createdAt:new Date().toISOString()});['c-nm','c-ph','c-note'].forEach(id=>document.getElementById(id).value='');toast('Customer saved! ✅','ok');}
-  catch(e){toast('Error: '+e.message,'err');}
+  if(!nm||!ph){toast('Naam aur Phone lazmi hai!','err');return;}
+  
+  showSync(true);
+  try{
+    const cust = {nm,ph,type,note,joined:today(),createdAt:new Date().toISOString()};
+    console.log("Saving customer:", cust);
+    await db.collection('customers').add(cust);
+    ['c-nm','c-ph','c-note'].forEach(id=>document.getElementById(id).value='');
+    toast('Customer saved! ✅','ok');
+  }catch(e){
+    console.error("Firebase Save Error (Customer):", e);
+    toast('Error: '+e.message,'err');
+  }
+  showSync(false);
 }
 function renderCustTable(q){
   let custs=allCustomers;
@@ -625,7 +699,7 @@ function renderCustTable(q){
       </tr>`;
     }).join('');
 }
-async function delCust(id){if(!confirm('Delete?'))return;await deleteDoc(doc(db, 'customers', id));toast('Deleted','err');}
+async function delCust(id){if(!confirm('Delete?'))return;await db.collection('customers').doc(id).delete();toast('Deleted','err');}
 
 // ─── BULK WHATSAPP ───
 function bulkWAReminder(){
@@ -645,15 +719,26 @@ function bulkWAReminder(){
 // ─── EXPENSE ───
 function checkExpCat(){document.getElementById('e-other-wrap').style.display=document.getElementById('e-c').value==='Other'?'block':'none';}
 async function saveExp(){
-  const d=document.getElementById('e-d').value;
-  let c=document.getElementById('e-c').value;
-  if(c==='Other')c=document.getElementById('e-other').value.trim()||'Other';
-  const a=document.getElementById('e-a').value;
-  const pay=document.getElementById('e-pay').value;
-  const desc=document.getElementById('e-desc').value.trim();
-  if(!d||!a){toast('Date and amount are required!','err');return;}
-  try{await addDoc(collection(db, 'expenses'), {date:d,cat:c,amount:parseFloat(a),pay,desc,createdAt:new Date().toISOString()});['e-a','e-desc','e-other'].forEach(id=>document.getElementById(id).value='');document.getElementById('e-other-wrap').style.display='none';document.getElementById('e-c').value='Electricity';toast('Expense saved! ✅','ok');}
-  catch(e){toast('Error: '+e.message,'err');}
+  const date=document.getElementById('e-d').value;
+  let cat=document.getElementById('e-c').value;
+  const amt=parseFloat(document.getElementById('e-a').value)||0;
+  const pay=document.getElementById('e-p').value;
+  const desc=document.getElementById('e-de').value.trim();
+  if(cat==='Other')cat=document.getElementById('e-other').value.trim();
+  if(!date||!cat||!amt){toast('Date, Category and Amount required!','err');return;}
+  
+  showSync(true);
+  try{
+    const exp = {date,cat,amount:amt,pay,desc,createdAt:new Date().toISOString()};
+    console.log("Saving expense:", exp);
+    await db.collection('expenses').add(exp);
+    ['e-a','e-de','e-other'].forEach(id=>document.getElementById(id).value='');
+    toast('Expense saved! ✅','ok');
+  }catch(e){
+    console.error("Firebase Save Error (Expense):", e);
+    toast('Error: '+e.message,'err');
+  }
+  showSync(false);
 }
 function renderET(){
   const fd=document.getElementById('ef-d').value;const fc=document.getElementById('ef-c').value;
@@ -669,7 +754,7 @@ function renderET(){
       <td><button class="btn-del" onclick="delEx('${e.id}')">Del</button></td>
     </tr>`).join('');
 }
-async function delEx(id){if(!confirm('Delete?'))return;await deleteDoc(doc(db, 'expenses', id));toast('Deleted','err');}
+async function delEx(id){if(!confirm('Delete?'))return;await db.collection('expenses').doc(id).delete();toast('Deleted','err');}
 function clrEF(){document.getElementById('ef-d').value='';document.getElementById('ef-c').value='';renderET();}
 
 // ─── REPORTS ───
@@ -691,7 +776,8 @@ function renderRep(){
   document.getElementById('r-prf').textContent=Rs(prf);document.getElementById('r-prf').style.color=prf>=0?'var(--green)':'var(--red)';
   document.getElementById('r-prf-s').textContent=prf>=0?'Profit':'Loss';
   document.getElementById('r-disc').textContent=Rs(tDisc);document.getElementById('r-adv').textContent=Rs(tAdv);document.getElementById('r-due').textContent=Rs(tDue);
-  document.getElementById('r-cash').textContent=Rs(cashT);document.getElementById('r-jazz').textContent=Rs(jazzT);document.getElementById('r-bank').textContent=Rs(bankT);document.getElementById('r-easy').textContent=Rs(easyT);
+  document.getElementById('r-cash').textContent=Rs(cashT);document.getElementById('r-jazz').textContent=Rs(jazzT);document.getElementById('r-bank').textContent=Rs(bankT);
+  document.getElementById('r-easy').textContent=Rs(easyT);
   const dI={},dE={};
   mB.forEach(b=>{const d=parseInt(b.date.split('-')[2]);dI[d]=(dI[d]||0)+(parseFloat(b.totalPaid)||0);});
   mE.forEach(e=>{const d=parseInt(e.date.split('-')[2]);dE[d]=(dE[d]||0)+(parseFloat(e.amount)||0);});
@@ -878,27 +964,35 @@ async function saveAddPay(){
   const cashNote=document.getElementById('ap-cash-note').value.trim();
   const accNote=document.getElementById('ap-acc-note').value.trim();
   const status=document.getElementById('ap-status').value;
-  if(cash===0&&acc===0){toast('Koi amount enter karo!','err');return;}
-  const newAfterCash=(bk.afterCash||0)+cash;
-  const newAfterAcc=(bk.afterAcc||0)+acc;
-  const newTotalPaid=(bk.totalPaid||0)+cash+acc;
-  const newDue=Math.max(0,bk.fin-newTotalPaid);
+  if(cash===0&&acc===0){toast('Amount enter karo!','err');return;}
+
   showSync(true);
   try{
-    await db.collection('bookings').doc(activeAddPayId).update({
+    const newAfterCash=(bk.afterCash||0)+cash;
+    const newAfterAcc=(bk.afterAcc||0)+acc;
+    const newTotalPaid=(bk.totalPaid||0)+cash+acc;
+    const newDue=Math.max(0,(bk.fin||0)-newTotalPaid);
+    
+    const updates = {
       afterCash:newAfterCash,
       afterAcc:newAfterAcc,
       afterAccType:accType||bk.afterAccType||'',
-      afterCashNote:(bk.afterCashNote||'')+( cashNote?' | '+cashNote:''),
+      afterCashNote:(bk.afterCashNote||'')+(cashNote?' | '+cashNote:''),
       afterAccNote:(bk.afterAccNote||'')+(accNote?' | '+accNote:''),
       totalPaid:newTotalPaid,
       due:newDue,
       status:status,
       lastPaymentAt:new Date().toISOString()
-    });
+    };
+    
+    console.log("Updating booking (AddPay):", activeAddPayId, updates);
+    await db.collection('bookings').doc(activeAddPayId).update(updates);
     closeAddPay();
     toast('Payment add ho gaya! ✅','ok');
-  }catch(e){toast('Error: '+e.message,'err');}
+  }catch(e){
+    console.error("Firebase Update Error (AddPay):", e);
+    toast('Error: '+e.message,'err');
+  }
   showSync(false);
 }
 
@@ -966,6 +1060,7 @@ function onTimeChange(){
 function checkDateWarning(){
   const date = document.getElementById('b-date').value;
   const dw = document.getElementById('dateWarn');
+  if(!dw) return;
   if(!date){dw.style.display='none';return;}
   dw.style.display = date < today() ? 'block' : 'none';
 }
@@ -975,6 +1070,7 @@ function checkMidnight(){
   const st = document.getElementById('b-st').value;
   const hrs = parseFloat(document.getElementById('b-hr').value)||0;
   const mw = document.getElementById('midnightWarn');
+  if(!mw) return;
   if(!st||!hrs){mw.style.display='none';return;}
   const {endTime, crossesMidnight} = getEndInfo(st, hrs);
   if(crossesMidnight){
@@ -989,6 +1085,7 @@ function checkMidnight(){
 function updateDayPreview(){
   const date = document.getElementById('b-date').value;
   const dp = document.getElementById('dayPreview');
+  if(!dp) return;
   if(!date){dp.style.display='none';return;}
   const d = new Date(date+'T00:00:00');
   const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1238,16 +1335,27 @@ async function saveEdit(){
   const nt=document.getElementById('ed-note').value.trim();
   const st=document.getElementById('ed-hour').value+':'+document.getElementById('ed-min').value+' '+document.getElementById('ed-ampm').value;
   if(!nm){toast('Name required!','err');return;}
+  
   showSync(true);
   try{
     const updates={nm,ph,vip,nt,st};
     if(hrs>0)updates.hrs=hrs;
     const bk=allBookings.find(b=>b.id===activeEditId);
     if(hrs>0&&bk&&hrs!==bk.hrs){const nf=Math.max(0,Math.round(hrs*2000)+(bk.exA||0)-(bk.dA||0));updates.fin=nf;updates.due=Math.max(0,nf-(bk.totalPaid||0));}
+    
+    console.log("Updating booking (Edit):", activeEditId, updates);
     await db.collection('bookings').doc(activeEditId).update(updates);
-    if(ph&&bk&&!bk.ph&&!allCustomers.find(c=>c.ph===ph))await db.collection('customers').add({nm,ph,type:vip,note:'',joined:bk.date,createdAt:new Date().toISOString()});
-    closeEdit();toast('Updated! ✅','ok');
-  }catch(e){toast('Error: '+e.message,'err');}
+    
+    if(ph&&bk&&!bk.ph&&!allCustomers.find(c=>c.ph===ph)) {
+       await db.collection('customers').add({nm,ph,type:vip,note:'',joined:bk.date,createdAt:new Date().toISOString()});
+    }
+    
+    closeEdit();
+    toast('Updated! ✅','ok');
+  }catch(e){
+    console.error("Firebase Update Error (Edit):", e);
+    toast('Error: '+e.message,'err');
+  }
   showSync(false);
 }
 
@@ -1358,7 +1466,11 @@ function renderTimer(){
   });
 
   const sec = document.getElementById('timerSection');
-  if(sec) sec.innerHTML = html || '<div class="no-bookings-timer">No bookings today</div>';
+  if(sec){
+    const dateStr = new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const header = `<div style="text-align:center;margin-bottom:12px;"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);letter-spacing:1px;">${dateStr}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:800;">Live Match Timers</div></div>`;
+    sec.innerHTML = header + (html || '<div class="no-bookings-timer">No bookings today</div>');
+  }
 }
 
 function formatCountdown(totalSecs){
@@ -1370,8 +1482,56 @@ function formatCountdown(totalSecs){
   return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
 }
 
+function goPreWithDate(date){
+  go('pre');
+  const dInp = document.getElementById('b-date');
+  if(dInp){
+    dInp.value = date;
+    checkConflict();
+  }
+}
+
+// ─── AUTH LOGIC ───
+let APP_PIN = "1122"; // Default fallback
+
+function checkPin() {
+  const inp = document.getElementById('pinInp');
+  const err = document.getElementById('pinErr');
+  if (inp.value === APP_PIN) {
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    localStorage.setItem('sultans_auth', 'true');
+    inp.value = '';
+    err.textContent = '';
+  } else {
+    err.textContent = '❌ Invalid PIN! Try again.';
+    inp.value = '';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('sultans_auth');
+  location.reload();
+}
+
 // ─── INIT ───
 function init(){
+  console.log('Initializing app...');
+  
+  // Check auth
+  if (localStorage.getItem('sultans_auth') === 'true') {
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+  }
+
+  // Sync PIN from Admin Settings in Firebase
+  db.collection('settings').doc('admin').onSnapshot(doc => {
+    if(doc.exists && doc.data().password){
+      APP_PIN = doc.data().password;
+      console.log("PIN Synced from Firebase:", APP_PIN);
+    }
+  }, err => console.error("Firebase PIN Sync Error:", err));
+
   tick();
   const td=today();
   ['b-date','e-d','ef-d'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=td;});
@@ -1400,5 +1560,23 @@ if('serviceWorker' in navigator){
   });
 }
 
-init();
-startListeners();
+try {
+  init();
+  startListeners();
+} catch (e) {
+  console.error("App initialization error:", e);
+}
+
+// ─── EXPOSE FOR INLINE HTML HANDLERS ───
+Object.assign(window, {
+  downloadInvPDF, shareInvWA, closeInv,
+  calcModal, saveComplete, closeModal, closeAddPay,
+  saveEdit, closeEdit, openEdit,
+  go, saveTarget, printDaily, printReport,
+  openInv, openComplete, openAddPay, delBk,
+  buildTime, checkConflict, calcAmt, custSearch, calcAdvance, savePreMatch,
+  renderPostTab, calNav, showCalDay,
+  bulkWAReminder, saveCust, renderCustTable, delCust,
+  checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
+  calcAddPay, saveAddPay, checkPin, logout
+});
