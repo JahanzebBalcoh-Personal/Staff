@@ -1,1 +1,35 @@
-{"name":"Jahanzeb Admin","short_name":"JB Admin","start_url":"/","display":"standalone","background_color":"#060e1a","theme_color":"#f0b429","icons":[{"src":"icon.jpg","sizes":"512x512","type":"image/jpeg"}]}
+{
+  "name": "Sultans Admin Panel",
+  "short_name": "Sultans Admin",
+  "description": "Admin dashboard for Sultans Indoor Cricket Club. Manage bookings, finances, and customers.",
+  "id": "com.sultans.admin",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#060e1a",
+  "theme_color": "#f0b429",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "sports"],
+  "orientation": "any",
+  "scope": "./",
+  "lang": "en-PK",
+  "dir": "ltr"
+}

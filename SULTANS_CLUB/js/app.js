@@ -19,6 +19,8 @@ let activeBookingId=null;
 let allBookings=[],allExpenses=[],allCustomers=[];
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
 let currentInvBooking=null;
+let allHistory=[];
+const APP_VERSION = '1.2.1'; // Update this when deploying new code
 
 // ─── FIREBASE LISTENERS ───
 function startListeners(){
@@ -27,6 +29,7 @@ function startListeners(){
     db.collection('bookings').onSnapshot(s=>{allBookings=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));showSync(false);refreshTab();},err=>{showSync(false);console.log('Bookings error:',err);});
     db.collection('expenses').onSnapshot(s=>{allExpenses=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('Expenses error:',err);});
     db.collection('customers').onSnapshot(s=>{allCustomers=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nm||'').localeCompare(b.nm||''));refreshTab();},err=>{console.log('Customers error:',err);});
+    db.collection('history_reset').onSnapshot(s=>{allHistory=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('History error:',err);});
   } catch (e) {
     console.error("Firebase Listeners failed:", e);
     showSync(false);
@@ -41,6 +44,7 @@ function refreshTab(){
   else if(fn.includes('post'))renderPostTab();
   else if(fn.includes('cal'))renderCal();
   else if(fn.includes('cust'))renderCustTable('');
+  else if(fn.includes('history'))renderHistory();
   else if(fn.includes('exp'))renderET();
   else if(fn.includes('rep'))renderRep();
 }
@@ -80,6 +84,7 @@ function go(tab){
   document.getElementById('pg-'+tab).classList.add('on');
   if(tab==='dash')renderDash();if(tab==='pre')renderPreTable();if(tab==='post')renderPostTab();
   if(tab==='cal')renderCal();if(tab==='cust')renderCustTable('');if(tab==='exp')renderET();if(tab==='rep')renderRep();
+  if(tab==='history')renderHistory();
 }
 
 // ─── TARGET ───
@@ -1524,19 +1529,41 @@ function init(){
     document.getElementById('mainApp').style.display = 'block';
   }
 
-  // Sync PIN & Rate from Admin Settings in Firebase
+  // Sync Settings from Admin in Firebase
   db.collection('settings').doc('admin').onSnapshot(doc => {
     if(doc.exists){
       const data = doc.data();
-      if(data.password){
-        APP_PIN = data.password;
-        console.log("PIN Synced:", APP_PIN);
+      // 1. PIN Sync
+      if(data.password){ APP_PIN = data.password; console.log("PIN Synced"); }
+      
+      // 2. Rate Sync
+      if(data.rate){ 
+        RATE = data.rate; 
+        if(typeof calcAmt === 'function') calcAmt(); 
       }
-      if(data.rate){
-        RATE = data.rate;
-        console.log("RATE Synced:", RATE);
-        // Refresh calculation if on dash/booking page
-        if(typeof calcAmt === 'function') calcAmt();
+      
+      // 3. Maintenance Mode
+      const mOverlay = document.getElementById('maintOverlay');
+      if(data.maint){
+        mOverlay.classList.add('on');
+      } else {
+        mOverlay.classList.remove('on');
+      }
+
+      // 4. Version Check
+      if(data.version && data.version !== APP_VERSION){
+        document.getElementById('updateBanner').classList.add('on');
+      } else {
+        document.getElementById('updateBanner').classList.remove('on');
+      }
+
+      // 5. Always Ask PIN
+      if(data.alwaysPin){
+        // Force logout on initialization if alwaysPin is true and not already showing pinScreen
+        if(localStorage.getItem('sultans_auth') === 'true'){
+           localStorage.removeItem('sultans_auth');
+           location.reload();
+        }
       }
     }
   }, err => console.error("Firebase Sync Error:", err));
@@ -1576,6 +1603,76 @@ try {
   console.error("App initialization error:", e);
 }
 
+function renderHistory(){
+  const h=document.getElementById('historyList');
+  if(!h) return;
+  if(!allHistory.length){h.innerHTML='<div class="empty">No snapshots found. Reset krne pr yahan summary nazar ayegi.</div>';return;}
+  h.innerHTML=allHistory.map(s=>`
+    <div class="card" style="border-left:4px solid var(--gold); border-bottom: 1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1.2px;color:var(--gold);">SNAPSHOT: ${s.date}</div>
+        <button class="btn-del" style="font-size:9px;padding:3px 8px;" onclick="delHistory('${s.id}')">Delete Row</button>
+      </div>
+      <div class="stats" style="margin-bottom:0;grid-template-columns:repeat(2,1fr);gap:8px;">
+        <div class="sc"><div class="sc-lbl">Earning</div><div class="sc-val" style="font-size:14px;color:var(--green);">${Rs(s.earned)}</div></div>
+        <div class="sc"><div class="sc-lbl">Expense</div><div class="sc-val" style="font-size:14px;color:var(--red);">${Rs(s.expense)}</div></div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:8px;">Archived on: ${s.resetAt || '—'} | Count: ${s.count}</div>
+    </div>`).join('');
+}
+
+async function archiveAndReset(){
+  if(!confirm('⚠️ DANGER: Reset krne se Bookings, Expenses or Customers clear ho jayenge.\n\nSummary History me archive ki jaye gi.')) return;
+  if(!confirm('Final Confirmation: Kya aap waqai reset chahte hain?')) return;
+  
+  toast('Archiving data...','info');
+  const earned = allBookings.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
+  const expense = allExpenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  const count = allBookings.length;
+  
+  try {
+    await db.collection('history_reset').add({
+      date: today(),
+      earned,
+      expense,
+      count,
+      resetAt: new Date().toLocaleString('en-PK')
+    });
+    
+    toast('Clearing Bookings...','info');
+    const bks = await db.collection('bookings').get();
+    let batch = db.batch();
+    bks.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    toast('Clearing Expenses...','info');
+    const exps = await db.collection('expenses').get();
+    batch = db.batch();
+    exps.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    toast('Clearing Customers...','info');
+    const custs = await db.collection('customers').get();
+    batch = db.batch();
+    custs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    
+    toast('Reset Complete! ✅','ok');
+    go('dash');
+  } catch(e) {
+    toast('Error: '+e.message, 'err');
+    console.error(e);
+  }
+}
+
+async function delHistory(id){
+  if(!confirm('Delete this history row?')) return;
+  try {
+    await db.collection('history_reset').doc(id).delete();
+    toast('Deleted','ok');
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
 // ─── EXPOSE FOR INLINE HTML HANDLERS ───
 Object.assign(window, {
   downloadInvPDF, shareInvWA, closeInv,
@@ -1587,5 +1684,6 @@ Object.assign(window, {
   renderPostTab, calNav, showCalDay,
   bulkWAReminder, saveCust, renderCustTable, delCust,
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
-  calcAddPay, saveAddPay, checkPin, logout
+  calcAddPay, saveAddPay, checkPin, logout,
+  archiveAndReset, renderHistory, delHistory
 });

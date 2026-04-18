@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="apple-touch-icon" href="icon.jpg">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sultans">
+<meta name="apple-mobile-web-app-title" content="Sultans Club">
+<meta name="description" content="Premium Indoor Cricket Club in Multan.">
 <meta name="theme-color" content="#f0b429">
 <title>Sultans Cricket Club</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -237,6 +238,7 @@
   <div class="tab" onclick="go('cust')">👥 Customers</div>
   <div class="tab" onclick="go('exp')">💸 Kharcha</div>
   <div class="tab" onclick="go('rep')">📊 Reports</div>
+  <div class="tab" onclick="go('history')">📜 History</div>
 </div>
 
 <!-- DASHBOARD -->
@@ -602,11 +604,25 @@
     <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>After Match</th><th>Due</th><th>Remind</th></tr></thead>
     <tbody id="pd-tbl"></tbody>
   </table></div>
-  <div class="sh"><div class="sh-t">Expense Breakdown</div></div>
   <div class="tw"><table>
     <thead><tr><th>Category</th><th>Total</th><th>%</th></tr></thead>
     <tbody id="eb-tbl"></tbody>
   </table></div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="pg" id="pg-history">
+  <br>
+  <div class="sh"><div class="sh-t">📜 Archived History</div></div>
+  <div class="card" style="background:rgba(240,180,41,0.05);border-color:rgba(240,180,41,0.2);">
+    <div style="font-size:12px;color:var(--soft);margin-bottom:12px;">Reset krne se pehle archive kiya gaya data yahan nazar ata hai.</div>
+    <div style="margin-top:10px; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.05); border-radius:12px; padding:14px;">
+      <div style="font-size:10px; font-weight:800; color:var(--red); letter-spacing:1.5px; margin-bottom:8px;">⚠️ DANGER ZONE</div>
+      <div style="font-size:11px; color:var(--soft); margin-bottom:10px;">Reset krne se pehle sara data History me archive ho jaye ga.</div>
+      <button class="btn-del" onclick="archiveAndReset()" style="width:100%; padding:11px; font-size:13px; font-weight:800; border-radius:10px;">📁 ARCHIVE & RESET ALL DATA</button>
+    </div>
+  </div>
+  <div id="historyList"></div>
 </div>
 
 <div class="footer">
@@ -618,5 +634,30 @@
 <div class="toast" id="toast"></div>
 
 <script src="js/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(e => console.log('SW Error:', e)); });
+  }
+</script>
+
+<!-- MAINTENANCE OVERLAY -->
+<div id="maintOverlay" class="maint-overlay">
+  <div class="maint-card">
+    <div class="maint-icon">⚙️</div>
+    <h1>Under Maintenance</h1>
+    <p>Sorry for the inconvenience! We are performing routine maintenance for a better experience. We will be back shortly.</p>
+    <div class="contact-box">
+      <div class="c-lbl">CONTACT CREATOR</div>
+      <div class="c-val">Jahanzeb Baloch</div>
+      <div class="c-num">0306-0711529</div>
+    </div>
+  </div>
+</div>
+
+<!-- UPDATE BANNER -->
+<div id="updateBanner" class="update-banner" onclick="location.reload()">
+  ✨ New Update Available — Tap to Refresh
+</div>
+
 </body>
 </html>
