@@ -224,6 +224,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="tab" onclick="go('feed')">Live Feed</div>
   <div class="tab" onclick="go('notes')">Notes</div>
   <div class="tab" onclick="go('history')">📜 History</div>
+  <div class="tab" onclick="go('online')">🌐 Online <span id="onlineCount" style="background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;display:none;">0</span></div>
   <div class="tab" onclick="go('settings')">Settings</div>
 </div>
 
@@ -232,6 +233,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <br>
   <div class="sh"><div class="sh-t">Live Match Timer</div><span class="sdot"></span></div>
   <div id="timerSec" style="margin-bottom:12px;"></div>
+
+  <!-- PENDING ONLINE BOOKINGS (QUICK VIEW) -->
+  <div id="onlineAlert" style="display:none; background:rgba(59,130,246,0.1); border:1.5px solid rgba(59,130,246,0.3); border-radius:15px; padding:15px; margin-bottom:15px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--blue); letter-spacing:1px;">🌐 New Online Bookings</div>
+      <button class="btn-sm" onclick="go('online')" style="background:var(--blue); color:#fff; border:none;">Review All</button>
+    </div>
+    <div id="onlineList"></div>
+  </div>
 
   <div class="sh">
     <div class="sh-t">Today's Summary</div>
@@ -293,6 +303,21 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="tw"><table>
     <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Time</th><th>Hrs</th><th>Total</th><th>Advance</th><th>Method</th><th>Cash</th><th>Account</th><th>Paid</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody id="bkTbl"></tbody>
+  </table></div>
+</div>
+
+</div>
+
+<!-- ONLINE BOOKINGS PAGE -->
+<div class="pg" id="pg-online">
+  <br>
+  <div class="sh"><div class="sh-t">🌐 Online Booking Requests</div></div>
+  <div style="background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.2); border-radius:12px; padding:12px; margin-bottom:15px; font-size:12px; color:var(--soft);">
+    Customers ne website se booking ki hai. TRID check karein aur confirm karein.
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Time</th><th>Hrs</th><th>Advance</th><th>TRID</th><th>Actions</th></tr></thead>
+    <tbody id="onlineTbl"></tbody>
   </table></div>
 </div>
 
@@ -523,9 +548,11 @@ function startSync(){
         if(d.status==='pre'){txt='Pre-Match: '+d.nm+' — '+Rs(d.fin)+' (Adv: '+Rs(d.advAmt)+')';color='var(--orange)';}
         else if(d.status==='paid'){txt='Complete: '+d.nm+' — '+Rs(d.fin)+' PAID';color='var(--green)';}
         else if(d.status==='partial'){txt='Partial: '+d.nm+' — Due: '+Rs(d.due);color='var(--gold)';}
+        else if(d.status==='pending'){txt='🌐 Online Request: '+d.nm+' (TRID: '+d.trid+')';color='var(--blue)';}
         if(txt){feedItems.unshift({txt:txt,t:t,color:color});if(feedItems.length>50)feedItems.pop();if(document.getElementById('pg-feed').classList.contains('on'))renderFeed();}
       }
     });
+    renderOnlineAlert();
     refreshActive();
   },function(err){
     try{document.getElementById('sdot').style.background='var(--red)';}catch(e){}
@@ -561,7 +588,52 @@ function go(tab){
   if(tab==='feed')renderFeed();
   if(tab==='notes')renderNotes();
   if(tab==='history')renderHistory();
+  if(tab==='online')renderOnline();
   if(tab==='settings')loadSettings();
+}
+
+function renderOnlineAlert(){
+  var pend = allBks.filter(function(b){return b.status==='pending';});
+  var alert = document.getElementById('onlineAlert');
+  var count = document.getElementById('onlineCount');
+  if(!alert || !count) return;
+  if(pend.length > 0){
+    alert.style.display = 'block';
+    count.style.display = 'inline-block';
+    count.textContent = pend.length;
+    document.getElementById('onlineList').innerHTML = pend.slice(0,3).map(function(b){
+      return '<div style="font-size:12px; margin-bottom:5px; color:var(--soft);"><b>'+b.nm+'</b> — '+b.date+' ('+b.st+') <span style="color:var(--blue);">TRID: '+b.trid+'</span></div>';
+    }).join('');
+  } else {
+    alert.style.display = 'none';
+    count.style.display = 'none';
+  }
+}
+
+function renderOnline(){
+  var h='';
+  var pend = allBks.filter(function(b){return b.status==='pending';});
+  if(!pend.length){h='<tr><td colspan="8" class="empty">No pending online bookings</td></tr>';}
+  else {
+    pend.forEach(function(b){
+      h+='<tr><td>'+b.date+'</td><td>'+b.nm+'</td><td>'+b.ph+'</td><td>'+b.st+'</td><td>'+b.hrs+'</td><td>'+Rs(b.advAmt)+'</td><td><b style="color:var(--blue);">'+b.trid+'</b></td>';
+      h+='<td><button class="btn-sm" style="background:var(--green);color:#000;border:none;padding:4px 8px;" onclick="verifyOnline(\''+b.id+'\', true)">Approve</button> <button class="btn-sm" style="background:var(--red);color:#fff;border:none;padding:4px 8px;" onclick="verifyOnline(\''+b.id+'\', false)">Reject</button></td></tr>';
+    });
+  }
+  document.getElementById('onlineTbl').innerHTML=h;
+}
+
+async function verifyOnline(id, approve){
+  if(!confirm(approve?'Verify TRID and approve booking?':'Reject this booking?')) return;
+  try {
+    if(approve){
+      await db.collection('bookings').doc(id).update({status:'pre'});
+      toast('Booking Approved! ✅');
+    } else {
+      await db.collection('bookings').doc(id).update({status:'rejected'});
+      toast('Booking Rejected ❌','err');
+    }
+  } catch(e){ toast('Error: '+e.message,'err'); }
 }
 
 // TIMER
