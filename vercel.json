@@ -1,6 +1,0 @@
-{
-  "rewrites": [
-    { "source": "/", "destination": "/SULTANS_CLUB/index.html" },
-    { "source": "/(.*)", "destination": "/SULTANS_CLUB/$1" }
-  ]
-}
