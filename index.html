@@ -18,6 +18,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <script>
+    window.addEventListener('error', function(e) {
+      console.error('Global Error:', e);
+      const errBox = document.getElementById('globalErr');
+      if (errBox) {
+        errBox.style.display = 'block';
+        errBox.textContent = '⚠️ Error: ' + e.message;
+      }
+    });
     (function() {
       const auth = localStorage.getItem('sultans_auth') === 'true';
       const alwaysPin = localStorage.getItem('always_pin') === 'true';
@@ -30,6 +38,12 @@
   </script>
 </head>
 <body>
+<div id="globalErr" style="position:fixed;top:0;left:0;width:100%;background:var(--red);color:#fff;font-size:12px;font-weight:bold;padding:10px;z-index:10001;display:none;text-align:center;"></div>
+<div id="loadingOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s;">
+  <div class="logo-w" style="width:80px;height:80px;font-size:40px;margin-bottom:20px;">🏏</div>
+  <div class="bn" style="font-size:32px;">THE SULTANS</div>
+  <div style="color:var(--gold);margin-top:20px;font-weight:bold;letter-spacing:2px;font-size:12px;">LOADING SYSTEM...</div>
+</div>
 
 <!-- INVOICE MODAL -->
 <div class="inv-modal" id="invModal">

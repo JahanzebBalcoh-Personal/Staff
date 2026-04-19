@@ -1668,18 +1668,19 @@ function init(){
   const savedTarget=localStorage.getItem('daily_target');
   if(savedTarget&&document.getElementById('targetInput'))document.getElementById('targetInput').value=savedTarget;
   calcAmt();renderDash();startTimer();
-}
+  
+  // Hide loading overlay on success
+  setTimeout(() => {
+    const loader = document.getElementById('loadingOverlay');
+    if(loader) {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.style.display = 'none', 500);
+    }
+  }, 800);
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
   });
-}
-
-try {
-  init();
-  startListeners();
-} catch (e) {
-  console.error("App initialization error:", e);
 }
 
 function renderHistory(){
@@ -1766,3 +1767,19 @@ Object.assign(window, {
   calcAddPay, saveAddPay, checkPin, logout,
   archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact
 });
+
+// ─── BOOT ───
+try {
+  if (typeof firebase === 'undefined') {
+    throw new Error("Firebase SDK not loaded! Check internet connection.");
+  }
+  init();
+  startListeners();
+} catch (e) {
+  console.error("App boot error:", e);
+  const errBox = document.getElementById('globalErr');
+  if (errBox) {
+    errBox.style.display = 'block';
+    errBox.textContent = '⚠️ System Boot Failed: ' + e.message;
+  }
+}
