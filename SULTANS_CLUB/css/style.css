@@ -1,6 +1,13 @@
 :root{--gold:#f0b429;--gold2:#e07b00;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;--teal:#14b8a6;--orange:#f97316;--bg:#060e1a;--card:#0f1c2e;--card2:#162035;--border:rgba(240,180,41,0.13);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* Auth States - EXCLUSIVE */
+html.auth-ok #pinScreen { display: none !important; }
+html.auth-ok #mainApp { display: block !important; }
+html.auth-none #pinScreen { display: flex !important; }
+html.auth-none #mainApp { display: none !important; }
+
 #pinScreen{position:fixed;inset:0;background:linear-gradient(135deg,#060e1a,#0d1a2e);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:20px;}
 .pin-logo{font-size:52px;margin-bottom:8px;filter:drop-shadow(0 0 20px rgba(240,180,41,0.5));}
 .pin-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
@@ -182,6 +189,18 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .timer-badge.next{background:rgba(59,130,246,0.15);color:var(--blue);}
 .timer-badge.waiting{background:rgba(240,180,41,0.12);color:var(--gold);}
 @keyframes badgePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+
+/* CAROUSEL */
+.timer-carousel { position: relative; overflow: hidden; }
+.timer-track { display: flex; align-items: stretch; gap: 10px; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.timer-panel { flex: 1; min-width: 0; transition: all 0.4s; }
+.timer-panel.side { opacity: 0.3; transform: scale(0.85); filter: blur(1px); pointer-events: none; }
+.timer-panel.curr { opacity: 1; transform: scale(1); filter: blur(0); z-index: 2; }
+
+@media(max-width: 600px) {
+  .timer-panel.side { display: none; }
+}
+
 .timer-team{font-size:16px;font-weight:900;margin-bottom:3px;}
 .timer-time{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px;}
 .timer-countdown{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;letter-spacing:2px;margin:4px 0;}
@@ -197,6 +216,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .timer-done-label{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--muted);font-weight:700;}
 .timer-amount{font-size:10px;font-weight:800;margin-top:4px;}
 .no-bookings-timer{text-align:center;padding:20px;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:14px;}
+.nav-btn { background: var(--card2); color: var(--gold); border: 1px solid var(--border); border-radius: 8px; padding: 10px 15px; cursor: pointer; font-size: 16px; font-weight: bold; transition: .2s; margin:0 5px;}
+.nav-btn:hover:not(:disabled) { background: rgba(240,180,41,0.1); }
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 

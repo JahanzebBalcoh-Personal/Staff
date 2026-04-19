@@ -357,6 +357,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div id="notesList"></div>
 </div>
 
+<!-- HISTORY PAGE -->
+<div class="pg" id="pg-history">
+  <br>
+  <div class="sh">
+    <div class="sh-t">📜 Archive History</div>
+    <div style="font-size:10px;color:var(--muted);">Reset ke baad ki summaries</div>
+  </div>
+  <div id="historyList"><div class="empty">Loading...</div></div>
+</div>
+
 <!-- SETTINGS PAGE -->
 <div class="pg" id="pg-settings">
   <br>
@@ -484,7 +494,7 @@ function tick(){
 setInterval(tick,1000);tick();
 
 var Rs=function(n){return 'Rs.'+Number(n||0).toLocaleString('en-PK');};
-var today=function(){return new Date().toISOString().slice(0,10);};
+var today=function(){var d=new Date();var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd;};
 function toast(m,t){var el=document.getElementById('toast');el.textContent=m;el.className='toast on '+(t||'ok');setTimeout(function(){el.className='toast';},3000);}
 function pmbadge(m){var mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};var ml={cash:'Cash',bank:'Alfalah',jazz:'Jazz',easy:'Easy'};return '<span class="bx '+(mp[m]||'bx-g')+'">'+(ml[m]||m||'—')+'</span>';}
 function sbadge(s){if(s==='paid')return '<span class="bx bx-g">PAID</span>';if(s==='partial')return '<span class="bx bx-y">PARTIAL</span>';if(s==='pre')return '<span class="bx bx-o">PRE</span>';return '';}

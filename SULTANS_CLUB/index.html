@@ -16,10 +16,20 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    (function() {
+      const auth = localStorage.getItem('sultans_auth') === 'true';
+      const alwaysPin = localStorage.getItem('always_pin') === 'true';
+      if (auth && !alwaysPin) {
+        document.documentElement.classList.add('auth-ok');
+      } else {
+        document.documentElement.classList.add('auth-none');
+      }
+    })();
+  </script>
 </head>
 <body>
-
 
 <!-- INVOICE MODAL -->
 <div class="inv-modal" id="invModal">
@@ -209,7 +219,7 @@
 </div>
 
 <!-- MAIN APP -->
-<div id="mainApp" style="display:none;">
+<div id="mainApp">
 <div class="sync-bar" id="syncBar">🔄 Sync ho raha hai...</div>
 <div class="hdr">
   <div class="hdr-top">

@@ -51,17 +51,34 @@ function refreshTab(){
 
 
 // ─── CLOCK ───
+let lastDate = today();
 function tick(){
   const n=new Date();
-  document.getElementById('clk').textContent=n.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('clkd').textContent=n.toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  const currentLocaleTime = n.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
+  const currentLocaleDate = n.toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  
+  if (document.getElementById('clk')) document.getElementById('clk').textContent = currentLocaleTime;
+  if (document.getElementById('clkd')) document.getElementById('clkd').textContent = currentLocaleDate;
+
+  // Midnight Date Sync
+  const curDate = today();
+  if(curDate !== lastDate){
+    console.log("Midnight detected! Syncing dates...");
+    lastDate = curDate;
+    ['b-date','e-d','ef-d'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.value = curDate;
+    });
+    // Optionally refresh parts of the UI that depend on "today"
+    if(typeof renderDash === 'function') renderDash();
+  }
 }
 setInterval(tick,1000);tick();
 
 // ─── HELPERS ───
 const Rs=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
 const fromRs = txt => parseFloat((txt||'').replace(/Rs|,/g, ''))||0;
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;};
 function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast on '+t;setTimeout(()=>el.className='toast',3000);}
 function pmbadge(m){const mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};const ml={cash:'💵 Cash',bank:'🏦 Alfalah',jazz:'🟣 Jazz',easy:'🩵 Easy'};return`<span class="bx ${mp[m]||'bx-g'}">${ml[m]||m}</span>`;}
 function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ PRE</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
@@ -727,8 +744,8 @@ async function saveExp(){
   const date=document.getElementById('e-d').value;
   let cat=document.getElementById('e-c').value;
   const amt=parseFloat(document.getElementById('e-a').value)||0;
-  const pay=document.getElementById('e-p').value;
-  const desc=document.getElementById('e-de').value.trim();
+  const pay=document.getElementById('e-pay').value;
+  const desc=document.getElementById('e-desc').value.trim();
   if(cat==='Other')cat=document.getElementById('e-other').value.trim();
   if(!date||!cat||!amt){toast('Date, Category and Amount required!','err');return;}
   
@@ -737,7 +754,7 @@ async function saveExp(){
     const exp = {date,cat,amount:amt,pay,desc,createdAt:new Date().toISOString()};
     console.log("Saving expense:", exp);
     await db.collection('expenses').add(exp);
-    ['e-a','e-de','e-other'].forEach(id=>document.getElementById(id).value='');
+    ['e-a','e-desc','e-other'].forEach(id=>document.getElementById(id).value='');
     toast('Expense saved! ✅','ok');
   }catch(e){
     console.error("Firebase Save Error (Expense):", e);
@@ -1369,6 +1386,7 @@ async function saveEdit(){
 // LIVE TIMER SYSTEM
 // ═══════════════════════════════════════════════════
 let timerInterval = null;
+let currentTimerIdx = 0;
 
 function startTimer(){
   if(timerInterval) clearInterval(timerInterval);
@@ -1376,115 +1394,138 @@ function startTimer(){
   timerInterval = setInterval(renderTimer, 1000);
 }
 
+function timerNav(dir){
+  const sec = document.getElementById('timerSection');
+  if(sec) sec.setAttribute('data-navigated', 'true');
+  currentTimerIdx += dir;
+  renderTimer();
+}
+
 function renderTimer(){
   const now = new Date();
-  const nowMins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  const nowMs = now.getTime();
   const todayStr = today();
 
-  // Update timer clock
   const tc = document.getElementById('timerClock');
-  if(tc) tc.textContent = now.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  if(tc){
+    const dateStr = now.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short' });
+    tc.textContent = dateStr + ' | ' + now.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }
 
-  // Get today's bookings sorted by start time
-  const todayBks = allBookings
-    .filter(b => b.date === todayStr && b.st)
+  const activeBks = allBookings
+    .filter(b => b.st && b.date)
     .map(b => {
-      const startMins = parseTimeToMinutes(b.st);
-      const endMins = startMins + (parseFloat(b.hrs)||1)*60;
-      return {...b, startMins, endMins};
+      // Use absolute Date objects to avoid midnight wraparound bugs
+      const start = new Date(`${b.date}T${b.st.includes(':') ? (b.st.split(' ')[0].length === 4 ? '0'+b.st.split(' ')[0] : b.st.split(' ')[0]) : '00:00'}:00`);
+      
+      // Manual parse for better accuracy
+      const sm = parseTimeToMinutes(b.st);
+      const s = new Date(`${b.date}T00:00:00`);
+      s.setMinutes(sm);
+      const startMs = s.getTime();
+      const endMs = startMs + (Math.round((parseFloat(b.hrs)||1)*60) + (parseFloat(b.exM)||0)) * 60000;
+      return {...b, startMs, endMs};
     })
-    .sort((a,b) => a.startMins - b.startMins);
+    .filter(b => b.endMs > (nowMs - 3600000)) // Show matches ended in last 1hr
+    .sort((a,b) => a.startMs - b.startMs);
 
-  if(!todayBks.length){
-    const sec = document.getElementById('timerSection');
-    if(sec) sec.innerHTML = '<div class="no-bookings-timer">📅 Aaj koi booking nahi</div>';
+  const sec = document.getElementById('timerSection');
+  if(!sec) return;
+
+  if(!activeBks.length){
+    sec.innerHTML = '<div class="no-bookings-timer">📅 No bookings today</div>';
     return;
   }
 
-  let html = '';
-
-  todayBks.forEach((b, idx) => {
-    const startMins = b.startMins;
-    const endMins = b.endMins;
-    const totalDuration = (endMins - startMins) * 60; // in seconds
-
-    if(nowMins >= endMins){
-      // DONE
-      html += `
-      <div class="timer-card done">
-        <div class="timer-badge done">✅ DONE</div>
-        <div class="timer-team" style="color:var(--muted);">${b.nm}</div>
-        <div class="timer-time">${b.st} → ${minutesToTime(endMins)} (${b.hrs}hr)</div>
-        <div class="timer-done-label">Finished ✓</div>
-        <div class="timer-amount" style="color:var(--muted);">
-          Total: ${Rs(b.fin)} | Paid: ${Rs(b.totalPaid||0)} 
-          ${(b.due||0)>0?'<span style="color:var(--red);">| Due: '+Rs(b.due)+'</span>':'<span style="color:var(--green);">| ✅ Clear</span>'}
-        </div>
-      </div>`;
-    } else if(nowMins >= startMins && nowMins < endMins){
-      // ACTIVE NOW
-      const remainSecs = Math.max(0, (endMins - nowMins) * 60);
-      const elapsed = totalDuration - remainSecs;
-      const pct = Math.min(100, (elapsed/totalDuration)*100);
-      const isUrgent = remainSecs < 600; // last 10 min
-      const countdownStr = formatCountdown(remainSecs);
-      const barClass = isUrgent ? 'urgent' : 'active';
-      const countClass = isUrgent ? 'urgent' : 'active';
-
-      html += `
-      <div class="timer-card active" style="${isUrgent?'border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.06);':''}">
-        <div class="timer-badge active">▶️ PLAYING NOW</div>
-        <div class="timer-team" style="color:var(--green);">${b.nm}</div>
-        <div class="timer-time">${b.st} → ${minutesToTime(endMins)} (${b.hrs}hr)</div>
-        <div class="timer-countdown ${countClass}">${countdownStr}</div>
-        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">${isUrgent?'⚠️ Almost done!':'Time remaining'}</div>
-        <div class="timer-bar-track">
-          <div class="timer-bar-fill ${barClass}" style="width:${pct.toFixed(1)}%"></div>
-        </div>
-        <div class="timer-amount" style="color:var(--green);">
-          ${Rs(b.fin)} | Advance: ${Rs(b.advAmt)}
-          ${(b.due||0)>0?'<span style="color:var(--orange);"> | Due: '+Rs(b.due)+'</span>':''}
-        </div>
-      </div>`;
-    } else {
-      // UPCOMING
-      const waitSecs = Math.max(0, (startMins - nowMins) * 60);
-      const isNext = idx > 0 ? todayBks.slice(0,idx).every(x=>nowMins>=x.endMins) : true;
-      const cardClass = isNext ? 'next' : 'waiting';
-      const badgeText = isNext ? '⏭️ UP NEXT' : '⏳ WAITING';
-      const countdownStr = formatCountdown(waitSecs);
-      const countClass = isNext ? 'next' : '';
-
-      html += `
-      <div class="timer-card ${cardClass}">
-        <div class="timer-badge ${cardClass}">${badgeText}</div>
-        <div class="timer-team" style="color:${isNext?'var(--blue)':'var(--gold)'};">${b.nm}</div>
-        <div class="timer-time">${b.st} → ${minutesToTime(endMins)} (${b.hrs}hr)</div>
-        <div class="timer-countdown ${countClass}" style="font-size:22px;">${countdownStr}</div>
-        <div style="font-size:10px;color:var(--muted);">Starts in</div>
-        <div class="timer-amount" style="color:${isNext?'var(--blue)':'var(--gold)'};">
-          Total: ${Rs(b.fin)} | Advance: ${Rs(b.advAmt)}
-          ${(b.due||0)>0?'<span style="color:var(--purple);"> | Due: '+Rs(b.due)+'</span>':''}
-        </div>
-      </div>`;
-    }
-  });
-
-  const sec = document.getElementById('timerSection');
-  if(sec){
-    const dateStr = new Date().toLocaleDateString('en-PK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const header = `<div style="text-align:center;margin-bottom:12px;"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);letter-spacing:1px;">${dateStr}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:800;">Live Match Timers</div></div>`;
-    sec.innerHTML = header + (html || '<div class="no-bookings-timer">No bookings today</div>');
+  if (timerInterval && !sec.getAttribute('data-navigated')) {
+    let activeIdx = activeBks.findIndex(b => nowMs >= b.startMs && nowMs < b.endMs);
+    if (activeIdx === -1) activeIdx = activeBks.findIndex(b => nowMs < b.startMs);
+    if (activeIdx === -1) activeIdx = activeBks.length - 1;
+    currentTimerIdx = Math.max(0, activeIdx);
   }
+  
+  if(currentTimerIdx < 0) currentTimerIdx = 0;
+  if(currentTimerIdx >= activeBks.length) currentTimerIdx = activeBks.length - 1;
+
+  const generateCard = (bk, type) => {
+    if(!bk) return `<div class="timer-panel side" style="visibility:hidden"></div>`;
+    
+    const isToday = bk.date === todayStr;
+    const dateLabel = isToday ? 'Today' : bk.date.split('-').slice(1).reverse().join('/');
+    const isPlaying = nowMs >= bk.startMs && nowMs < bk.endMs;
+    const isDone = nowMs >= bk.endMs;
+    const isSide = type === 'side';
+
+    let statusHtml = '';
+    if(isDone){
+      statusHtml = `
+        <div class="timer-card done">
+          <div class="timer-badge done">✅ DONE</div>
+          <div class="timer-team">${bk.nm}</div>
+          <div style="font-size:10px;color:var(--gold);margin-bottom:5px;">📅 ${dateLabel}</div>
+          <div class="timer-time">${bk.st} (${bk.hrs}hr)</div>
+        </div>`;
+    } else if(isPlaying){
+      const remainSecs = Math.max(0, (bk.endMs - nowMs) / 1000);
+      const isUrgent = remainSecs < 600;
+      const totalSecs = (bk.endMs - bk.startMs) / 1000;
+      const pct = Math.min(100, (((totalSecs - remainSecs)/totalSecs)*100)||0);
+      statusHtml = `
+        <div class="timer-card active">
+          <div class="timer-badge active">▶️ PLAYING NOW</div>
+          <div class="timer-team" style="color:var(--green);">${bk.nm}</div>
+          <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:5px;">📅 ${dateLabel}</div>
+          <div class="timer-time">${bk.st} (${bk.hrs}hr)</div>
+          <div class="timer-countdown ${isUrgent?'urgent':'active'}" style="font-size:${isSide?'18px':'28px'}">${formatCountdownExact(remainSecs)}</div>
+          <div class="timer-bar-track"><div class="timer-bar-fill ${isUrgent?'urgent':'active'}" style="width:${pct.toFixed(1)}%"></div></div>
+        </div>`;
+    } else {
+      const waitSecs = Math.max(0, (bk.startMs - nowMs) / 1000);
+      statusHtml = `
+        <div class="timer-card waiting">
+          <div class="timer-badge waiting">⏳ UPCOMING</div>
+          <div class="timer-team" style="color:var(--gold);">${bk.nm}</div>
+          <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:5px;">📅 ${dateLabel}</div>
+          <div class="timer-time">${bk.st} (${bk.hrs}hr)</div>
+          <div class="timer-countdown" style="font-size:${isSide?'18px':'22px'};color:var(--gold);">${formatCountdownExact(waitSecs)}</div>
+        </div>`;
+    }
+    return `<div class="timer-panel ${type}">${statusHtml}</div>`;
+  };
+
+  const prev = activeBks[currentTimerIdx - 1];
+  const curr = activeBks[currentTimerIdx];
+  const next = activeBks[currentTimerIdx + 1];
+
+  sec.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="nav-btn" onclick="timerNav(-1)" ${!prev?'disabled style="opacity:0.2"':''}>◀</button>
+      <div class="timer-carousel" style="flex:1;">
+        <div class="timer-track" id="timerTrack">
+          ${generateCard(prev, 'side')}
+          ${generateCard(curr, 'curr')}
+          ${generateCard(next, 'side')}
+        </div>
+      </div>
+      <button class="nav-btn" onclick="timerNav(1)" ${!next?'disabled style="opacity:0.2"':''}>▶</button>
+    </div>
+    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:8px;font-weight:800;letter-spacing:1px;">
+      MATCH ${currentTimerIdx+1} / ${activeBks.length}
+    </div>
+  `;
 }
 
-function formatCountdown(totalSecs){
-  const s = Math.floor(totalSecs);
-  const h = Math.floor(s/3600);
-  const m = Math.floor((s%3600)/60);
-  const sec = s%60;
-  if(h>0) return h+'h '+String(m).padStart(2,'0')+'m '+String(sec).padStart(2,'0')+'s';
-  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+function formatCountdownExact(totalSecs){
+  const days = Math.floor(totalSecs / 86400);
+  const hs = totalSecs % 86400;
+  const hrs = Math.floor(hs / 3600);
+  const m = Math.floor((hs % 3600) / 60);
+  const sec = Math.floor(hs % 60);
+  let s = '';
+  if (days > 0) s += days + 'd ';
+  if (hrs > 0 || days > 0) s += String(hrs).padStart(2,'0') + 'h ';
+  s += String(m).padStart(2,'0') + 'm ' + String(sec).padStart(2,'0') + 's';
+  return s;
 }
 
 function goPreWithDate(date){
@@ -1523,11 +1564,7 @@ function logout() {
 function init(){
   console.log('Initializing app...');
   
-  // Check auth
-  if (localStorage.getItem('sultans_auth') === 'true') {
-    document.getElementById('pinScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-  }
+  // Auth check is now handled instantly in the <head> using CSS classes.
 
   // Sync Settings from Admin in Firebase
   db.collection('settings').doc('admin').onSnapshot(doc => {
@@ -1535,6 +1572,9 @@ function init(){
       const data = doc.data();
       // 1. PIN Sync
       if(data.password){ APP_PIN = data.password; console.log("PIN Synced"); }
+      
+      // Sync alwaysPin to localStorage for instant head check
+      localStorage.setItem('always_pin', data.alwaysPin ? 'true' : 'false');
       
       // 2. Rate Sync
       if(data.rate){ 
@@ -1557,14 +1597,6 @@ function init(){
         document.getElementById('updateBanner').classList.remove('on');
       }
 
-      // 5. Always Ask PIN
-      if(data.alwaysPin){
-        // Force logout on initialization if alwaysPin is true and not already showing pinScreen
-        if(localStorage.getItem('sultans_auth') === 'true'){
-           localStorage.removeItem('sultans_auth');
-           location.reload();
-        }
-      }
     }
   }, err => console.error("Firebase Sync Error:", err));
 
@@ -1685,5 +1717,5 @@ Object.assign(window, {
   bulkWAReminder, saveCust, renderCustTable, delCust,
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
   calcAddPay, saveAddPay, checkPin, logout,
-  archiveAndReset, renderHistory, delHistory
+  archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact
 });
