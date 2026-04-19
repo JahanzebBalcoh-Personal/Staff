@@ -1677,6 +1677,8 @@ function init(){
       setTimeout(() => loader.style.display = 'none', 500);
     }
   }, 800);
+}
+
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
