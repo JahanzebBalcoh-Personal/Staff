@@ -487,8 +487,12 @@ function pad(n){return n<10?'0'+n:n;}
 function tick(){
   try{
     var n=new Date();
-    var el=document.getElementById('clk');
-    if(el){var h=n.getHours(),m=n.getMinutes();el.textContent=(h%12||12)+':'+pad(m)+' '+(h<12?'AM':'PM');}
+    var clk=document.getElementById('clk');
+    if(clk){
+      var h=n.getHours(), m=String(n.getMinutes()).padStart(2,'0'), ap=h>=12?'PM':'AM';
+      var h12=h%12||12;
+      clk.textContent=h12+':'+m+' '+ap;
+    }
   }catch(e){}
 }
 setInterval(tick,1000);tick();

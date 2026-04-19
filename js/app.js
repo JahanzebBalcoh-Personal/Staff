@@ -53,29 +53,40 @@ function refreshTab(){
 // ─── CLOCK ───
 let lastDate = today();
 function tick(){
-  const n=new Date();
-  const currentLocaleTime = n.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'});
-  const currentLocaleDate = n.toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-  
-  if (document.getElementById('clk')) document.getElementById('clk').textContent = currentLocaleTime;
-  if (document.getElementById('clkd')) document.getElementById('clkd').textContent = currentLocaleDate;
+  try {
+    const n = new Date();
+    // Use standard formatting to ensure compatibility
+    const hours = n.getHours();
+    const minutes = String(n.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const h12 = hours % 12 || 12;
+    const timeStr = h12 + ':' + minutes + ' ' + ampm;
+    
+    const dateStr = n.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    
+    const clk = document.getElementById('clk');
+    const clkd = document.getElementById('clkd');
+    if (clk) clk.textContent = timeStr;
+    if (clkd) clkd.textContent = dateStr;
 
-  // Midnight Date Sync — fires exactly when date changes (12:00:00 AM)
-  const curDate = today();
-  if(curDate !== lastDate){
-    console.log("Midnight detected! Syncing dates to:", curDate);
-    lastDate = curDate;
-    // Update all date inputs to new date immediately
-    ['b-date','e-d','ef-d'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.value = curDate;
-    });
-    // Refresh dashboard and timer
-    if(typeof renderDash === 'function') renderDash();
-    if(typeof startTimer === 'function') startTimer();
+    // Midnight Date Sync
+    const curDate = today();
+    if(curDate !== lastDate){
+      console.log("Midnight detected! Syncing dates to:", curDate);
+      lastDate = curDate;
+      ['b-date','e-d','ef-d'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.value = curDate;
+      });
+      if(typeof renderDash === 'function') renderDash();
+      if(typeof startTimer === 'function') startTimer();
+    }
+  } catch (e) {
+    console.warn("Clock tick error:", e);
   }
 }
-setInterval(tick,1000);tick();
+setInterval(tick,1000);
+tick();
 
 // ─── HELPERS ───
 const Rs=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
@@ -1404,8 +1415,13 @@ function renderTimer() {
 
   const tc = document.getElementById('timerClock');
   if(tc){
+    const h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    const ap = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
     const dateStr = now.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short' });
-    tc.textContent = dateStr + ' | ' + now.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    tc.textContent = dateStr + ' | ' + h12 + ':' + m + ':' + s + ' ' + ap;
   }
 
   // Build bookings with absolute timestamps — ONLY show today + future (not past days)
