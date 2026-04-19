@@ -50,29 +50,30 @@ function refreshTab(){
 }
 
 
+// ─── HELPERS ───
+const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;};
+const Rs=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
+const fromRs = txt => parseFloat((txt||'').replace(/Rs|,/g, ''))||0;
+function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast on '+t;setTimeout(()=>el.className='toast',3000);}
+
 // ─── CLOCK ───
 let lastDate = today();
 function tick(){
   try {
     const n = new Date();
-    // Use standard formatting to ensure compatibility
     const hours = n.getHours();
     const minutes = String(n.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const h12 = hours % 12 || 12;
     const timeStr = h12 + ':' + minutes + ' ' + ampm;
-    
     const dateStr = n.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-    
     const clk = document.getElementById('clk');
     const clkd = document.getElementById('clkd');
     if (clk) clk.textContent = timeStr;
     if (clkd) clkd.textContent = dateStr;
 
-    // Midnight Date Sync
     const curDate = today();
     if(curDate !== lastDate){
-      console.log("Midnight detected! Syncing dates to:", curDate);
       lastDate = curDate;
       ['b-date','e-d','ef-d'].forEach(id=>{
         const el=document.getElementById(id);
@@ -81,18 +82,10 @@ function tick(){
       if(typeof renderDash === 'function') renderDash();
       if(typeof startTimer === 'function') startTimer();
     }
-  } catch (e) {
-    console.warn("Clock tick error:", e);
-  }
+  } catch (e) { console.warn("Clock tick error:", e); }
 }
 setInterval(tick,1000);
 tick();
-
-// ─── HELPERS ───
-const Rs=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
-const fromRs = txt => parseFloat((txt||'').replace(/Rs|,/g, ''))||0;
-const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;};
-function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast on '+t;setTimeout(()=>el.className='toast',3000);}
 function pmbadge(m){const mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};const ml={cash:'💵 Cash',bank:'🏦 Alfalah',jazz:'🟣 Jazz',easy:'🩵 Easy'};return`<span class="bx ${mp[m]||'bx-g'}">${ml[m]||m}</span>`;}
 function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ PRE</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
 function vipbadge(v){if(v==='vip')return'<span class="bx bx-y">⭐ VIP</span>';if(v==='new')return'<span class="bx bx-b">🆕 NEW</span>';return'<span class="bx bx-t">Regular</span>';}
