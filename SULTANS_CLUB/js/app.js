@@ -60,17 +60,19 @@ function tick(){
   if (document.getElementById('clk')) document.getElementById('clk').textContent = currentLocaleTime;
   if (document.getElementById('clkd')) document.getElementById('clkd').textContent = currentLocaleDate;
 
-  // Midnight Date Sync
+  // Midnight Date Sync — fires exactly when date changes (12:00:00 AM)
   const curDate = today();
   if(curDate !== lastDate){
-    console.log("Midnight detected! Syncing dates...");
+    console.log("Midnight detected! Syncing dates to:", curDate);
     lastDate = curDate;
+    // Update all date inputs to new date immediately
     ['b-date','e-d','ef-d'].forEach(id=>{
       const el=document.getElementById(id);
       if(el) el.value = curDate;
     });
-    // Optionally refresh parts of the UI that depend on "today"
+    // Refresh dashboard and timer
     if(typeof renderDash === 'function') renderDash();
+    if(typeof startTimer === 'function') startTimer();
   }
 }
 setInterval(tick,1000);tick();
@@ -350,9 +352,6 @@ function shareInvWA(){
   }
 }
 
-function waInvoiceText(b){
-  const status=b.status==='paid'?'✅ FULLY PAID':b.status==='partial'?'💛 PARTIAL PAYMENT':'⏳ PRE-MATCH';
-  return `🏏 *THE SULTANS INDOOR CRICKET CLUB*\n📍 Multan, Pakistan\n\n━━━━━━━━━━━━━━\n📄 *BOOKING RECEIPT*\n━━━━━━━━━━━━━━\n👤 *Name:* ${b.nm}\n📞 *Phone:* ${b.ph||'—'}\n📅 *Date:* ${b.date}\n⏰ *Time:* ${b.st||'—'} (${b.hrs} hrs${b.exM>0?' + '+b.exM+' min':''})\n💰 *Rate:* Rs.2000/hr${b.dA>0?'\n🎁 *Discount:* -'+Rs(b.dA):''}\n\n━━━━━━━━━━━━━━\n💵 *PAYMENT DETAILS*\n━━━━━━━━━━━━━━\n*Total: ${Rs(b.fin)}*\nAdvance (${b.advMode}): ${Rs(b.advAmt)}${b.status!=='pre'?'\nCash (After Match): '+Rs(b.afterCash||0)+'\nAccount (After Match): '+Rs(b.afterAcc||0):''}\n*Due: ${(b.due||0)>0?Rs(b.due):'CLEAR ✅'}*\n*Status: ${status}*\n\n━━━━━━━━━━━━━━\n🏦 *PAYMENT ACCOUNTS*\n━━━━━━━━━━━━━━\n🟣 JazzCash: 0300-3510175\n   (Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101\n   (Mehboob Ahmad)\n\n📞 0300-9634880\n*Thank you! 🙏*`;}
 
 // ─── DASHBOARD ───
 function renderDash(){
@@ -1356,52 +1355,49 @@ async function saveEdit(){
   const hrs=parseFloat(document.getElementById('ed-hrs').value)||0;
   const nt=document.getElementById('ed-note').value.trim();
   const st=document.getElementById('ed-hour').value+':'+document.getElementById('ed-min').value+' '+document.getElementById('ed-ampm').value;
-  if(!nm){toast('Name required!','err');return;}
-  
-  showSync(true);
+  if(!nm){
+    toast('Naam required!','err');
+    return;
+  }
+
+  const b=allBookings.find(x=>x.id===activeEditId);
+  const upd={nm,ph,vip,nt,st};
+  if(hrs>0 && b && hrs!==b.hrs){
+    upd.hrs=hrs;
+    const nf=Math.max(0,Math.round(hrs*2000)+(b.extraChargeAdded||0)-(b.extraDiscAdded||0));
+    upd.fin=nf;
+    upd.due=Math.max(0,nf-(b.totalPaid||0));
+  }
+
+  if(typeof showSync === 'function') showSync(true);
   try{
-    const updates={nm,ph,vip,nt,st};
-    if(hrs>0)updates.hrs=hrs;
-    const bk=allBookings.find(b=>b.id===activeEditId);
-    if(hrs>0&&bk&&hrs!==bk.hrs){const nf=Math.max(0,Math.round(hrs*2000)+(bk.exA||0)-(bk.dA||0));updates.fin=nf;updates.due=Math.max(0,nf-(bk.totalPaid||0));}
-    
-    console.log("Updating booking (Edit):", activeEditId, updates);
-    await db.collection('bookings').doc(activeEditId).update(updates);
-    
-    if(ph&&bk&&!bk.ph&&!allCustomers.find(c=>c.ph===ph)) {
-       await db.collection('customers').add({nm,ph,type:vip,note:'',joined:bk.date,createdAt:new Date().toISOString()});
-    }
-    
+    await db.collection('bookings').doc(activeEditId).update(upd);
     closeEdit();
-    toast('Updated! ✅','ok');
+    toast('Booking updated! ✅','ok');
   }catch(e){
-    console.error("Firebase Update Error (Edit):", e);
     toast('Error: '+e.message,'err');
   }
-  showSync(false);
+  if(typeof showSync === 'function') showSync(false);
 }
 
-
-// ═══════════════════════════════════════════════════
-// LIVE TIMER SYSTEM
-// ═══════════════════════════════════════════════════
+// ─── LIVE TIMER ──────────────────────────
 let timerInterval = null;
 let currentTimerIdx = 0;
 
-function startTimer(){
-  if(timerInterval) clearInterval(timerInterval);
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
   renderTimer();
   timerInterval = setInterval(renderTimer, 1000);
 }
 
-function timerNav(dir){
-  const sec = document.getElementById('timerSection');
-  if(sec) sec.setAttribute('data-navigated', 'true');
+function timerNav(dir) {
   currentTimerIdx += dir;
+  const sec = document.getElementById('timerSection');
+  if (sec) sec.setAttribute('data-navigated', 'true');
   renderTimer();
 }
 
-function renderTimer(){
+function renderTimer() {
   const now = new Date();
   const nowMs = now.getTime();
   const todayStr = today();
@@ -1412,28 +1408,39 @@ function renderTimer(){
     tc.textContent = dateStr + ' | ' + now.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   }
 
+  // Build bookings with absolute timestamps — ONLY show today + future (not past days)
   const activeBks = allBookings
-    .filter(b => b.st && b.date)
+    .filter(b => b.st && b.date && b.date >= todayStr)
     .map(b => {
-      // Use absolute Date objects to avoid midnight wraparound bugs
-      const start = new Date(`${b.date}T${b.st.includes(':') ? (b.st.split(' ')[0].length === 4 ? '0'+b.st.split(' ')[0] : b.st.split(' ')[0]) : '00:00'}:00`);
-      
-      // Manual parse for better accuracy
       const sm = parseTimeToMinutes(b.st);
       const s = new Date(`${b.date}T00:00:00`);
       s.setMinutes(sm);
       const startMs = s.getTime();
-      const endMs = startMs + (Math.round((parseFloat(b.hrs)||1)*60) + (parseFloat(b.exM)||0)) * 60000;
+      const durationMs = (Math.round((parseFloat(b.hrs)||1)*60) + (parseFloat(b.exM)||0)) * 60000;
+      const endMs = startMs + durationMs;
       return {...b, startMs, endMs};
     })
-    .filter(b => b.endMs > (nowMs - 3600000)) // Show matches ended in last 1hr
+    // Show: currently playing, upcoming, or ended within last 30 mins (not next day)
+    .filter(b => {
+      const isFinished = nowMs >= b.endMs;
+      // If match is done, only show if it ended within 30 mins AND it's today
+      if(isFinished) return (nowMs - b.endMs < 1800000) && b.date === todayStr;
+      return true; // upcoming or playing
+    })
     .sort((a,b) => a.startMs - b.startMs);
 
   const sec = document.getElementById('timerSection');
   if(!sec) return;
 
   if(!activeBks.length){
-    sec.innerHTML = '<div class="no-bookings-timer">📅 No bookings today</div>';
+    const nextAny = allBookings
+      .filter(b => b.st && b.date && b.date > todayStr)
+      .sort((a,b) => (a.date+a.st).localeCompare(b.date+b.st))[0];
+    if(nextAny){
+      sec.innerHTML = `<div class="no-bookings-timer">✅ Aaj koi match nahi<br><span style="color:var(--gold);font-size:11px;">Next: ${nextAny.nm} — ${nextAny.date} @ ${nextAny.st}</span></div>`;
+    } else {
+      sec.innerHTML = '<div class="no-bookings-timer">📅 Koi booking nahi</div>';
+    }
     return;
   }
 
@@ -1451,7 +1458,16 @@ function renderTimer(){
     if(!bk) return `<div class="timer-panel side" style="visibility:hidden"></div>`;
     
     const isToday = bk.date === todayStr;
-    const dateLabel = isToday ? 'Today' : bk.date.split('-').slice(1).reverse().join('/');
+    // Smart date label
+    let dateLabel;
+    if(isToday){
+      dateLabel = 'Aaj';
+    } else {
+      const d = new Date(bk.date + 'T00:00:00');
+      const diffDays = Math.round((d - new Date(todayStr+'T00:00:00')) / 86400000);
+      if(diffDays === 1) dateLabel = 'Kal';
+      else dateLabel = bk.date.split('-').reverse().join('/');
+    }
     const isPlaying = nowMs >= bk.startMs && nowMs < bk.endMs;
     const isDone = nowMs >= bk.endMs;
     const isSide = type === 'side';
@@ -1460,10 +1476,11 @@ function renderTimer(){
     if(isDone){
       statusHtml = `
         <div class="timer-card done">
-          <div class="timer-badge done">✅ DONE</div>
+          <div class="timer-badge done">✅ MATCH KHATAM</div>
           <div class="timer-team">${bk.nm}</div>
-          <div style="font-size:10px;color:var(--gold);margin-bottom:5px;">📅 ${dateLabel}</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">📅 ${dateLabel} — ${bk.date}</div>
           <div class="timer-time">${bk.st} (${bk.hrs}hr)</div>
+          <div style="font-size:11px;color:var(--green);font-weight:800;">✅ Khatam ho gaya</div>
         </div>`;
     } else if(isPlaying){
       const remainSecs = Math.max(0, (bk.endMs - nowMs) / 1000);
@@ -1474,20 +1491,22 @@ function renderTimer(){
         <div class="timer-card active">
           <div class="timer-badge active">▶️ PLAYING NOW</div>
           <div class="timer-team" style="color:var(--green);">${bk.nm}</div>
-          <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:5px;">📅 ${dateLabel}</div>
+          <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:3px;">📅 ${dateLabel} — ${bk.date}</div>
           <div class="timer-time">${bk.st} (${bk.hrs}hr)</div>
           <div class="timer-countdown ${isUrgent?'urgent':'active'}" style="font-size:${isSide?'18px':'28px'}">${formatCountdownExact(remainSecs)}</div>
           <div class="timer-bar-track"><div class="timer-bar-fill ${isUrgent?'urgent':'active'}" style="width:${pct.toFixed(1)}%"></div></div>
         </div>`;
     } else {
+      // Upcoming match — show exact time remaining
       const waitSecs = Math.max(0, (bk.startMs - nowMs) / 1000);
       statusHtml = `
         <div class="timer-card waiting">
           <div class="timer-badge waiting">⏳ UPCOMING</div>
           <div class="timer-team" style="color:var(--gold);">${bk.nm}</div>
-          <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:5px;">📅 ${dateLabel}</div>
+          <div style="font-size:11px;color:var(--gold);font-weight:800;margin-bottom:3px;">📅 ${dateLabel} — ${bk.date}</div>
           <div class="timer-time">${bk.st} (${bk.hrs}hr)</div>
-          <div class="timer-countdown" style="font-size:${isSide?'18px':'22px'};color:var(--gold);">${formatCountdownExact(waitSecs)}</div>
+          <div class="timer-countdown" style="font-size:${isSide?'16px':'22px'};color:var(--gold);">${formatCountdownExact(waitSecs)}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px;">Shuru hone mein</div>
         </div>`;
     }
     return `<div class="timer-panel ${type}">${statusHtml}</div>`;
@@ -1498,8 +1517,8 @@ function renderTimer(){
   const next = activeBks[currentTimerIdx + 1];
 
   sec.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;">
-      <button class="nav-btn" onclick="timerNav(-1)" ${!prev?'disabled style="opacity:0.2"':''}>◀</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="nav-btn" onclick="timerNav(-1)" ${!prev?'disabled style="opacity:0.2;cursor:not-allowed"':''}>◄</button>
       <div class="timer-carousel" style="flex:1;">
         <div class="timer-track" id="timerTrack">
           ${generateCard(prev, 'side')}
@@ -1507,10 +1526,10 @@ function renderTimer(){
           ${generateCard(next, 'side')}
         </div>
       </div>
-      <button class="nav-btn" onclick="timerNav(1)" ${!next?'disabled style="opacity:0.2"':''}>▶</button>
+      <button class="nav-btn" onclick="timerNav(1)" ${!next?'disabled style="opacity:0.2;cursor:not-allowed"':''}>►</button>
     </div>
-    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:8px;font-weight:800;letter-spacing:1px;">
-      MATCH ${currentTimerIdx+1} / ${activeBks.length}
+    <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:6px;font-weight:800;letter-spacing:1px;">
+      ${activeBks.filter(b=>nowMs>=b.startMs&&nowMs<b.endMs).length>0?'🟢':'⏳'} MATCH ${currentTimerIdx+1} / ${activeBks.length}
     </div>
   `;
 }
@@ -1544,20 +1563,32 @@ function checkPin() {
   const inp = document.getElementById('pinInp');
   const err = document.getElementById('pinErr');
   if (inp.value === APP_PIN) {
-    document.getElementById('pinScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
     localStorage.setItem('sultans_auth', 'true');
+    localStorage.setItem('always_pin', 'false');
+    // Use CSS classes for instant, flicker-free transition
+    document.documentElement.classList.remove('auth-none');
+    document.documentElement.classList.add('auth-ok');
     inp.value = '';
     err.textContent = '';
   } else {
-    err.textContent = '❌ Wrong password, contact Jahanzeb Baloch 0306-0711529';
+    err.textContent = '❌ Wrong PIN — Contact Jahanzeb Baloch 0306-0711529';
     inp.value = '';
+    inp.focus();
   }
 }
 
+// Allow Enter key on PIN input
+document.addEventListener('DOMContentLoaded', () => {
+  const pinInp = document.getElementById('pinInp');
+  if (pinInp) {
+    pinInp.addEventListener('keydown', e => { if (e.key === 'Enter') checkPin(); });
+  }
+});
+
 function logout() {
   localStorage.removeItem('sultans_auth');
-  location.reload();
+  document.documentElement.classList.remove('auth-ok');
+  document.documentElement.classList.add('auth-none');
 }
 
 // ─── INIT ───
