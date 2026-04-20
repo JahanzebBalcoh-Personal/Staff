@@ -526,7 +526,8 @@ var Rs=function(n){return 'Rs.'+Number(n||0).toLocaleString('en-PK');};
 var today=function(){var d=new Date();var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+dd;};
 function toast(m,t){var el=document.getElementById('toast');el.textContent=m;el.className='toast on '+(t||'ok');setTimeout(function(){el.className='toast';},3000);}
 function pmbadge(m){var mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};var ml={cash:'Cash',bank:'Alfalah',jazz:'Jazz',easy:'Easy'};return '<span class="bx '+(mp[m]||'bx-g')+'">'+(ml[m]||m||'—')+'</span>';}
-function sbadge(s){if(s==='paid')return '<span class="bx bx-g">PAID</span>';if(s==='partial')return '<span class="bx bx-y">PARTIAL</span>';if(s==='pre')return '<span class="bx bx-o">PRE</span>';return '';}
+function sbadge(s){if(s==='paid')return '<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return '<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return '<span class="bx bx-o">⏳ PRE</span>';if(s==='waiting_approval')return '<span class="bx bx-b">⏳ WAITING APPROVAL</span>';return '<span class="bx bx-r">❌ PENDING</span>';}
+
 function vbadge(v){if(v==='vip')return '<span class="bx bx-y">VIP</span>';if(v==='new')return '<span class="bx bx-b">NEW</span>';return '<span class="bx bx-t">Regular</span>';}
 function waLink(ph,msg){var p=ph.replace(/[^0-9]/g,'');var i=p.startsWith('0')?'92'+p.slice(1):p;return 'https://wa.me/'+i+'?text='+encodeURIComponent(msg);}
 function waDue(b){return 'Assalam o Alaikum '+b.nm+'!\nThe Sultans Indoor Cricket Club — Multan\n\nYour payment is pending:\nDate: '+b.date+'\nTotal: '+Rs(b.fin)+'\nDue: '+Rs(b.due)+'\n\nJazzCash: 0300-3510175 (Abdul Gaffar)\nBank Alfalah: 83721010111101\n\nThank you!';}
@@ -548,7 +549,8 @@ function startSync(){
         if(d.status==='pre'){txt='Pre-Match: '+d.nm+' — '+Rs(d.fin)+' (Adv: '+Rs(d.advAmt)+')';color='var(--orange)';}
         else if(d.status==='paid'){txt='Complete: '+d.nm+' — '+Rs(d.fin)+' PAID';color='var(--green)';}
         else if(d.status==='partial'){txt='Partial: '+d.nm+' — Due: '+Rs(d.due);color='var(--gold)';}
-        else if(d.status==='pending'){txt='🌐 Online Request: '+d.nm+' (TRID: '+d.trid+')';color='var(--blue)';}
+        else if(d.status==='waiting_approval'||d.status==='pending'){txt='🌐 Online Request: '+d.nm+' (TRID: '+d.trid+')';color='var(--blue)';}
+
         if(txt){feedItems.unshift({txt:txt,t:t,color:color});if(feedItems.length>50)feedItems.pop();if(document.getElementById('pg-feed').classList.contains('on'))renderFeed();}
       }
     });
@@ -593,7 +595,8 @@ function go(tab){
 }
 
 function renderOnlineAlert(){
-  var pend = allBks.filter(function(b){return b.status==='pending';});
+  var pend = allBks.filter(function(b){return b.status==='waiting_approval'||b.status==='pending';});
+
   var alert = document.getElementById('onlineAlert');
   var count = document.getElementById('onlineCount');
   if(!alert || !count) return;
@@ -612,7 +615,8 @@ function renderOnlineAlert(){
 
 function renderOnline(){
   var h='';
-  var pend = allBks.filter(function(b){return b.status==='pending';});
+  var pend = allBks.filter(function(b){return b.status==='waiting_approval'||b.status==='pending';});
+
   if(!pend.length){h='<tr><td colspan="8" class="empty">No pending online bookings</td></tr>';}
   else {
     pend.forEach(function(b){

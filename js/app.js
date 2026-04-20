@@ -105,7 +105,8 @@ function tick(){
 setInterval(tick,1000);
 tick();
 function pmbadge(m){const mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};const ml={cash:'💵 Cash',bank:'🏦 Alfalah',jazz:'🟣 Jazz',easy:'🩵 Easy'};return`<span class="bx ${mp[m]||'bx-g'}">${ml[m]||m}</span>`;}
-function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ PRE</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
+function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ PRE</span>';if(s==='waiting_approval')return'<span class="bx bx-b">⏳ WAITING APPROVAL</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
+
 function vipbadge(v){if(v==='vip')return'<span class="bx bx-y">⭐ VIP</span>';if(v==='new')return'<span class="bx bx-b">🆕 NEW</span>';return'<span class="bx bx-t">Regular</span>';}
 function accName(t){return{jazz:'JazzCash (Abdul Gaffar)',bank:'Bank Alfalah (Mehboob Ahmad)',easy:'Easypaisa'}[t]||'';}
 function viewSS(url){ if(!url) return; window.open(url, '_blank'); }
