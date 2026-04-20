@@ -30,6 +30,24 @@ function startListeners(){
     db.collection('expenses').onSnapshot(s=>{allExpenses=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('Expenses error:',err);});
     db.collection('customers').onSnapshot(s=>{allCustomers=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nm||'').localeCompare(b.nm||''));refreshTab();},err=>{console.log('Customers error:',err);});
     db.collection('history_reset').onSnapshot(s=>{allHistory=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('History error:',err);});
+    
+    // Listen for real-time notifications from Public App
+    db.collection('feed').orderBy('at', 'desc').limit(5).onSnapshot(s => {
+      s.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const data = change.doc.data();
+          const now = new Date().getTime();
+          const at = new Date(data.at).getTime();
+          // Only notify for new items (within last 30s) to avoid old alerts on load
+          if (now - at < 30000) {
+            toast('🔔 ' + data.txt, 'info');
+            // Play a sound if possible
+            try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){}
+          }
+        }
+      });
+    });
+
   } catch (e) {
     console.error("Firebase Listeners failed:", e);
     showSync(false);
@@ -90,6 +108,8 @@ function pmbadge(m){const mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};c
 function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ PRE</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
 function vipbadge(v){if(v==='vip')return'<span class="bx bx-y">⭐ VIP</span>';if(v==='new')return'<span class="bx bx-b">🆕 NEW</span>';return'<span class="bx bx-t">Regular</span>';}
 function accName(t){return{jazz:'JazzCash (Abdul Gaffar)',bank:'Bank Alfalah (Mehboob Ahmad)',easy:'Easypaisa'}[t]||'';}
+function viewSS(url){ if(!url) return; window.open(url, '_blank'); }
+
 function waLink(phone,msg){const p=phone.replace(/[^0-9]/g,'');const intl=p.startsWith('0')?'92'+p.slice(1):p;return`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;}
 
 // ─── WHATSAPP MESSAGES ───
@@ -417,10 +437,12 @@ function renderDash(){
       <td>${sbadge(b.status)}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap;">
         <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;">🖼️ SS</button>` : ''}
         <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
         <button class="btn-del" onclick="delBk('${b.id}')" style="font-size:9px;padding:4px 8px;">🗑️</button>
         ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
       </td>
+
     </tr>`).join('');
 }
 
@@ -472,10 +494,12 @@ function renderPreTable(){
         <td style="display:flex;gap:4px;flex-wrap:wrap;">
           <button class="btn-orange" onclick="openComplete('${b.id}')">✅</button>
           <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+          ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;">🖼️ SS</button>` : ''}
           <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
           ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank">💬</a>`:''}
           <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
         </td>
+
       </tr>`;
     }).join('');
 }
@@ -628,10 +652,12 @@ function renderPostTab(){
       <td>${sbadge(b.status)}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap;">
         <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;">🖼️ SS</button>` : ''}
         ${(b.due||0)>0?`<button class="btn-orange" onclick="openAddPay('${b.id}')" style="font-size:9px;padding:4px 8px;">💰 Add Pay</button>`:''}
         <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
         <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
       </td>
+
     </tr>`).join('');
 }
 async function delBk(id){if(!confirm('Delete?'))return;await db.collection('bookings').doc(id).delete();toast('Deleted','err');}
@@ -669,10 +695,12 @@ function showCalDay(ds){
       <td>${sbadge(b.status)}</td>
       <td style="display:flex;gap:4px;">
         <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
+        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;">🖼️ SS</button>` : ''}
         ${b.status==='pre'?`<button class="btn-orange" onclick="openComplete('${b.id}')" style="font-size:9px;padding:4px 8px;">✅</button>`:''}
         <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
         <button class="btn-del" onclick="delBk('${b.id}')" style="font-size:9px;padding:4px 8px;">🗑️</button>
       </td>
+
     </tr>`).join('');
 }
 
@@ -1760,8 +1788,10 @@ Object.assign(window, {
   bulkWAReminder, saveCust, renderCustTable, delCust,
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
   calcAddPay, saveAddPay, checkPin, logout,
-  archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact
+  archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact,
+  viewSS
 });
+
 
 // ─── BOOT ───
 try {
