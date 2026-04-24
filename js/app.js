@@ -11,6 +11,10 @@ const EJ_TO = 'jahanzebbaloch@example.com';
 const firebaseConfig={apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"};
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// Enable Persistence for Speed
+db.enablePersistence().catch(err => console.warn("Persistence failed:", err.code));
+
 let RATE=2000;
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1738,7 +1742,7 @@ function init(){
       loader.style.opacity = '0';
       setTimeout(() => loader.style.display = 'none', 500);
     }
-  }, 800);
+  }, 300);
 }
 
 if('serviceWorker' in navigator){

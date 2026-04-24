@@ -138,6 +138,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   };
 </script>
 
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s;">
+  <div class="hdr-logo" style="width:100px; height:100px; margin-bottom:20px; box-shadow:0 0 20px rgba(240,180,41,0.3);">
+    <img src="icon.jpg" alt="Jahanzeb">
+  </div>
+  <div class="hdr-name" style="font-size:32px;">THE SULTANS CLUB</div>
+  <div style="color:var(--gold);margin-top:20px;font-weight:bold;letter-spacing:2px;font-size:12px;">LOADING ADMIN...</div>
+</div>
+
 <!-- EDIT MODAL -->
 <div class="modal-bg" id="editModal">
   <div class="modal-box">
@@ -512,6 +521,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 // ─── FIREBASE INIT ───
 if(!firebase.apps.length){firebase.initializeApp({apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645",databaseURL:""});}
 var db=firebase.firestore();
+
+// Enable Persistence
+db.enablePersistence().catch(function(err){ console.warn("Persistence failed:", err.code); });
 
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var allBks=[],allExps=[],allCusts=[],feedItems=[],allHistory=[];
@@ -1048,6 +1060,16 @@ initSelectors();
 startSync();
 startTimer();
 startAlarmListener();
+
+// Hide loading overlay
+setTimeout(function() {
+    var loader = document.getElementById('loadingOverlay');
+    if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(function() { loader.style.display = 'none'; }, 500);
+    }
+}, 300);
+
 setInterval(function(){if(document.getElementById('pg-dash').classList.contains('on')){renderTimer();}},1000);
 </script>
 </body>
