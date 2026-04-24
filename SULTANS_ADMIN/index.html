@@ -231,6 +231,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="tab" onclick="go('settings')">Settings</div>
 </div>
 
+<!-- ALARM ALERT UI -->
+<div id="alarmAlert" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); width:90%; max-width:400px; background:linear-gradient(135deg, #ef4444, #b91c1c); color:white; z-index:11000; padding:20px; border-radius:15px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); animation: badgePulse 1s infinite;">
+    <div style="font-size:40px; margin-bottom:10px;">🚨 SIREN ALARM 🚨</div>
+    <div id="alarmMsg" style="font-weight:bold; font-size:16px; margin-bottom:15px;">Customer needs attention!</div>
+    <button onclick="stopAlarm()" style="background:white; color:#ef4444; border:none; padding:10px 20px; border-radius:10px; font-weight:900; cursor:pointer;">DISMISS ALARM</button>
+</div>
+
 <!-- DASHBOARD -->
 <div class="pg on" id="pg-dash">
   <br>
@@ -991,17 +998,46 @@ async function archiveAndReset(){
   }
 }
 
-async function delHistory(id){
-  if(!confirm('Delete this history row?')) return;
-  try {
-    await db.collection('history_reset').doc(id).delete();
-    toast('Deleted','ok');
-  } catch(e){ toast('Error: '+e.message,'err'); }
+function viewSS(url){ if(!url) return; window.open(url, '_blank'); }
+
+var sirenAudio = null;
+function startAlarmListener() {
+    db.collection('alerts').onSnapshot(function(snap) {
+        snap.docChanges().forEach(function(ch) {
+            if (ch.type === 'added') {
+                var data = ch.doc.data();
+                var now = new Date().getTime();
+                var at = new Date(data.at).getTime();
+                if (now - at < 60000) { 
+                    playSiren(data.txt);
+                }
+            }
+        });
+    });
+}
+
+function playSiren(msg) {
+    document.getElementById('alarmMsg').textContent = msg || 'Customer needs attention!';
+    document.getElementById('alarmAlert').style.display = 'block';
+    if (!sirenAudio) {
+        sirenAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2816/2816-preview.mp3');
+        sirenAudio.loop = true;
+    }
+    sirenAudio.play().catch(function(e){ console.log("Sound blocked:", e); });
+}
+
+function stopAlarm() {
+    document.getElementById('alarmAlert').style.display = 'none';
+    if (sirenAudio) {
+        sirenAudio.pause();
+        sirenAudio.currentTime = 0;
+    }
 }
 
 initSelectors();
 startSync();
 startTimer();
+startAlarmListener();
 setInterval(function(){if(document.getElementById('pg-dash').classList.contains('on')){renderTimer();}},1000);
 </script>
 </body>

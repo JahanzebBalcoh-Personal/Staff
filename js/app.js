@@ -26,7 +26,12 @@ const APP_VERSION = '1.2.1'; // Update this when deploying new code
 function startListeners(){
   try {
     showSync(true);
-    db.collection('bookings').onSnapshot(s=>{allBookings=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));showSync(false);refreshTab();},err=>{showSync(false);console.log('Bookings error:',err);});
+    db.collection('bookings').onSnapshot(s=>{
+      allBookings=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
+      showSync(false);
+      renderOnline(); // Update online badge/tab
+      refreshTab();
+    },err=>{showSync(false);console.log('Bookings error:',err);});
     db.collection('expenses').onSnapshot(s=>{allExpenses=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('Expenses error:',err);});
     db.collection('customers').onSnapshot(s=>{allCustomers=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nm||'').localeCompare(b.nm||''));refreshTab();},err=>{console.log('Customers error:',err);});
     db.collection('history_reset').onSnapshot(s=>{allHistory=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('History error:',err);});
@@ -62,11 +67,46 @@ function refreshTab(){
   else if(fn.includes('post'))renderPostTab();
   else if(fn.includes('cal'))renderCal();
   else if(fn.includes('cust'))renderCustTable('');
+  else if(fn.includes('online'))renderOnline();
   else if(fn.includes('history'))renderHistory();
   else if(fn.includes('exp'))renderET();
   else if(fn.includes('rep'))renderRep();
 }
 
+// ─── ALARM SYSTEM ───
+let sirenAudio = null;
+function startAlarmListener() {
+    db.collection('alerts').onSnapshot(snap => {
+        snap.docChanges().forEach(ch => {
+            if (ch.type === 'added') {
+                const data = ch.doc.data();
+                const now = new Date().getTime();
+                const at = new Date(data.at).getTime();
+                if (now - at < 60000) { // Only if alert is within last 1 minute
+                    playSiren(data.txt);
+                }
+            }
+        });
+    });
+}
+
+function playSiren(msg) {
+    document.getElementById('alarmMsg').textContent = msg || 'Customer needs attention!';
+    document.getElementById('alarmAlert').style.display = 'block';
+    if (!sirenAudio) {
+        sirenAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2816/2816-preview.mp3');
+        sirenAudio.loop = true;
+    }
+    sirenAudio.play().catch(e => console.log("Sound blocked:", e));
+}
+
+function stopAlarm() {
+    document.getElementById('alarmAlert').style.display = 'none';
+    if (sirenAudio) {
+        sirenAudio.pause();
+        sirenAudio.currentTime = 0;
+    }
+}
 
 // ─── HELPERS ───
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;};
@@ -1769,12 +1809,47 @@ async function archiveAndReset(){
   }
 }
 
-async function delHistory(id){
-  if(!confirm('Delete this history row?')) return;
+async function verifyOnline(id, approve) {
+  if (!confirm(approve ? 'Approve this booking?' : 'Reject this booking?')) return;
   try {
-    await db.collection('history_reset').doc(id).delete();
-    toast('Deleted','ok');
-  } catch(e){ toast('Error: '+e.message,'err'); }
+    if (approve) {
+      await db.collection('bookings').doc(id).update({ status: 'pre' });
+      toast('Booking Approved! ✅', 'ok');
+    } else {
+      await db.collection('bookings').doc(id).update({ status: 'rejected' });
+      toast('Booking Rejected ❌', 'err');
+    }
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+
+function renderOnline() {
+  const list = document.getElementById('online-tbl');
+  const badge = document.getElementById('onlineBadge');
+  const pend = allBookings.filter(b => b.status === 'waiting_approval' || b.status === 'pending');
+  if (badge) {
+    badge.textContent = pend.length;
+    badge.style.display = pend.length > 0 ? 'inline-block' : 'none';
+  }
+  if (!list) return;
+  if (!pend.length) {
+    list.innerHTML = '<tr><td colspan="7" class="empty">No pending online bookings</td></tr>';
+    return;
+  }
+  list.innerHTML = pend.map(b => `
+    <tr>
+      <td style="font-size:10px;color:var(--muted);">${b.date}</td>
+      <td><b>${b.nm}</b></td>
+      <td style="font-size:11px;">${b.st} (${b.hrs}hr)</td>
+      <td style="color:var(--gold);">${Rs(b.fin)}</td>
+      <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
+      <td style="color:var(--blue);font-weight:800;">${b.trid || '—'}</td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:9px;padding:4px 8px;background:var(--green);border:none;color:#000;font-weight:bold;border-radius:6px;cursor:pointer;">APPROVE</button>
+        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;border-radius:6px;cursor:pointer;">🖼️ SS</button>` : ''}
+        <button class="btn-del" onclick="verifyOnline('${b.id}', false)" style="font-size:9px;padding:4px 8px;border-radius:6px;cursor:pointer;">REJECT</button>
+      </td>
+    </tr>
+  `).join('');
 }
 
 // ─── EXPOSE FOR INLINE HTML HANDLERS ───
@@ -1790,7 +1865,7 @@ Object.assign(window, {
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
   calcAddPay, saveAddPay, checkPin, logout,
   archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact,
-  viewSS
+  viewSS, verifyOnline, renderOnline, stopAlarm
 });
 
 
@@ -1801,6 +1876,7 @@ try {
   }
   init();
   startListeners();
+  startAlarmListener();
 } catch (e) {
   console.error("App boot error:", e);
   const errBox = document.getElementById('globalErr');

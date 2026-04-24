@@ -258,6 +258,7 @@
   <div class="tab active" onclick="go('dash')">🏠 Home</div>
   <div class="tab" onclick="go('pre')">📋 Pre-Match</div>
   <div class="tab" onclick="go('post')">✅ Complete</div>
+  <div class="tab" onclick="go('online')">🌐 Online <span id="onlineBadge" class="badge" style="display:none;">0</span></div>
   <div class="tab" onclick="go('cal')">📆 Calendar</div>
   <div class="tab" onclick="go('cust')">👥 Customers</div>
   <div class="tab" onclick="go('exp')">💸 Kharcha</div>
@@ -349,8 +350,30 @@
   </table></div>
 </div>
 
+<!-- ALARM ALERT UI -->
+<div id="alarmAlert" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); width:90%; max-width:400px; background:linear-gradient(135deg, #ef4444, #b91c1c); color:white; z-index:11000; padding:20px; border-radius:15px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); animation: badgePulse 1s infinite;">
+    <div style="font-size:40px; margin-bottom:10px;">🚨 SIREN ALARM 🚨</div>
+    <div id="alarmMsg" style="font-weight:bold; font-size:16px; margin-bottom:15px;">Customer needs attention!</div>
+    <button onclick="stopAlarm()" style="background:white; color:#ef4444; border:none; padding:10px 20px; border-radius:10px; font-weight:900; cursor:pointer;">DISMISS ALARM</button>
+</div>
+
 <!-- PRE-MATCH -->
 <div class="pg" id="pg-pre">
+...
+</div>
+
+<!-- ONLINE REQUESTS -->
+<div class="pg" id="pg-online">
+  <br>
+  <div style="background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--blue);font-weight:700;">
+    🌐 Online bookings from Website. Check TRID/Screenshot and Approve.
+  </div>
+  <div class="sh"><div class="sh-t">Pending Online Requests</div></div>
+  <div class="tw"><table>
+    <thead><tr><th>Date</th><th>Name</th><th>Time</th><th>Total</th><th>Advance</th><th>TRID</th><th>Actions</th></tr></thead>
+    <tbody id="online-tbl"></tbody>
+  </table></div>
+</div>
   <br>
   <div class="card">
     <div class="sh-t" style="margin-bottom:4px;">📋 Pre-Match Booking</div>
