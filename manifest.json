@@ -1,7 +1,7 @@
 {
   "name": "Sultans Indoor Cricket Club",
-  "short_name": "Sultans",
-  "description": "Premium Indoor Cricket facility in Multan, Pakistan. Book slots, track scores, and manage your matches.",
+  "short_name": "Sultans Club",
+  "description": "Premium Indoor Cricket facility in Multan. Book slots, track scores, and manage matches.",
   "id": "com.sultans.club",
   "start_url": "./index.html",
   "display": "standalone",
@@ -9,10 +9,15 @@
   "theme_color": "#f0b429",
   "icons": [
     {
-      "src": "icon.jpg",
-      "sizes": "192x192 512x512",
-      "type": "image/jpeg",
+      "src": "club_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "icon.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
     }
   ],
   "categories": ["sports", "business"],

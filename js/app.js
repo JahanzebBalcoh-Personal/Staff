@@ -1765,6 +1765,17 @@ function renderHistory(){
     </div>`).join('');
 }
 
+async function delHistory(id) {
+  if (!confirm('Are you sure you want to delete this history record?')) return;
+  try {
+    await db.collection('history_reset').doc(id).delete();
+    toast('History record deleted ✅', 'ok');
+  } catch (e) {
+    toast('Error deleting history: ' + e.message, 'err');
+  }
+}
+
+
 async function archiveAndReset(){
   if(!confirm('⚠️ DANGER: Reset krne se Bookings, Expenses or Customers clear ho jayenge.\n\nSummary History me archive ki jaye gi.')) return;
   if(!confirm('Final Confirmation: Kya aap waqai reset chahte hain?')) return;

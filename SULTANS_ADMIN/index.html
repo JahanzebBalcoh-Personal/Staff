@@ -1034,6 +1034,14 @@ function stopAlarm() {
     }
 }
 
+async function delHistory(id) {
+  if (!confirm('Are you sure?')) return;
+  try {
+    await db.collection('history_reset').doc(id).delete();
+    toast('Snapshot deleted! ✅');
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
 initSelectors();
 startSync();
 startTimer();
