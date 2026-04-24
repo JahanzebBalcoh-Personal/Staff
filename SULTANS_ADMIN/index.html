@@ -26,8 +26,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 .hdr{background:linear-gradient(180deg,#0a1628,#060e1a);border-bottom:2px solid var(--border);padding:10px 14px;position:sticky;top:0;z-index:200;}
 .hdr-row{display:flex;align-items:center;justify-content:space-between;}
 .hdr-brand{display:flex;align-items:center;gap:10px;}
-.hdr-logo{width:38px;height:38px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.hdr-logo{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;border:2px solid var(--gold);}
+.hdr-logo img{width:100%;height:100%;object-fit:cover;}
 .hdr-name{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;background:linear-gradient(90deg,var(--gold),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
 .hdr-sub{font-size:9px;color:var(--muted);}
 .clk{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);font-weight:700;}
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;}
@@ -203,9 +205,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="hdr">
   <div class="hdr-row">
     <div class="hdr-brand">
-      <div class="hdr-logo">🏏</div>
+      <div class="hdr-logo"><img src="icon.jpg" alt="Jahanzeb"></div>
       <div>
         <div class="hdr-name">JAHANZEB BALOCH — ADMIN</div>
+
         <div class="hdr-sub">Sultans Indoor Cricket Club, Multan</div>
       </div>
     </div>
@@ -544,14 +547,32 @@ function startSync(){
     allBks=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'');});
     document.getElementById('sdot').style.background='var(--green)';
     snap.docChanges().forEach(function(ch){
-      if(ch.type==='added'||ch.type==='modified'){
+      if(ch.type==='added' || ch.type==='modified'){
         var d=ch.doc.data(),t=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}),txt='',color='var(--green)';
+        
+        // Notification Sound Logic
+        var isNew = ch.type==='added';
+        
         if(d.status==='pre'){txt='Pre-Match: '+d.nm+' — '+Rs(d.fin)+' (Adv: '+Rs(d.advAmt)+')';color='var(--orange)';}
         else if(d.status==='paid'){txt='Complete: '+d.nm+' — '+Rs(d.fin)+' PAID';color='var(--green)';}
         else if(d.status==='partial'){txt='Partial: '+d.nm+' — Due: '+Rs(d.due);color='var(--gold)';}
-        else if(d.status==='waiting_approval'||d.status==='pending'){txt='🌐 Online Request: '+d.nm+' (TRID: '+d.trid+')';color='var(--blue)';}
+        else if(d.status==='waiting_approval'||d.status==='pending'){
+            txt='🌐 Online Request: '+d.nm+' (TRID: '+d.trid+')';
+            color='var(--blue)';
+            // Sound and Toast for new online requests
+            if(isNew) {
+                toast('New Online Booking Request! 🔔', 'info');
+                try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){}
+            }
+        }
 
-        if(txt){feedItems.unshift({txt:txt,t:t,color:color});if(feedItems.length>50)feedItems.pop();if(document.getElementById('pg-feed').classList.contains('on'))renderFeed();}
+        if(txt){
+            feedItems.unshift({txt:txt,t:t,color:color});
+            if(feedItems.length>50)feedItems.pop();
+            // Show toast for all new activities if not initial load
+            if(isNew && snap.size > feedItems.length) { toast(txt, 'info'); }
+            if(document.getElementById('pg-feed').classList.contains('on')) renderFeed();
+        }
       }
     });
     renderOnlineAlert();
