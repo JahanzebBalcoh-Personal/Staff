@@ -1885,8 +1885,8 @@ function renderOnlineAlert() {
           <div style="color:var(--blue);font-weight:700;font-size:10px;">TRID: ${b.trid}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
-           ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gold);">` : ''}
-           <button class="btn-sm" onclick="go('online')" style="font-size:9px;padding:4px 8px;background:var(--blue);color:#fff;border:none;">Review</button>
+           ${b.screenshot ? `<button class="btn-sm" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;background:var(--gold);color:#000;border:none;font-weight:900;">🖼️ SS</button>` : ''}
+           <button class="btn-sm" onclick="go('online')" style="font-size:9px;padding:4px 8px;background:var(--blue);color:#fff;border:none;font-weight:900;">Review</button>
         </div>
       </div>
     `).join('');
