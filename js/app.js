@@ -66,6 +66,7 @@ function showSync(on){document.getElementById('syncBar').className='sync-bar'+(o
 function refreshTab(){
   const a=document.querySelector('.tab.active');if(!a)return;
   const fn=a.getAttribute('onclick')||'';
+  renderOnlineAlert();
   if(fn.includes('dash'))renderDash();
   else if(fn.includes('pre'))renderPreTable();
   else if(fn.includes('post'))renderPostTab();
@@ -149,7 +150,7 @@ function tick(){
 setInterval(tick,1000);
 tick();
 function pmbadge(m){const mp={cash:'bx-g',bank:'bx-b',jazz:'bx-p',easy:'bx-t'};const ml={cash:'💵 Cash',bank:'🏦 Alfalah',jazz:'🟣 Jazz',easy:'🩵 Easy'};return`<span class="bx ${mp[m]||'bx-g'}">${ml[m]||m}</span>`;}
-function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ PRE</span>';if(s==='waiting_approval')return'<span class="bx bx-b">⏳ WAITING APPROVAL</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
+function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';if(s==='partial')return'<span class="bx bx-y">💛 PARTIAL</span>';if(s==='pre')return'<span class="bx bx-o">⏳ BOOKED</span>';if(s==='waiting_approval')return'<span class="bx bx-b">🌐 ONLINE REQ</span>';return'<span class="bx bx-r">❌ PENDING</span>';}
 
 function vipbadge(v){if(v==='vip')return'<span class="bx bx-y">⭐ VIP</span>';if(v==='new')return'<span class="bx bx-b">🆕 NEW</span>';return'<span class="bx bx-t">Regular</span>';}
 function accName(t){return{jazz:'JazzCash (Abdul Gaffar)',bank:'Bank Alfalah (Mehboob Ahmad)',easy:'Easypaisa'}[t]||'';}
@@ -432,11 +433,11 @@ function renderDash(){
   const prf=inc-exp;
   const adv=tB.reduce((s,b)=>s+(parseFloat(b.advAmt)||0),0);
   const due=tB.reduce((s,b)=>s+(parseFloat(b.due)||0),0);
-  document.getElementById('d-inc').textContent=Rs(inc);document.getElementById('d-inc-s').textContent=tB.filter(b=>b.status!=='pre').length+' complete';
+  document.getElementById('d-inc').textContent=Rs(inc);document.getElementById('d-inc-s').textContent=tB.filter(b=>b.status!=='pre').length+' completed';
   document.getElementById('d-exp').textContent=Rs(exp);document.getElementById('d-exp-s').textContent=tE.length+' entries';
   document.getElementById('d-prf').textContent=Rs(prf);document.getElementById('d-prf').style.color=prf>=0?'var(--gold)':'var(--red)';
   document.getElementById('d-prf-s').textContent=prf>=0?'Profit 📈':'Loss 📉';
-  document.getElementById('d-sl').textContent=tB.length;document.getElementById('d-sl-s').textContent=tB.filter(b=>b.status==='pre').length+' pending';
+  document.getElementById('d-sl').textContent=tB.length;document.getElementById('d-sl-s').textContent=tB.filter(b=>b.status==='pre').length+' booked';
   document.getElementById('d-adv').textContent=Rs(adv);document.getElementById('d-due').textContent=Rs(due);
   updateTarget();
   // Slot map
@@ -476,13 +477,13 @@ function renderDash(){
     :recent.map(b=>`<tr>
       <td style="font-family:'JetBrains Mono',monospace;font-size:11px;">${b.st||'—'}<br><span style="color:var(--muted);font-size:10px;">${b.hrs}hr</span></td>
       <td><b>${b.nm}</b></td><td style="color:var(--blue);font-size:11px;">${b.ph||'—'}</td>
-      <td style="color:var(--gold);">${Rs(b.fin)}</td>
+      <td style="color:var(--gold);">${Rs(b.fin || b.totalAmt)}</td>
       <td style="color:var(--orange);">${Rs(b.advAmt)}<br>${pmbadge(b.advMode)}</td>
       <td style="color:${(b.due||0)>0?'var(--red)':'var(--green)'};">${(b.due||0)>0?Rs(b.due):'✅'}</td>
       <td>${sbadge(b.status)}</td>
-      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+      <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
         <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
-        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;">🖼️ SS</button>` : ''}
+        ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:28px;height:28px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gold);">` : ''}
         <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
         <button class="btn-del" onclick="delBk('${b.id}')" style="font-size:9px;padding:4px 8px;">🗑️</button>
         ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
@@ -667,7 +668,7 @@ async function saveComplete(){
 function renderPostTab(){
   const pending=allBookings.filter(b=>b.status==='pre');
   document.getElementById('post-tbl').innerHTML=!pending.length
-    ?'<tr><td colspan="8" class="empty"><div class="empty-ic">🎉</div>All bookings complete!</td></tr>'
+    ?'<tr><td colspan="8" class="empty"><div class="empty-ic">🎉</div>All matches completed!</td></tr>'
     :pending.map(b=>`<tr>
       <td style="font-size:10px;color:var(--muted);">${b.date}</td>
       <td>${b.st||'—'}</td><td><b>${b.nm}</b></td>
@@ -695,9 +696,9 @@ function renderPostTab(){
       <td style="color:var(--blue);">${Rs(b.afterAcc||0)}<br>${b.afterAccType?pmbadge(b.afterAccType):''}</td>
       <td style="color:${(b.due||0)>0?'var(--red)':'var(--green)'};font-weight:800;">${(b.due||0)>0?Rs(b.due):'✅'}</td>
       <td>${sbadge(b.status)}</td>
-      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+      <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
         <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
-        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;">🖼️ SS</button>` : ''}
+        ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:28px;height:28px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gold);">` : ''}
         ${(b.due||0)>0?`<button class="btn-orange" onclick="openAddPay('${b.id}')" style="font-size:9px;padding:4px 8px;">💰 Add Pay</button>`:''}
         <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
         <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
@@ -935,7 +936,7 @@ ${!bks.length?'<tr><td colspan="11" style="text-align:center;color:#888;padding:
   <td>${Rs(b.afterCash||0)}</td><td>${Rs(b.afterAcc||0)}</td>
   <td>${b.afterAccType?accName(b.afterAccType):'—'}</td>
   <td style="color:${(b.due||0)>0?'#ef4444':'#22c55e'};font-weight:bold;">${(b.due||0)>0?Rs(b.due):'Clear ✅'}</td>
-  <td>${b.status==='pre'?'PRE-MATCH':'COMPLETE'}</td>
+  <td>${b.status==='pre'?'BOOKED':'COMPLETE'}</td>
 </tr>`).join('')}</tbody></table>
 <h2>💸 Expenses</h2>
 <table><thead><tr><th>Category</th><th>Details</th><th>Paid Via</th><th>Amount</th></tr></thead><tbody>
@@ -1828,7 +1829,10 @@ async function verifyOnline(id, approve) {
   if (!confirm(approve ? 'Approve this booking?' : 'Reject this booking?')) return;
   try {
     if (approve) {
-      await db.collection('bookings').doc(id).update({ status: 'pre' });
+      const b = allBookings.find(x => x.id === id);
+      const upd = { status: 'pre' };
+      if (b && !b.fin && b.totalAmt) { upd.fin = b.totalAmt; }
+      await db.collection('bookings').doc(id).update(upd);
       toast('Booking Approved! ✅', 'ok');
     } else {
       await db.collection('bookings').doc(id).update({ status: 'rejected' });
@@ -1855,16 +1859,40 @@ function renderOnline() {
       <td style="font-size:10px;color:var(--muted);">${b.date}</td>
       <td><b>${b.nm}</b></td>
       <td style="font-size:11px;">${b.st} (${b.hrs}hr)</td>
-      <td style="color:var(--gold);">${Rs(b.fin)}</td>
+      <td style="color:var(--gold);">${Rs(b.fin || b.totalAmt)}</td>
       <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
       <td style="color:var(--blue);font-weight:800;">${b.trid || '—'}</td>
-      <td style="display:flex;gap:4px;">
+      <td style="display:flex;gap:6px;align-items:center;">
         <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:9px;padding:4px 8px;background:var(--green);border:none;color:#000;font-weight:bold;border-radius:6px;cursor:pointer;">APPROVE</button>
-        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;border-radius:6px;cursor:pointer;">🖼️ SS</button>` : ''}
+        ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:36px;height:36px;object-fit:cover;border-radius:6px;cursor:pointer;border:1.5px solid var(--gold);box-shadow:0 0 10px rgba(240,180,41,0.2);">` : '<span style="font-size:8px;color:var(--muted);">No SS</span>'}
         <button class="btn-del" onclick="verifyOnline('${b.id}', false)" style="font-size:9px;padding:4px 8px;border-radius:6px;cursor:pointer;">REJECT</button>
       </td>
     </tr>
   `).join('');
+}
+
+function renderOnlineAlert() {
+  const pend = allBookings.filter(b => b.status === 'waiting_approval' || b.status === 'pending');
+  const alert = document.getElementById('onlineAlert');
+  if (!alert) return;
+  if (pend.length > 0) {
+    alert.style.display = 'block';
+    document.getElementById('onlineList').innerHTML = pend.slice(0, 3).map(b => `
+      <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);padding:8px;border-radius:10px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.05);">
+        <div style="font-size:11px;">
+          <div style="font-weight:800;color:var(--text);">${b.nm}</div>
+          <div style="color:var(--soft);font-size:10px;">${b.date} • ${b.st}</div>
+          <div style="color:var(--blue);font-weight:700;font-size:10px;">TRID: ${b.trid}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+           ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:32px;height:32px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gold);">` : ''}
+           <button class="btn-sm" onclick="go('online')" style="font-size:9px;padding:4px 8px;background:var(--blue);color:#fff;border:none;">Review</button>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    alert.style.display = 'none';
+  }
 }
 
 // ─── EXPOSE FOR INLINE HTML HANDLERS ───
@@ -1880,7 +1908,7 @@ Object.assign(window, {
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
   calcAddPay, saveAddPay, checkPin, logout,
   archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact,
-  viewSS, verifyOnline, renderOnline, stopAlarm
+  viewSS, verifyOnline, renderOnline, renderOnlineAlert, stopAlarm
 });
 
 

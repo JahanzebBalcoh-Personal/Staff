@@ -285,11 +285,20 @@
     </div>
   </div>
 
+  <!-- ONLINE REQUESTS ALERT (QUICK VIEW) -->
+  <div id="onlineAlert" style="display:none; background:rgba(59,130,246,0.1); border:1.5px solid rgba(59,130,246,0.3); border-radius:15px; padding:15px; margin-bottom:15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--blue); letter-spacing:1px;">🌐 New Online Bookings</div>
+      <button class="btn-sm" onclick="go('online')" style="background:var(--blue); color:#fff; border:none; padding:4px 10px;">View All</button>
+    </div>
+    <div id="onlineList"></div>
+  </div>
+
   <div class="stats">
     <div class="sc inc"><div class="sc-lbl">Today's Earning</div><div class="sc-val" id="d-inc">Rs.0</div><div class="sc-sub" id="d-inc-s">0 complete</div></div>
     <div class="sc exp"><div class="sc-lbl">Today's Expense</div><div class="sc-val" id="d-exp">Rs.0</div><div class="sc-sub" id="d-exp-s">0 entries</div></div>
     <div class="sc prf"><div class="sc-lbl">Today's Profit</div><div class="sc-val" id="d-prf">Rs.0</div><div class="sc-sub" id="d-prf-s">Net</div></div>
-    <div class="sc bks"><div class="sc-lbl">Today's Bookings</div><div class="sc-val" id="d-sl">0</div><div class="sc-sub" id="d-sl-s">total</div></div>
+    <div class="sc bks"><div class="sc-lbl">Today's Bookings</div><div class="sc-val" id="d-sl">0</div><div class="sc-sub" id="d-sl-s">0 booked</div></div>
     <div class="sc adv"><div class="sc-lbl">Advance Received</div><div class="sc-val" id="d-adv">Rs.0</div><div class="sc-sub">today</div></div>
     <div class="sc due"><div class="sc-lbl">Due Pending</div><div class="sc-val" id="d-due">Rs.0</div><div class="sc-sub">pending</div></div>
   </div>
@@ -480,7 +489,7 @@
     </div>
     <button class="btn-gold" onclick="savePreMatch()">📋 SAVE PRE-MATCH BOOKING</button>
   </div>
-  <div class="sh"><div class="sh-t">Pre-Match Pending</div></div>
+  <div class="sh"><div class="sh-t">Upcoming & Booked Matches</div></div>
   <div class="tw"><table>
     <thead><tr><th>Date</th><th>Time</th><th>Name</th><th>Phone</th><th>Hrs</th><th>Total</th><th>Advance</th><th>Due</th><th>Actions</th></tr></thead>
     <tbody id="pre-tbl"></tbody>
@@ -493,7 +502,7 @@
   <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--green);font-weight:700;">
     ✅ Match done? Select booking below and mark complete with remaining payment.
   </div>
-  <div class="sh"><div class="sh-t">Pending Bookings</div></div>
+  <div class="sh"><div class="sh-t">Matches to be Completed</div></div>
   <div class="tw"><table>
     <thead><tr><th>Date</th><th>Time</th><th>Name</th><th>Phone</th><th>Total</th><th>Advance</th><th>Due</th><th>Actions</th></tr></thead>
     <tbody id="post-tbl"></tbody>
