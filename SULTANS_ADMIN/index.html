@@ -512,7 +512,15 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-
   </div>
 </div>
 
-<div class="footer">
+<!-- REAL-TIME ALARM ALERT -->
+<div id="alarmAlert" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); width:90%; max-width:400px; background:linear-gradient(135deg, #ef4444, #b91c1c); color:white; z-index:11000; padding:20px; border-radius:15px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); animation: badgePulse 1s infinite;">
+  <div style="font-size:40px; margin-bottom:10px;">🚨</div>
+  <div style="font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:5px;">NEW ONLINE BOOKING!</div>
+  <div id="alarmMsg" style="font-size:14px; font-weight:700; margin-bottom:20px; opacity:0.9;">A customer just booked a slot online.</div>
+  <button onclick="stopAlarm()" style="background:white; color:#b91c1c; border:none; padding:10px 20px; border-radius:8px; font-weight:900; font-family:'Nunito',sans-serif; cursor:pointer; width:100%;">OK, I'LL CHECK</button>
+</div>
+
+<div class="app-wrap">
   <div class="fc">Jahanzeb Baloch — <a href="tel:03060711529">0306-0711529</a> | Sultans Indoor Cricket Club, Multan</div>
 </div>
 <div class="toast" id="toast"></div>
@@ -556,11 +564,46 @@ function waDue(b){return 'Assalam o Alaikum '+b.nm+'!\nThe Sultans Indoor Cricke
 function ptm(t){if(!t)return 0;var m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i);if(!m)return 0;var h=parseInt(m[1]),mn=parseInt(m[2]||0),ap=(m[3]||'').toUpperCase();if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;if(!ap&&h<8)h+=12;return h*60+mn;}
 function mtt(mins){var t=mins%1440,h24=Math.floor(t/60),m=t%60,ap=h24>=12?'PM':'AM',h12=h24>12?h24-12:h24===0?12:h24;return h12+':'+(m<10?'0':'')+m+' '+ap;}
 function fcd(s){var sec=Math.floor(s),h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),sc=sec%60;if(h>0)return h+'h '+pad(m)+'m '+pad(sc)+'s';return pad(m)+':'+pad(sc);}
+function viewSS(url){ if(!url) return; window.open(url, '_blank'); }
+
+// ─── ALARM SYSTEM ───
+var sirenAudio = null;
+function startAlarmListener() {
+    db.collection('alerts').onSnapshot(function(snap) {
+        snap.docChanges().forEach(function(ch) {
+            if (ch.type === 'added') {
+                var data = ch.doc.data();
+                var now = new Date().getTime();
+                var at = new Date(data.at).getTime();
+                if (now - at < 60000) { // Only if alert is within last 1 minute
+                    playSiren(data.txt);
+                }
+            }
+        });
+    });
+}
+function playSiren(msg) {
+    var m = document.getElementById('alarmMsg'); if(m) m.textContent = msg || 'New Online Booking!';
+    var a = document.getElementById('alarmAlert'); if(a) a.style.display = 'block';
+    if (!sirenAudio) {
+        sirenAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2816/2816-preview.mp3');
+        sirenAudio.loop = true;
+    }
+    sirenAudio.play().catch(function(e) { console.log("Sound blocked:", e); });
+}
+function stopAlarm() {
+    var a = document.getElementById('alarmAlert'); if(a) a.style.display = 'none';
+    if (sirenAudio) {
+        sirenAudio.pause();
+        sirenAudio.currentTime = 0;
+    }
+}
 
 // FIREBASE
 function startSync(){
   try{
     document.getElementById('sdot').style.background='var(--orange)';
+    startAlarmListener();
   }catch(e){}
   db.collection('bookings').onSnapshot(function(snap){
     allBks=snap.docs.map(function(d){return Object.assign({},d.data(),{id:d.id});}).sort(function(a,b){return (b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||'');});
@@ -645,7 +688,20 @@ function renderOnlineAlert(){
     count.style.display = 'inline-block';
     count.textContent = pend.length;
     document.getElementById('onlineList').innerHTML = pend.slice(0,3).map(function(b){
-      return '<div style="font-size:12px; margin-bottom:5px; color:var(--soft);"><b>'+b.nm+'</b> — '+b.date+' ('+b.st+') <span style="color:var(--blue);">TRID: '+b.trid+'</span></div>';
+      return '<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:10px; border-radius:12px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.05);">'+
+        '<div style="font-size:12px;">'+
+          '<div style="font-weight:800; color:var(--text);">'+b.nm+'</div>'+
+          '<div style="color:var(--soft); font-size:10px;">'+b.date+' • '+b.st+'</div>'+
+          '<div style="color:var(--blue); font-weight:700; font-size:10px;">TRID: '+(b.trid || '—')+'</div>'+
+        '</div>'+
+        '<div style="display:flex; gap:8px; align-items:center;">'+
+           (b.screenshot ? '<img src="'+b.screenshot+'" onclick="viewSS(\''+b.screenshot+'\')" style="width:36px; height:36px; object-fit:cover; border-radius:6px; cursor:pointer; border:1.5px solid var(--gold); shadow:0 0 10px rgba(0,0,0,0.3);">' : '')+
+           '<div style="display:flex; flex-direction:column; gap:4px;">'+
+             '<button class="btn-sm" style="background:var(--green); color:#000; border:none; padding:3px 8px; font-size:9px;" onclick="verifyOnline(\''+b.id+'\', true)">Approve</button>'+
+             '<button class="btn-sm" style="background:var(--red); color:#fff; border:none; padding:3px 8px; font-size:9px;" onclick="verifyOnline(\''+b.id+'\', false)">Reject</button>'+
+           '</div>'+
+        '</div>'+
+      '</div>';
     }).join('');
   } else {
     alert.style.display = 'none';
@@ -660,10 +716,12 @@ function renderOnline(){
   if(!pend.length){h='<tr><td colspan="8" class="empty">No pending online bookings</td></tr>';}
   else {
     pend.forEach(function(b){
-      h+='<tr><td>'+b.date+'</td><td>'+b.nm+'</td><td>'+b.ph+'</td><td>'+b.st+'</td><td>'+b.hrs+'</td><td>'+Rs(b.advAmt)+'</td><td><b style="color:var(--blue);">'+b.trid+'</b></td>';
-      h+='<td><button class="btn-sm" style="background:var(--green);color:#000;border:none;padding:4px 8px;" onclick="verifyOnline(\''+b.id+'\', true)">Approve</button> ';
-      if(b.screenshot){ h+='<button class="btn-sm" style="background:var(--orange);color:#fff;border:none;padding:4px 8px;" onclick="viewSS(\''+b.screenshot+'\')">🖼️ SS</button> '; }
-      h+='<button class="btn-sm" style="background:var(--red);color:#fff;border:none;padding:4px 8px;" onclick="verifyOnline(\''+b.id+'\', false)">Reject</button></td></tr>';
+      h+='<tr><td>'+b.date+'</td><td>'+b.nm+'</td><td>'+b.ph+'</td><td>'+b.st+'</td><td>'+b.hrs+'</td><td>'+Rs(b.advAmt)+'</td><td><b style="color:var(--blue);">'+(b.trid || '—')+'</b></td>';
+      h+='<td style="display:flex; gap:8px; align-items:center;">';
+      h+='<button class="btn-sm" style="background:var(--green); color:#000; border:none; padding:5px 12px;" onclick="verifyOnline(\''+b.id+'\', true)">Approve</button> ';
+      if(b.screenshot){ h+='<img src="'+b.screenshot+'" onclick="viewSS(\''+b.screenshot+'\')" style="width:40px; height:40px; object-fit:cover; border-radius:8px; cursor:pointer; border:1.5px solid var(--gold);">'; }
+      else { h+='<span style="font-size:9px; color:var(--muted);">No SS</span>'; }
+      h+='<button class="btn-sm" style="background:var(--red); color:#fff; border:none; padding:5px 12px;" onclick="verifyOnline(\''+b.id+'\', false)">Reject</button></td></tr>';
     });
   }
   document.getElementById('onlineTbl').innerHTML=h;
@@ -673,7 +731,11 @@ async function verifyOnline(id, approve){
   if(!confirm(approve?'Verify TRID and approve booking?':'Reject this booking?')) return;
   try {
     if(approve){
-      await db.collection('bookings').doc(id).update({status:'pre'});
+      var b=allBks.find(function(x){return x.id===id;});
+      var upd = {status:'pre'};
+      // Ensure fin is set if only totalAmt exists (from public app)
+      if(b && !b.fin && b.totalAmt) { upd.fin = b.totalAmt; }
+      await db.collection('bookings').doc(id).update(upd);
       toast('Booking Approved! ✅');
     } else {
       await db.collection('bookings').doc(id).update({status:'rejected'});
@@ -756,7 +818,7 @@ function renderBk(q){
   var tInc=bks.reduce(function(s,b){return s+(parseFloat(b.totalPaid)||0);},0);
   var tDue=bks.reduce(function(s,b){return s+(parseFloat(b.due)||0);},0);
   document.getElementById('bkStats').innerHTML='<span style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;color:var(--green);">'+bks.length+' bookings</span><span style="background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.2);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;color:var(--gold);">Total: '+Rs(tInc)+'</span>'+(tDue>0?'<span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;color:var(--red);">Due: '+Rs(tDue)+'</span>':'');
-  document.getElementById('bkTbl').innerHTML=!bks.length?'<tr><td colspan="14" class="empty">No bookings</td></tr>':bks.map(function(b){return '<tr><td style="font-size:10px;color:var(--muted);">'+b.date+'</td><td><b>'+b.nm+'</b></td><td style="color:var(--blue);font-size:11px;">'+(b.ph||'—')+'</td><td style="font-size:11px;">'+(b.st||'—')+'</td><td>'+(b.hrs||'')+'hr</td><td style="color:var(--gold);">'+Rs(b.fin)+'</td><td style="color:var(--orange);">'+Rs(b.advAmt)+'</td><td>'+pmbadge(b.advMode)+'</td><td style="color:var(--green);">'+Rs(b.afterCash||0)+'</td><td style="color:var(--blue);">'+Rs(b.afterAcc||0)+'</td><td style="color:var(--green);">'+Rs(b.totalPaid||0)+'</td><td style="color:'+((b.due||0)>0?'var(--red)':'var(--green)')+';">'+((b.due||0)>0?Rs(b.due):'OK')+'</td><td>'+sbadge(b.status)+'</td><td style="display:flex;gap:4px;flex-wrap:wrap;"><button class="btn-edit" onclick="openEdit(\''+b.id+'\')">Edit</button>'+(b.screenshot?'<button class="btn-pay" style="background:var(--orange);" onclick="viewSS(\''+b.screenshot+'\')">🖼️</button>':'')+(((b.due||0)>0)?'<button class="btn-pay" onclick="openPay(\''+b.id+'\')">Pay</button>':'')+'<button class="btn-del" onclick="delBk(\''+b.id+'\')">Del</button></td></tr>';}).join('');
+  document.getElementById('bkTbl').innerHTML=!bks.length?'<tr><td colspan="14" class="empty">No bookings</td></tr>':bks.map(function(b){return '<tr><td style="font-size:10px;color:var(--muted);">'+b.date+'</td><td><b>'+b.nm+'</b></td><td style="color:var(--blue);font-size:11px;">'+(b.ph||'—')+'</td><td style="font-size:11px;">'+(b.st||'—')+'</td><td>'+(b.hrs||'')+'hr</td><td style="color:var(--gold);">'+Rs(b.fin || b.totalAmt)+'</td><td style="color:var(--orange);">'+Rs(b.advAmt)+'</td><td>'+pmbadge(b.advMode)+'</td><td style="color:var(--green);">'+Rs(b.afterCash||0)+'</td><td style="color:var(--blue);">'+Rs(b.afterAcc||0)+'</td><td style="color:var(--green);">'+Rs(b.totalPaid||0)+'</td><td style="color:'+((b.due||0)>0?'var(--red)':'var(--green)')+';">'+((b.due||0)>0?Rs(b.due):'OK')+'</td><td>'+sbadge(b.status)+'</td><td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;"><button class="btn-edit" onclick="openEdit(\''+b.id+'\')">Edit</button>'+(b.screenshot?'<img src="'+b.screenshot+'" onclick="viewSS(\''+b.screenshot+'\')" style="width:28px;height:28px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gold);">':'')+( ((b.due||0)>0)?'<button class="btn-pay" onclick="openPay(\''+b.id+'\')">Pay</button>':'')+'<button class="btn-del" onclick="delBk(\''+b.id+'\')">Del</button></td></tr>';}).join('');
 }
 
 // FINANCE
