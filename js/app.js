@@ -481,12 +481,12 @@ function renderDash(){
       <td style="color:var(--orange);">${Rs(b.advAmt)}<br>${pmbadge(b.advMode)}</td>
       <td style="color:${(b.due||0)>0?'var(--red)':'var(--green)'};">${(b.due||0)>0?Rs(b.due):'✅'}</td>
       <td>${sbadge(b.status)}</td>
-      <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
-        <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
-        ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:28px;height:28px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gold);">` : ''}
-        <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
-        <button class="btn-del" onclick="delBk('${b.id}')" style="font-size:9px;padding:4px 8px;">🗑️</button>
-        ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
+      <td style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;" title="Invoice">🧾</button>
+        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--orange),#ea580c);border:none;color:#fff;border-radius:5px;cursor:pointer;font-weight:800;">🖼️ VIEW SS</button>` : ''}
+        <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;" title="Edit">✏️</button>
+        <button class="btn-del" onclick="delBk('${b.id}')" style="font-size:9px;padding:4px 8px;" title="Delete">🗑️</button>
+        ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank" style="font-size:9px;padding:4px 8px;" title="WhatsApp">💬</a>`:''}
       </td>
 
     </tr>`).join('');
@@ -540,7 +540,7 @@ function renderPreTable(){
         <td style="display:flex;gap:4px;flex-wrap:wrap;">
           <button class="btn-orange" onclick="openComplete('${b.id}')">✅</button>
           <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
-          ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;">🖼️ SS</button>` : ''}
+          ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;">🖼️ VIEW SS</button>` : ''}
           <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
           ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank">💬</a>`:''}
           <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
@@ -1862,10 +1862,10 @@ function renderOnline() {
       <td style="color:var(--gold);">${Rs(b.fin || b.totalAmt)}</td>
       <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
       <td style="color:var(--blue);font-weight:800;">${b.trid || '—'}</td>
-      <td style="display:flex;gap:6px;align-items:center;">
-        <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:9px;padding:4px 8px;background:var(--green);border:none;color:#000;font-weight:bold;border-radius:6px;cursor:pointer;">APPROVE</button>
-        ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:36px;height:36px;object-fit:cover;border-radius:6px;cursor:pointer;border:1.5px solid var(--gold);box-shadow:0 0 10px rgba(240,180,41,0.2);">` : '<span style="font-size:8px;color:var(--muted);">No SS</span>'}
-        <button class="btn-del" onclick="verifyOnline('${b.id}', false)" style="font-size:9px;padding:4px 8px;border-radius:6px;cursor:pointer;">REJECT</button>
+      <td style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:10px;padding:6px 12px;background:var(--green);border:none;color:#000;font-weight:900;border-radius:6px;cursor:pointer;">APPROVE ✅</button>
+        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:10px;padding:6px 12px;background:var(--gold);border:none;color:#000;font-weight:900;border-radius:6px;cursor:pointer;">🖼️ VIEW SCREENSHOT</button>` : '<span style="font-size:9px;color:var(--muted);font-weight:bold;">NO SS</span>'}
+        <button class="btn-del" onclick="verifyOnline('${b.id}', false)" style="font-size:10px;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:900;">REJECT ❌</button>
       </td>
     </tr>
   `).join('');
