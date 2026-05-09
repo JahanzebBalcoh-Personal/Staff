@@ -168,41 +168,35 @@ function waInvoiceText(b){
 
 // ─── TABS ───
 function go(tab){
-  console.log("Navigating to:", tab);
   // 1. Reset Tabs
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>{
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => {
     const oc = t.getAttribute('onclick') || '';
     if(oc.includes("'"+tab+"'")) t.classList.add('active');
   });
 
-  // 2. Hide ALL pages first (Nuclear Reset)
+  // 2. Hide ALL pages — ONLY use CSS classes, never inline style
   document.querySelectorAll('.pg').forEach(p => {
     p.classList.remove('on');
-    p.style.display = 'none'; // Explicit override
+    p.removeAttribute('style'); // Kill any lingering inline styles
   });
 
-  // 3. Show target page
+  // 3. Show target page via class only
   const target = document.getElementById('pg-'+tab);
   if(target) {
     target.classList.add('on');
-    target.style.display = 'block'; // Explicit override
-    
-    // 4. Scroll to top
     window.scrollTo({top:0, behavior:'smooth'});
 
-    // 5. Render specific tab data
+    // 4. Render tab content
     if(tab==='dash') renderDash();
-    if(tab==='pre') renderPreTable();
-    if(tab==='post') renderPostTab();
-    if(tab==='online') renderOnline();
-    if(tab==='cal') renderCal();
-    if(tab==='cust') renderCustTable('');
-    if(tab==='exp') renderET();
-    if(tab==='rep') renderRep();
-    if(tab==='history') renderHistory();
-  } else {
-    console.warn("Target page not found: pg-" + tab);
+    else if(tab==='pre') renderPreTable();
+    else if(tab==='post') renderPostTab();
+    else if(tab==='online') renderOnline();
+    else if(tab==='cal') renderCal();
+    else if(tab==='cust') renderCustTable('');
+    else if(tab==='exp') renderET();
+    else if(tab==='rep') renderRep();
+    else if(tab==='history') renderHistory();
   }
 }
 
@@ -1803,7 +1797,7 @@ function init(){
   if(ySel&&!ySel.options.length)for(let y=now.getFullYear();y>=now.getFullYear()-3;y--){const o=document.createElement('option');o.value=y;o.textContent=y;ySel.appendChild(o);}
   const savedTarget=localStorage.getItem('daily_target');
   if(savedTarget&&document.getElementById('targetInput'))document.getElementById('targetInput').value=savedTarget;
-  calcAmt();renderDash();startTimer();
+  calcAmt(); go('dash'); startTimer();
   
   // Hide loading overlay on success
   setTimeout(() => {
