@@ -1,7 +1,7 @@
 {
-  "name": "Sultans Indoor Cricket Club",
-  "short_name": "Sultans Club",
-  "description": "Premium Indoor Cricket facility in Multan. Book slots, track scores, and manage matches.",
+  "name": "SCC Staff",
+  "short_name": "SCC Staff",
+  "description": "SCC Staff portal for managing Sultans Indoor Cricket Club, Multan.",
   "id": "com.sultans.club",
   "start_url": "./index.html",
   "display": "standalone",

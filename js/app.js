@@ -24,7 +24,7 @@ let allBookings=[],allExpenses=[],allCustomers=[];
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
 let currentInvBooking=null;
 let allHistory=[];
-const APP_VERSION = '1.2.1'; // Update this when deploying new code
+const APP_VERSION = '1.2.2'; // Update this when deploying new code
 
 // ─── FIREBASE LISTENERS ───
 function startListeners(){
@@ -70,6 +70,7 @@ function refreshTab(){
   if(fn.includes('dash'))renderDash();
   else if(fn.includes('pre'))renderPreTable();
   else if(fn.includes('post'))renderPostTab();
+  else if(fn.includes('online'))renderOnline();
   else if(fn.includes('cal'))renderCal();
   else if(fn.includes('cust'))renderCustTable('');
   else if(fn.includes('online'))renderOnline();
@@ -157,6 +158,7 @@ function accName(t){return{jazz:'JazzCash (Abdul Gaffar)',bank:'Bank Alfalah (Me
 function viewSS(url){ if(!url) return; window.open(url, '_blank'); }
 
 function waLink(phone,msg){const p=phone.replace(/[^0-9]/g,'');const intl=p.startsWith('0')?'92'+p.slice(1):p;return`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;}
+function viewSS(url){ if(!url) return; window.open(url,'_blank'); }
 
 // ─── WHATSAPP MESSAGES ───
 function waConfirm(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\n✅ *Your booking is confirmed!*\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n🕐 Hours: ${b.hrs} hrs\n💰 Total: ${Rs(b.fin)}\n💵 Advance Paid: ${Rs(b.advAmt)}\n⏳ Remaining: ${Rs(b.due)}\n\nPlease arrive on time!\n*Thank you! 🙏*`;}
@@ -167,13 +169,39 @@ function waInvoiceText(b){
 
 // ─── TABS ───
 function go(tab){
+  // 1. Reset Tabs
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>{if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes("'"+tab+"'"))t.classList.add('active');});
-  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
-  document.getElementById('pg-'+tab).classList.add('on');
-  if(tab==='dash')renderDash();if(tab==='pre')renderPreTable();if(tab==='post')renderPostTab();
-  if(tab==='cal')renderCal();if(tab==='cust')renderCustTable('');if(tab==='exp')renderET();if(tab==='rep')renderRep();
-  if(tab==='history')renderHistory();
+  document.querySelectorAll('.tab').forEach(t=>{
+    const oc = t.getAttribute('onclick') || '';
+    if(oc.includes("'"+tab+"'")) t.classList.add('active');
+  });
+
+  // 2. Hide ALL pages first (Nuclear Reset)
+  document.querySelectorAll('.pg').forEach(p => {
+    p.classList.remove('on');
+    p.style.display = 'none'; // Explicit override
+  });
+
+  // 3. Show target page
+  const target = document.getElementById('pg-'+tab);
+  if(target) {
+    target.classList.add('on');
+    target.style.display = 'block'; // Explicit override
+  }
+
+  // 4. Scroll to top
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  // 5. Render specific tab data
+  if(tab==='dash') renderDash();
+  if(tab==='pre') renderPreTable();
+  if(tab==='post') renderPostTab();
+  if(tab==='online') renderOnline();
+  if(tab==='cal') renderCal();
+  if(tab==='cust') renderCustTable('');
+  if(tab==='exp') renderET();
+  if(tab==='rep') renderRep();
+  if(tab==='history') renderHistory();
 }
 
 // ─── TARGET ───
@@ -308,9 +336,9 @@ function openInv(id){
   document.getElementById('invContent').innerHTML=`
     <div class="inv-header">
       <div style="font-size:26px;">🏏</div>
-      <div style="font-size:18px;font-weight:bold;letter-spacing:2px;">THE SULTANS</div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Indoor Cricket Club — Multan</div>
-      <div style="font-size:10px;color:#94a3b8;">0300-9634880 | 0319-3510870</div>
+      <div style="font-size:18px;font-weight:bold;letter-spacing:2px;">SCC STAFF</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:2px;">Near Menssion Marriage Club, MA Jinnah Road</div>
+      <div style="font-size:10px;color:#94a3b8;">Qasoori Chowk, Multan | 0300-9634880</div>
     </div>
     <div class="inv-title-row"><span>📄 BOOKING RECEIPT</span><span style="font-size:10px;">${new Date().toLocaleDateString('en-PK')}</span></div>
     <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:10px;">
@@ -335,7 +363,8 @@ function openInv(id){
       <div style="display:flex;justify-content:space-between;"><span>🏦 Bank Alfalah:</span><span><b>83721010111101 (Mehboob Ahmad)</b></span></div>
     </div>
     <div class="inv-footer">
-      <p><b>The Sultans Indoor Cricket Club, Multan</b></p>
+      <p><b>The Sultans Indoor Cricket Club - Multan</b></p>
+      <p style="font-size:9px;">Near Menssion Marriage Club, MA Jinnah Road, Qasoori Chowk</p>
       <p>System by Jahanzeb Baloch — 0306-0711529</p>
       <p style="margin-top:4px;">Thank you! Please come again 🏏</p>
     </div>`;
@@ -353,10 +382,10 @@ function downloadInvPDF(){
     // Header
     doc.setFillColor(6,14,26);doc.rect(0,0,W,30,'F');
     doc.setTextColor(240,180,41);doc.setFontSize(14);doc.setFont('helvetica','bold');
-    doc.text('THE SULTANS',W/2,12,{align:'center'});
+    doc.text('SCC STAFF',W/2,12,{align:'center'});
     doc.setFontSize(8);doc.setTextColor(148,163,184);
-    doc.text('Indoor Cricket Club — Multan',W/2,18,{align:'center'});
-    doc.text('0300-9634880 | 0319-3510870',W/2,23,{align:'center'});
+    doc.text('Near Menssion Marriage Club, MA Jinnah Road',W/2,18,{align:'center'});
+    doc.text('Qasoori Chowk, Multan | 0300-9634880',W/2,23,{align:'center'});
     y=36;
     // Title
     doc.setFillColor(240,180,41);doc.rect(8,y-5,W-16,8,'F');
@@ -471,7 +500,7 @@ function renderDash(){
   // Analytics
   renderAnalytics();
   // Recent
-  const recent=tB.slice(0,6);
+  const recent=tB.filter(b=>b.status!=='pre').slice(0,6);
   document.getElementById('dash-bks').innerHTML=!recent.length
     ?'<tr><td colspan="8" class="empty"><div class="empty-ic">📅</div>No bookings today</td></tr>'
     :recent.map(b=>`<tr>
@@ -537,7 +566,7 @@ function renderPreTable(){
         <td style="color:var(--gold);">${Rs(b.fin)}</td>
         <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
         <td style="color:var(--purple);font-weight:800;">${Rs(b.due)}</td>
-        <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
           <button class="btn-orange" onclick="openComplete('${b.id}')">✅</button>
           <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
           ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;">🖼️ VIEW SS</button>` : ''}
@@ -708,6 +737,42 @@ function renderPostTab(){
 }
 async function delBk(id){if(!confirm('Delete?'))return;await db.collection('bookings').doc(id).delete();toast('Deleted','err');}
 
+// ─── ONLINE REQUESTS ───
+function renderOnline(){
+  const bks=allBookings.filter(b=>b.status==='waiting_approval');
+  const badge=document.getElementById('onlineBadge');
+  if(badge){badge.style.display=bks.length?'inline-block':'none';badge.textContent=bks.length;}
+  document.getElementById('online-tbl').innerHTML=!bks.length
+    ?'<tr><td colspan="7" class="empty">No pending online requests</td></tr>'
+    :bks.map(b=>`<tr>
+      <td style="font-size:10px;color:var(--muted);">${b.date}</td>
+      <td><b>${b.nm}</b><br><span style="color:var(--soft);font-size:10px;">${b.ph||'—'}</span></td>
+      <td style="font-size:11px;">${b.st||'—'} (${b.hrs}hr)</td>
+      <td style="color:var(--gold);">${Rs(b.fin||b.totalAmt)}</td>
+      <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
+      <td style="color:var(--blue);font-weight:800;">${b.trid || '—'}</td>
+      <td style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:10px;padding:6px 12px;background:var(--green);border:none;color:#000;font-weight:900;border-radius:6px;cursor:pointer;">APPROVE ✅</button>
+        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:10px;padding:6px 12px;background:var(--gold);border:none;color:#000;font-weight:900;border-radius:6px;cursor:pointer;">🖼️ VIEW SCREENSHOT</button>` : '<span style="font-size:9px;color:var(--muted);font-weight:bold;">NO SS</span>'}
+        <button class="btn-del" onclick="verifyOnline('${b.id}', false)" style="font-size:10px;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:900;">REJECT ❌</button>
+      </td>
+    </tr>`).join('');
+}
+async function verifyOnline(id, approve){
+  if(!confirm(approve?'Approve this booking?':'Reject and delete?'))return;
+  showSync(true);
+  try{
+    if(approve){
+      await db.collection('bookings').doc(id).update({status:'pre', approvedAt:new Date().toISOString()});
+      toast('Booking Approved! ✅','ok');
+    } else {
+      await db.collection('bookings').doc(id).delete();
+      toast('Rejected & Deleted','err');
+    }
+  }catch(e){toast('Error: '+e.message,'err');}
+  showSync(false);
+}
+
 // ─── CALENDAR ───
 function renderCal(){
   document.getElementById('calTitle').textContent=MONTHS[calMonth]+' '+calYear;
@@ -791,7 +856,7 @@ function renderCustTable(q){
         <td style="color:${due>0?'var(--red)':'var(--green)'};">${due>0?Rs(due):'✅'}</td>
         <td style="font-size:11px;color:var(--soft);">${c.note||'—'}</td>
         <td style="display:flex;gap:4px;">
-          ${c.ph?`<a class="btn-wa" href="${waLink(c.ph,'Assalam o Alaikum '+c.nm+'! 🏏 The Sultans Indoor Cricket Club — Multan.')}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
+          ${c.ph?`<a class="btn-wa" href="${waLink(c.ph,'Assalam o Alaikum '+c.nm+'! 🏏 SCC — Sultans Indoor Cricket Club - Multan.')}" target="_blank" style="font-size:9px;padding:4px 8px;">💬</a>`:''}
           ${c.ph&&due>0?`<a class="btn-wa" href="${waLink(c.ph,waDue({nm:c.nm,ph:c.ph,date:'—',st:'—',fin:spent,due}))}" target="_blank" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--red),#b91c1c);">💬 Due</a>`:''}
           <button class="btn-del" onclick="delCust('${c.id}')">Del</button>
         </td>
@@ -920,7 +985,7 @@ td{padding:6px 8px;border-bottom:1px solid #e2e8f0;font-size:11px;}tr:nth-child(
 .footer{text-align:center;font-size:10px;color:#888;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px;}
 @media print{.pb{display:none;}@page{margin:8mm;}}</style></head><body>
 <button class="pb" onclick="window.print()">🖨️ Print / Save as PDF</button>
-<h1>🏏 THE SULTANS — Daily Report (${td})</h1>
+<h1>🏏 SCC STAFF - Daily Report (${td})</h1>
 <p style="color:#888;font-size:11px;margin-bottom:12px;">${new Date().toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
 <div class="boxes">
   <div class="box g"><span class="bv">${Rs(inc)}</span><span class="bl">Earning</span></div>
@@ -943,7 +1008,8 @@ ${!bks.length?'<tr><td colspan="11" style="text-align:center;color:#888;padding:
 ${!exps.length?'<tr><td colspan="4" style="text-align:center;color:#888;padding:12px;">No expenses</td></tr>':exps.map(e=>`<tr><td>${e.cat}</td><td>${e.desc||'—'}</td><td>${e.pay}</td><td>${Rs(e.amount)}</td></tr>`).join('')}
 </tbody></table>
 <div class="footer">
-  <p><b>The Sultans Indoor Cricket Club, Multan</b> | 0300-9634880 | 0319-3510870</p>
+  <p><b>The Sultans Indoor Cricket Club - Multan</b></p>
+  <p style="font-size:10px;">Near Menssion Marriage Club, MA Jinnah Road, Qasoori Chowk | 0300-9634880</p>
   <p>JazzCash: 0300-3510175 (Abdul Gaffar) | Bank Alfalah: 83721010111101 (Mehboob Ahmad)</p>
   <p style="margin-top:4px;"><b>System by Jahanzeb Baloch — 0306-0711529</b></p>
 </div>
@@ -979,7 +1045,7 @@ td{padding:5px 7px;border-bottom:1px solid #e2e8f0;font-size:10px;}tr:nth-child(
 .footer{text-align:center;font-size:10px;color:#888;border-top:1px solid #e2e8f0;padding-top:10px;margin-top:14px;}
 @media print{.pb{display:none;}@page{margin:8mm;size:A4 landscape;}}</style></head><body>
 <button class="pb" onclick="window.print()">🖨️ Print / Save as PDF</button>
-<h1>🏏 THE SULTANS — ${MONTHS[month-1]} ${year}</h1>
+<h1>🏏 SCC STAFF - ${MONTHS[month-1]} ${year}</h1>
 <p style="color:#888;font-size:11px;margin-bottom:12px;">Generated: ${new Date().toLocaleString('en-PK')}</p>
 <div class="boxes">
   <div class="box g"><span class="bv">${Rs(tInc)}</span><span class="bl">Monthly Earning</span></div>
@@ -1002,7 +1068,8 @@ ${bks.map(b=>`<tr>
 ${exps.map(e=>`<tr><td>${e.date}</td><td>${e.cat}</td><td>${e.desc||'—'}</td><td>${e.pay}</td><td>${Rs(e.amount)}</td></tr>`).join('')}
 </tbody></table>
 <div class="footer">
-  <p><b>The Sultans Indoor Cricket Club, Multan</b> | 0300-9634880 | 0319-3510870</p>
+  <p><b>The Sultans Indoor Cricket Club - Multan</b></p>
+  <p style="font-size:10px;">Near Menssion Marriage Club, MA Jinnah Road, Qasoori Chowk | 0300-9634880</p>
   <p>JazzCash: 0300-3510175 (Abdul Gaffar) | Bank Alfalah: 83721010111101 (Mehboob Ahmad)</p>
   <p style="margin-top:4px;"><b>System by Jahanzeb Baloch — 0306-0711529</b></p>
 </div>
@@ -1281,7 +1348,7 @@ function checkAdvWarn(){
 }
 
 // ─── SMART PASTE ─────────────────────────
-const WA_TEMPLATE=`THE SULTANS INDOOR CRICKET CLUB 🏏
+const WA_TEMPLATE=`🏏 SCC — Sultans Indoor Cricket Club 🏏
 Booking Request - Yeh fill kar ke bhejein:
 
 NAME: 
