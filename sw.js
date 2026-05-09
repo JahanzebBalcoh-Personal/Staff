@@ -1,40 +1,30 @@
-const CACHE_NAME = 'sultans-staff-v12';
-const ASSETS = [
-  './',
-  './index.html',
-  './js/app.js',
-  './manifest.json'
-];
+// SELF-DESTRUCT SERVICE WORKER
+// This SW clears ALL caches and forces page reload
+// After this, no caching will happen
 
-// Install: cache core assets
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
-  self.skipWaiting(); // Force activate immediately
+self.addEventListener('install', function(e) {
+  self.skipWaiting(); // Activate immediately
 });
 
-// Activate: delete ALL old caches
-self.addEventListener('activate', (e) => {
+self.addEventListener('activate', function(e) {
   e.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    }).then(() => self.clients.claim()) // Take control immediately
+    // Delete ALL caches
+    caches.keys().then(function(names) {
+      return Promise.all(names.map(function(name) { return caches.delete(name); }));
+    }).then(function() {
+      return self.clients.claim(); // Take control
+    }).then(function() {
+      // Tell all open tabs to reload
+      return self.clients.matchAll().then(function(clients) {
+        clients.forEach(function(client) { 
+          client.postMessage({type: 'force-reload'}); 
+        });
+      });
+    })
   );
 });
 
-// Fetch: NETWORK FIRST — always try fresh, fallback to cache
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    fetch(e.request)
-      .then(response => {
-        // Save fresh copy to cache
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        return response;
-      })
-      .catch(() => caches.match(e.request)) // Offline fallback
-  );
+// NEVER cache anything - always go to network
+self.addEventListener('fetch', function(e) {
+  e.respondWith(fetch(e.request));
 });

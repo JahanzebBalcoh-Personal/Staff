@@ -17,16 +17,27 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-  // Force clear old Service Worker caches on every load
+  // NUCLEAR CACHE FIX — runs before anything else
   if('serviceWorker' in navigator){
-    // Unregister ALL old service workers and clear caches
-    caches.keys().then(function(names){
-      names.forEach(function(name){ 
-        if(name !== 'sultans-staff-v12') caches.delete(name); 
+    // Clear ALL caches immediately
+    if(window.caches){
+      caches.keys().then(function(names){
+        names.forEach(function(name){ caches.delete(name); });
       });
-    });
+    }
+    // Force SW update check
     navigator.serviceWorker.getRegistrations().then(function(regs){
       regs.forEach(function(reg){ reg.update(); });
+    });
+    // Listen for reload command from new SW
+    navigator.serviceWorker.addEventListener('message', function(e){
+      if(e.data && e.data.type === 'force-reload'){
+        window.location.reload();
+      }
+    });
+    // Auto reload when new SW takes control
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      window.location.reload();
     });
   }
   window.addEventListener('error', function(e) {
