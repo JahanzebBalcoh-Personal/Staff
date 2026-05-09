@@ -1,11 +1,10 @@
-const CACHE_NAME = 'sultans-club-v5';
+const CACHE_NAME = 'sultans-club-v10';
 const ASSETS = [
   './',
   './index.html',
-  './css/style.css',
   './js/app.js',
-  './club_logo.png',
-  './icon.jpg'
+  './icon-192.png',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (e) => {
