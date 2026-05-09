@@ -155,10 +155,9 @@ function sbadge(s){if(s==='paid')return'<span class="bx bx-g">✅ PAID</span>';i
 
 function vipbadge(v){if(v==='vip')return'<span class="bx bx-y">⭐ VIP</span>';if(v==='new')return'<span class="bx bx-b">🆕 NEW</span>';return'<span class="bx bx-t">Regular</span>';}
 function accName(t){return{jazz:'JazzCash (Abdul Gaffar)',bank:'Bank Alfalah (Mehboob Ahmad)',easy:'Easypaisa'}[t]||'';}
-function viewSS(url){ if(!url) return; window.open(url, '_blank'); }
 
 function waLink(phone,msg){const p=phone.replace(/[^0-9]/g,'');const intl=p.startsWith('0')?'92'+p.slice(1):p;return`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;}
-function viewSS(url){ if(!url) return; window.open(url,'_blank'); }
+function viewSS(url){ if(!url){ toast('No screenshot found!','err'); return; } window.open(url,'_blank'); }
 
 // ─── WHATSAPP MESSAGES ───
 function waConfirm(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\n✅ *Your booking is confirmed!*\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n🕐 Hours: ${b.hrs} hrs\n💰 Total: ${Rs(b.fin)}\n💵 Advance Paid: ${Rs(b.advAmt)}\n⏳ Remaining: ${Rs(b.due)}\n\nPlease arrive on time!\n*Thank you! 🙏*`;}
@@ -169,6 +168,7 @@ function waInvoiceText(b){
 
 // ─── TABS ───
 function go(tab){
+  console.log("Navigating to:", tab);
   // 1. Reset Tabs
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>{
@@ -187,21 +187,23 @@ function go(tab){
   if(target) {
     target.classList.add('on');
     target.style.display = 'block'; // Explicit override
+    
+    // 4. Scroll to top
+    window.scrollTo({top:0, behavior:'smooth'});
+
+    // 5. Render specific tab data
+    if(tab==='dash') renderDash();
+    if(tab==='pre') renderPreTable();
+    if(tab==='post') renderPostTab();
+    if(tab==='online') renderOnline();
+    if(tab==='cal') renderCal();
+    if(tab==='cust') renderCustTable('');
+    if(tab==='exp') renderET();
+    if(tab==='rep') renderRep();
+    if(tab==='history') renderHistory();
+  } else {
+    console.warn("Target page not found: pg-" + tab);
   }
-
-  // 4. Scroll to top
-  window.scrollTo({top:0, behavior:'smooth'});
-
-  // 5. Render specific tab data
-  if(tab==='dash') renderDash();
-  if(tab==='pre') renderPreTable();
-  if(tab==='post') renderPostTab();
-  if(tab==='online') renderOnline();
-  if(tab==='cal') renderCal();
-  if(tab==='cust') renderCustTable('');
-  if(tab==='exp') renderET();
-  if(tab==='rep') renderRep();
-  if(tab==='history') renderHistory();
 }
 
 // ─── TARGET ───
@@ -1922,17 +1924,23 @@ function renderOnline() {
     return;
   }
   list.innerHTML = pend.map(b => `
-    <tr>
+    <tr style="background:rgba(240,180,41,0.03);">
       <td style="font-size:10px;color:var(--muted);">${b.date}</td>
-      <td><b>${b.nm}</b></td>
-      <td style="font-size:11px;">${b.st} (${b.hrs}hr)</td>
-      <td style="color:var(--gold);">${Rs(b.fin || b.totalAmt)}</td>
-      <td style="color:var(--orange);">${Rs(b.advAmt)}</td>
-      <td style="color:var(--blue);font-weight:800;">${b.trid || '—'}</td>
-      <td style="display:flex;gap:8px;align-items:center;">
-        <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:10px;padding:6px 12px;background:var(--green);border:none;color:#000;font-weight:900;border-radius:6px;cursor:pointer;">APPROVE ✅</button>
-        ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:10px;padding:6px 12px;background:var(--gold);border:none;color:#000;font-weight:900;border-radius:6px;cursor:pointer;">🖼️ VIEW SCREENSHOT</button>` : '<span style="font-size:9px;color:var(--muted);font-weight:bold;">NO SS</span>'}
-        <button class="btn-del" onclick="verifyOnline('${b.id}', false)" style="font-size:10px;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:900;">REJECT ❌</button>
+      <td><b>${b.nm}</b><br><span style="font-size:9px;color:var(--blue);">${b.ph}</span></td>
+      <td style="font-size:11px;">${b.st}<br><span style="color:var(--muted);font-size:10px;">${b.hrs}hr Match</span></td>
+      <td style="color:var(--gold);font-weight:800;">${Rs(b.fin || b.totalAmt)}</td>
+      <td style="color:var(--green);font-weight:800;">${Rs(b.advAmt)}<br><span style="font-size:9px;color:var(--muted);">50% Advance</span></td>
+      <td style="color:var(--blue);font-weight:900;letter-spacing:1px;">${b.trid || '—'}</td>
+      <td style="display:flex;gap:10px;align-items:center;padding:12px 10px;">
+        <div style="display:flex;flex-direction:column;gap:5px;">
+           <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:11px;padding:8px 15px;background:linear-gradient(135deg,var(--green),#15803d);border:none;color:#000;font-weight:900;border-radius:8px;cursor:pointer;box-shadow:0 4px 10px rgba(34,197,94,0.2);">APPROVE ✅</button>
+           <button class="btn-del" onclick="verifyOnline('${b.id}', false)" style="font-size:10px;padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:900;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red);">REJECT ❌</button>
+        </div>
+        ${b.screenshot ? `
+          <div style="position:relative;cursor:pointer;" onclick="viewSS('${b.screenshot}')">
+            <img src="${b.screenshot}" style="width:70px; height:70px; object-fit:cover; border-radius:10px; border:2px solid var(--gold); box-shadow:0 5px 15px rgba(0,0,0,0.4);">
+            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(240,180,41,0.9);color:#000;font-size:8px;font-weight:900;text-align:center;padding:2px;border-radius:0 0 8px 8px;">TAP TO VIEW</div>
+          </div>` : '<div style="width:70px;height:70px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);border-radius:10px;border:1px dashed var(--muted);font-size:9px;color:var(--muted);font-weight:bold;text-align:center;">MISSING<br>SCREENSHOT</div>'}
       </td>
     </tr>
   `).join('');

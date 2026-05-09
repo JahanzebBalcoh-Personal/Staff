@@ -16,6 +16,18 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  window.addEventListener('error', function(e) {
+    console.error('Global Error:', e);
+    const syncBar = document.getElementById('syncBar');
+    if (syncBar) {
+      syncBar.style.display = 'block';
+      syncBar.style.background = '#ef4444';
+      syncBar.style.color = '#fff';
+      syncBar.textContent = '⚠️ System Error: ' + e.message;
+    }
+  });
+</script>
 <style>
 :root{--gold:#f0b429;--gold2:#e07b00;--green:#22c55e;--red:#ef4444;--blue:#3b82f6;--purple:#a855f7;--teal:#14b8a6;--orange:#f97316;--bg:#060e1a;--card:#0f1c2e;--card2:#162035;--border:rgba(240,180,41,0.13);--text:#f1f5f9;--muted:#64748b;--soft:#94a3b8;}
 *{margin:0;padding:0;box-sizing:border-box;}
