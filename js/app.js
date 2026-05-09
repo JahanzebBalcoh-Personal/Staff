@@ -162,7 +162,23 @@ function vipbadge(v){if(v==='vip')return'<span class="bx bx-y">⭐ VIP</span>';i
 function accName(t){return{jazz:'JazzCash (Abdul Gaffar)',bank:'Bank Alfalah (Mehboob Ahmad)',easy:'Easypaisa'}[t]||'';}
 
 function waLink(phone,msg){const p=phone.replace(/[^0-9]/g,'');const intl=p.startsWith('0')?'92'+p.slice(1):p;return`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`;}
-function viewSS(url){ if(!url){ toast('No screenshot found!','err'); return; } window.open(url,'_blank'); }
+function viewSS(url){
+    if(!url){ toast('No screenshot found!','err'); return; }
+    let modal = document.getElementById('ssModal');
+    if(!modal) {
+        modal = document.createElement('div');
+        modal.id = 'ssModal';
+        modal.style = "position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:10000;display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px;";
+        modal.innerHTML = `
+            <div style="position:absolute;top:20px;right:20px;color:#fff;font-size:30px;cursor:pointer;font-weight:bold;" onclick="document.getElementById('ssModal').style.display='none'">×</div>
+            <img id="ssImg" style="max-width:100%;max-height:85vh;border-radius:12px;border:3px solid var(--gold);box-shadow:0 0 50px rgba(0,0,0,0.8);">
+            <button onclick="document.getElementById('ssModal').style.display='none'" style="margin-top:20px;padding:12px 40px;background:var(--gold);color:#000;border:none;border-radius:12px;font-weight:900;cursor:pointer;box-shadow:0 10px 20px rgba(0,0,0,0.4);">CLOSE PREVIEW</button>
+        `;
+        document.body.appendChild(modal);
+    }
+    document.getElementById('ssImg').src = url;
+    modal.style.display = 'flex';
+}
 
 // ─── WHATSAPP MESSAGES ───
 function waConfirm(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\n✅ *Your booking is confirmed!*\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n🕐 Hours: ${b.hrs} hrs\n💰 Total: ${Rs(b.fin)}\n💵 Advance Paid: ${Rs(b.advAmt)}\n⏳ Remaining: ${Rs(b.due)}\n\nPlease arrive on time!\n*Thank you! 🙏*`;}
