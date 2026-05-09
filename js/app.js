@@ -1901,7 +1901,7 @@ async function archiveAndReset(){
 }
 
 async function verifyOnline(id, approve) {
-  if (!confirm(approve ? 'Approve this booking?' : 'Reject this booking?')) return;
+  if(!confirm(approve?'Verify screenshot and approve booking?':'Reject this online booking?')) return;
   try {
     if (approve) {
       const b = allBookings.find(x => x.id === id);
@@ -1926,7 +1926,7 @@ function renderOnline() {
   }
   if (!list) return;
   if (!pend.length) {
-    list.innerHTML = '<tr><td colspan="7" class="empty">No pending online bookings</td></tr>';
+    list.innerHTML = '<tr><td colspan="6" class="empty">No pending online bookings</td></tr>';
     return;
   }
   list.innerHTML = pend.map(b => `
@@ -1936,7 +1936,7 @@ function renderOnline() {
       <td style="font-size:11px;">${b.st}<br><span style="color:var(--muted);font-size:10px;">${b.hrs}hr Match</span></td>
       <td style="color:var(--gold);font-weight:800;">${Rs(b.fin || b.totalAmt)}</td>
       <td style="color:var(--green);font-weight:800;">${Rs(b.advAmt)}<br><span style="font-size:9px;color:var(--muted);">50% Advance</span></td>
-      <td style="color:var(--blue);font-weight:900;letter-spacing:1px;">${b.trid || '—'}</td>
+
       <td style="display:flex;gap:10px;align-items:center;padding:12px 10px;">
         <div style="display:flex;flex-direction:column;gap:5px;">
            <button class="btn-green" onclick="verifyOnline('${b.id}', true)" style="font-size:11px;padding:8px 15px;background:linear-gradient(135deg,var(--green),#15803d);border:none;color:#000;font-weight:900;border-radius:8px;cursor:pointer;box-shadow:0 4px 10px rgba(34,197,94,0.2);">APPROVE ✅</button>
