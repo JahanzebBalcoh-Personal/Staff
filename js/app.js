@@ -64,19 +64,24 @@ function startListeners(){
 }
 function showSync(on){document.getElementById('syncBar').className='sync-bar'+(on?' on':'');}
 function refreshTab(){
-  const a=document.querySelector('.tab.active');if(!a)return;
-  const fn=a.getAttribute('onclick')||'';
+  var a=document.querySelector('.tab.active');if(!a)return;
+  var fn=a.getAttribute('onclick')||'';
   renderOnlineAlert();
-  if(fn.includes('dash'))renderDash();
-  else if(fn.includes('pre'))renderPreTable();
-  else if(fn.includes('post'))renderPostTab();
-  else if(fn.includes('online'))renderOnline();
-  else if(fn.includes('cal'))renderCal();
-  else if(fn.includes('cust'))renderCustTable('');
-  else if(fn.includes('online'))renderOnline();
-  else if(fn.includes('history'))renderHistory();
-  else if(fn.includes('exp'))renderET();
-  else if(fn.includes('rep'))renderRep();
+  // Extract tab name from go('xxx')
+  var m = fn.match(/go\('(\w+)'\)/);
+  if(!m) return;
+  var tab = m[1];
+  switch(tab){
+    case 'dash': renderDash(); break;
+    case 'pre': renderPreTable(); break;
+    case 'post': renderPostTab(); break;
+    case 'online': renderOnline(); break;
+    case 'cal': renderCal(); break;
+    case 'cust': renderCustTable(''); break;
+    case 'exp': renderET(); break;
+    case 'rep': renderRep(); break;
+    case 'history': renderHistory(); break;
+  }
 }
 
 // ─── ALARM SYSTEM ───
@@ -168,35 +173,42 @@ function waInvoiceText(b){
 
 // ─── TABS ───
 function go(tab){
-  // 1. Reset Tabs
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => {
-    const oc = t.getAttribute('onclick') || '';
-    if(oc.includes("'"+tab+"'")) t.classList.add('active');
-  });
+  try {
+    // 1. Deactivate ALL tabs, then activate the right one
+    var tabs = document.querySelectorAll('.tab');
+    for(var i=0; i<tabs.length; i++){
+      tabs[i].classList.remove('active');
+      var oc = tabs[i].getAttribute('onclick') || '';
+      // Exact match: go('dash') should NOT match go('history')
+      if(oc === "go('"+tab+"')") tabs[i].classList.add('active');
+    }
 
-  // 2. Hide ALL pages — ONLY use CSS classes, never inline style
-  document.querySelectorAll('.pg').forEach(p => {
-    p.classList.remove('on');
-    p.removeAttribute('style'); // Kill any lingering inline styles
-  });
+    // 2. Hide ALL pages
+    var pages = document.querySelectorAll('.pg');
+    for(var j=0; j<pages.length; j++){
+      pages[j].classList.remove('on');
+    }
 
-  // 3. Show target page via class only
-  const target = document.getElementById('pg-'+tab);
-  if(target) {
+    // 3. Show ONLY the target page
+    var target = document.getElementById('pg-'+tab);
+    if(!target) return;
     target.classList.add('on');
-    window.scrollTo({top:0, behavior:'smooth'});
+    window.scrollTo(0,0);
 
-    // 4. Render tab content
-    if(tab==='dash') renderDash();
-    else if(tab==='pre') renderPreTable();
-    else if(tab==='post') renderPostTab();
-    else if(tab==='online') renderOnline();
-    else if(tab==='cal') renderCal();
-    else if(tab==='cust') renderCustTable('');
-    else if(tab==='exp') renderET();
-    else if(tab==='rep') renderRep();
-    else if(tab==='history') renderHistory();
+    // 4. Render content for active tab
+    switch(tab){
+      case 'dash': renderDash(); break;
+      case 'pre': renderPreTable(); break;
+      case 'post': renderPostTab(); break;
+      case 'online': renderOnline(); break;
+      case 'cal': renderCal(); break;
+      case 'cust': renderCustTable(''); break;
+      case 'exp': renderET(); break;
+      case 'rep': renderRep(); break;
+      case 'history': renderHistory(); break;
+    }
+  } catch(e) {
+    console.error('go() error:', e);
   }
 }
 
