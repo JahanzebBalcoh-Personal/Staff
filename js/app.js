@@ -53,7 +53,7 @@ function startListeners(){
             
             // Browser Notification
             if (Notification.permission === "granted") {
-                new Notification("Sultan Booking Alert! 🏏", {
+                showNotification("Sultan Booking Alert! 🏏", {
                     body: data.txt,
                     icon: "icon.jpg"
                 });
@@ -112,7 +112,7 @@ function startAlarmListener() {
                     
                     // Browser Notification for Alarm
                     if (Notification.permission === "granted") {
-                        new Notification("🚨 EMERGENCY ALERT", {
+                        showNotification("🚨 EMERGENCY ALERT", {
                             body: data.txt,
                             icon: "icon.jpg",
                             requireInteraction: true // Keep it until dismissed
@@ -141,6 +141,26 @@ function stopAlarm() {
         sirenAudio.currentTime = 0;
     }
 }
+
+function showNotification(title, options) {
+    if ("serviceWorker" in navigator && Notification.permission === "granted") {
+        navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(title, options);
+        }).catch(err => {
+            console.error("SW Notification failed, falling back:", err);
+            new Notification(title, options);
+        });
+    } else if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, options);
+    }
+}
+
+// Request permission on first click
+document.addEventListener('click', () => {
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+}, { once: true });
 
 // ─── HELPERS ───
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;};
