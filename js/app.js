@@ -50,6 +50,15 @@ function startListeners(){
           // Only notify for new items (within last 30s) to avoid old alerts on load
           if (now - at < 30000) {
             toast('🔔 ' + data.txt, 'info');
+            
+            // Browser Notification
+            if (Notification.permission === "granted") {
+                new Notification("Sultan Booking Alert! 🏏", {
+                    body: data.txt,
+                    icon: "icon.jpg"
+                });
+            }
+
             // Play a sound if possible
             try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){}
           }
@@ -87,6 +96,11 @@ function refreshTab(){
 // ─── ALARM SYSTEM ───
 let sirenAudio = null;
 function startAlarmListener() {
+    // Request permission on start
+    if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+
     db.collection('alerts').onSnapshot(snap => {
         snap.docChanges().forEach(ch => {
             if (ch.type === 'added') {
@@ -95,6 +109,15 @@ function startAlarmListener() {
                 const at = new Date(data.at).getTime();
                 if (now - at < 60000) { // Only if alert is within last 1 minute
                     playSiren(data.txt);
+                    
+                    // Browser Notification for Alarm
+                    if (Notification.permission === "granted") {
+                        new Notification("🚨 EMERGENCY ALERT", {
+                            body: data.txt,
+                            icon: "icon.jpg",
+                            requireInteraction: true // Keep it until dismissed
+                        });
+                    }
                 }
             }
         });
