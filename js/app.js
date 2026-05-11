@@ -151,6 +151,9 @@ function tick(){
       if(typeof renderDash === 'function') renderDash();
       if(typeof startTimer === 'function') startTimer();
     }
+    // Set dash slot date if not set
+    const dsd = document.getElementById('dashSlotDate');
+    if(dsd && !dsd.value) dsd.value = curDate;
   } catch (e) { console.warn("Clock tick error:", e); }
 }
 setInterval(tick,1000);
@@ -478,7 +481,17 @@ function shareInvWA(){
 
 // ─── DASHBOARD ───
 function renderDash(){
-  const td=today();
+  const td=document.getElementById('dashSlotDate').value || today();
+  const dashLabel = document.getElementById('dashDateLabel');
+  if(dashLabel) {
+    if(td === today()) dashLabel.textContent = 'Today';
+    else {
+        const dObj = new Date(td);
+        dashLabel.textContent = dObj.toLocaleDateString('en-PK', {day:'numeric', month:'short', weekday:'short'});
+    }
+  }
+  document.getElementById('slotMapTitle').innerHTML = `Slot Status — <span style="color:#fff;">${td === today() ? 'Today' : td}</span>`;
+
   const tB=allBookings.filter(b=>b.date===td);
   const tE=allExpenses.filter(e=>e.date===td);
   const inc=tB.reduce((s,b)=>s+(parseFloat(b.totalPaid)||0),0);
@@ -513,11 +526,13 @@ function renderDash(){
     const info=ts[h];
     const div=document.createElement('div');
     div.className='slot '+(info?info.type:'free');
-    div.textContent=d+':00 '+ap;
-    if(info){
-      div.style.cursor='pointer';
-      div.title=`Booked by ${info.bk.nm}`;
-      div.onclick=()=>showSlotLink(info.bk.id);
+    
+    if(info) {
+        div.innerHTML = `<div style="font-size:9px;">${d}:00 ${ap}</div><div style="font-size:8px; margin-top:2px; font-weight:900; color:#fff;">${info.bk.nm}</div>`;
+        div.style.cursor='pointer';
+        div.onclick=()=>showSlotDetails(info.bk.id);
+    } else {
+        div.textContent=d+':00 '+ap;
     }
     sm.appendChild(div);
   }
@@ -545,10 +560,41 @@ function renderDash(){
     </tr>`).join('');
 }
 
-function showSlotLink(id){
+function showSlotDetails(id){
   const b=allBookings.find(x=>x.id===id);
   if(!b)return;
-  toast(`${b.nm} (${b.st}) - ${b.status==='pre'?'Pending':'Paid'} 🏏`,'ok');
+  
+  const modal = document.getElementById('detailsModal');
+  const content = document.getElementById('details-content');
+  const statusEl = document.getElementById('det-status');
+  
+  statusEl.className = 'bx ' + (b.status === 'pre' ? 'bx-o' : 'bx-g');
+  statusEl.textContent = b.status === 'pre' ? 'BOOKED (PENDING)' : 'PAID/DONE';
+  
+  content.innerHTML = `
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="fl"><label>Player Name</label><div style="font-size:16px; font-weight:900; color:var(--gold);">${b.nm}</div></div>
+        <div class="fl"><label>Phone</label><div style="font-size:15px; font-weight:800;">${b.ph || 'N/A'}</div></div>
+        <div class="fl"><label>Match Date</label><div style="font-weight:700;">${b.date}</div></div>
+        <div class="fl"><label>Start Time</label><div style="font-weight:700;">${b.st}</div></div>
+        <div class="fl"><label>Duration</label><div style="font-weight:700;">${b.hrs} Hours</div></div>
+        <div class="fl"><label>Type</label><div style="font-weight:700; text-transform:uppercase;">${b.vip || 'Regular'}</div></div>
+    </div>
+    <div class="abox" style="margin-top:15px;">
+        <div class="ab-row"><span class="ab-lbl">Total Amount</span><span class="ab-val">${Rs(b.fin)}</span></div>
+        <div class="ab-row"><span class="ab-lbl">Paid Amount</span><span class="ab-val g">${Rs(b.totalPaid || b.advAmt)}</span></div>
+        <div class="ab-row" style="border:none;"><span class="ab-lbl">Remaining Due</span><span class="ab-val r">${Rs(b.due)}</span></div>
+    </div>
+    ${b.nt ? `<div class="fl" style="margin-top:10px;"><label>Note</label><div style="font-size:11px; color:var(--soft); font-style:italic;">"${b.nt}"</div></div>` : ''}
+  `;
+  
+  const editBtn = document.getElementById('det-edit-btn');
+  editBtn.onclick = () => {
+    modal.classList.remove('on');
+    openEdit(b.id);
+  };
+  
+  modal.classList.add('on');
 }
 
 // ─── ANALYTICS ───
@@ -1220,12 +1266,14 @@ function getEndInfo(startTimeStr, hrs){
 
 // ─── TIME PICKER ─────────────────────────
 function buildTime(){
-  const h = document.getElementById('b-hour').value;
-  const m = document.getElementById('b-min').value;
-  const ap = document.getElementById('b-ampm').value;
-  const timeStr = h+':'+m+' '+ap;
-  document.getElementById('b-st').value = timeStr;
-  document.getElementById('b-st-preview').textContent = '⏰ '+timeStr;
+  const val = document.getElementById('b-startTime').value;
+  if(!val) return;
+  const [h24, m] = val.split(':');
+  const h12 = parseInt(h24) % 12 || 12;
+  const ampm = parseInt(h24) >= 12 ? 'PM' : 'AM';
+  const st = `${String(h12).padStart(2, '0')}:${m} ${ampm}`;
+  document.getElementById('b-st').value = st;
+  document.getElementById('b-st-preview').textContent = '⏰ ' + st;
   onTimeChange();
 }
 
@@ -1444,11 +1492,9 @@ function autofillFromPaste(){
     let h=parseInt(timeMatch[1]);
     const m=timeMatch[2]?parseInt(timeMatch[2]):0;
     let ap=(timeMatch[3]||'PM').toUpperCase();
-    if(h>12){ap='PM';h=h-12;}
-    if(h===0){h=12;ap='AM';}
-    document.getElementById('b-hour').value=h;
-    document.getElementById('b-min').value=m<10?'0'+m:''+m;
-    document.getElementById('b-ampm').value=ap;
+    if(ap==='PM' && h<12) h+=12;
+    if(ap==='AM' && h===12) h=0;
+    document.getElementById('b-startTime').value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     buildTime();
     filled.push('Time');
   }
@@ -1502,50 +1548,61 @@ function parseDate(str){
 // ─── EDIT BOOKING ─────────────────────────
 let activeEditId=null;
 function openEdit(id){
+  const b=allBookings.find(x=>x.id===id); if(!b) return;
   activeEditId=id;
-  const bk=allBookings.find(b=>b.id===id);if(!bk)return;
-  document.getElementById('ed-nm').value=bk.nm||'';
-  document.getElementById('ed-ph').value=bk.ph||'';
-  document.getElementById('ed-vip').value=bk.vip||'regular';
-  document.getElementById('ed-hrs').value=bk.hrs||'';
-  document.getElementById('ed-note').value=bk.nt||'';
-  if(bk.st){
-    const m=bk.st.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-    if(m){document.getElementById('ed-hour').value=m[1];document.getElementById('ed-min').value=m[2].padStart(2,'0');document.getElementById('ed-ampm').value=(m[3]||'PM').toUpperCase();}
+  document.getElementById('ed-nm').value=b.nm;
+  document.getElementById('ed-ph').value=b.ph||'';
+  document.getElementById('ed-vip').value=b.vip||'regular';
+  document.getElementById('ed-hrs').value=b.hrs;
+  document.getElementById('ed-note').value=b.nt||'';
+
+  // Parse time for HTML time input (needs 24h format HH:mm)
+  const t = b.st || '';
+  const match = t.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+  if(match){
+    let h = parseInt(match[1]);
+    const m = match[2];
+    const ap = (match[3] || 'PM').toUpperCase();
+    if(ap === 'PM' && h < 12) h += 12;
+    if(ap === 'AM' && h === 12) h = 0;
+    document.getElementById('ed-startTime').value = `${String(h).padStart(2,'0')}:${m}`;
   }
+
   document.getElementById('editModal').classList.add('on');
 }
 function closeEdit(){document.getElementById('editModal').classList.remove('on');activeEditId=null;}
 async function saveEdit(){
-  if(!activeEditId)return;
+  if(!activeEditId) return;
+  const b=allBookings.find(x=>x.id===activeEditId); if(!b) return;
+  
   const nm=document.getElementById('ed-nm').value.trim();
   const ph=document.getElementById('ed-ph').value.trim();
   const vip=document.getElementById('ed-vip').value;
-  const hrs=parseFloat(document.getElementById('ed-hrs').value)||0;
+  const hrs=parseFloat(document.getElementById('ed-hrs').value)||1;
   const nt=document.getElementById('ed-note').value.trim();
-  const st=document.getElementById('ed-hour').value+':'+document.getElementById('ed-min').value+' '+document.getElementById('ed-ampm').value;
-  if(!nm){
-    toast('Naam required!','err');
-    return;
+
+  // Build time from input type="time"
+  const timeVal = document.getElementById('ed-startTime').value;
+  let st = b.st;
+  if(timeVal){
+    const [h24, m] = timeVal.split(':');
+    const h12 = parseInt(h24) % 12 || 12;
+    const ampm = parseInt(h24) >= 12 ? 'PM' : 'AM';
+    st = `${String(h12).padStart(2, '0')}:${m} ${ampm}`;
   }
 
-  const b=allBookings.find(x=>x.id===activeEditId);
-  const upd={nm,ph,vip,nt,st};
-  if(hrs>0 && b && hrs!==b.hrs){
-    upd.hrs=hrs;
-    const nf=Math.max(0,Math.round(hrs*2000)+(b.extraChargeAdded||0)-(b.extraDiscAdded||0));
-    upd.fin=nf;
-    upd.due=Math.max(0,nf-(b.totalPaid||0));
+  const upd={nm,ph,vip,hrs,nt,st};
+  if(hrs !== b.hrs) {
+      upd.fin = Math.round(hrs * RATE);
+      upd.due = Math.max(0, upd.fin - (b.totalPaid || 0));
   }
 
   if(typeof showSync === 'function') showSync(true);
   try{
     await db.collection('bookings').doc(activeEditId).update(upd);
+    toast('Updated! ✅');
     closeEdit();
-    toast('Booking updated! ✅','ok');
-  }catch(e){
-    toast('Error: '+e.message,'err');
-  }
+  }catch(e){toast('Error: '+e.message,'err');}
   if(typeof showSync === 'function') showSync(false);
 }
 

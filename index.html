@@ -454,17 +454,8 @@ html.auth-none #mainApp { display: none !important; }
       </div>
     </div>
     <div class="slbl">Time Update Karo</div>
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
-      <select id="ed-hour" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;flex:1;">
-        <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
-        <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
-      </select>
-      <select id="ed-min" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;width:72px;">
-        <option value="00">:00</option><option value="15">:15</option><option value="30">:30</option><option value="45">:45</option>
-      </select>
-      <select id="ed-ampm" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;outline:none;width:72px;color:var(--gold);">
-        <option value="AM">AM</option><option value="PM">PM</option>
-      </select>
+    <div style="margin-bottom:8px;">
+      <input type="time" id="ed-startTime" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;outline:none;width:100%;color:var(--gold);">
     </div>
     <div class="row">
       <div class="fl"><label>Ghante</label><input type="number" id="ed-hrs" placeholder="1, 2, 2.5..." min="0.5" step="0.5"></div>
@@ -473,6 +464,21 @@ html.auth-none #mainApp { display: none !important; }
     <div style="display:flex;gap:8px;margin-top:10px;">
       <button class="btn-green" onclick="saveEdit()" style="flex:1;background:linear-gradient(135deg,var(--blue),#1d4ed8);">✏️ UPDATE KARO</button>
       <button class="btn-sm" onclick="closeEdit()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SLOT DETAILS MODAL -->
+<div class="modal-bg" id="detailsModal">
+  <div class="modal-box" style="border-top: 4px solid var(--gold);">
+    <div class="modal-title" style="color:var(--gold); display: flex; justify-content: space-between; align-items: center;">
+      <span>🏏 Match Details</span>
+      <span id="det-status" class="bx" style="font-size: 10px;"></span>
+    </div>
+    <div id="details-content" style="background:var(--card2); border-radius:12px; padding:15px; margin-bottom:15px;"></div>
+    <div style="display:flex; gap:10px;">
+        <button class="btn-gold" id="det-edit-btn" style="flex:1;">Edit Booking</button>
+        <button class="btn-sm" onclick="document.getElementById('detailsModal').classList.remove('on')">Close</button>
     </div>
   </div>
 </div>
@@ -559,11 +565,14 @@ html.auth-none #mainApp { display: none !important; }
   </div>
 
   <div class="sh">
-    <div class="sh-t">Slot Status</div>
-    <div style="display:flex;gap:8px;font-size:9px;font-weight:800;">
-      <span style="color:var(--green);">■ Done</span>
-      <span style="color:var(--orange);">■ Pre</span>
-      <span style="color:var(--muted);">■ Free</span>
+    <div class="sh-t" id="slotMapTitle">Slot Status — <span id="dashDateLabel" style="color:#fff;">Today</span></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="date" id="dashSlotDate" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:4px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;outline:none;" onchange="renderDash()">
+      <div style="display:flex;gap:8px;font-size:9px;font-weight:800;">
+        <span style="color:var(--green);">■ Done</span>
+        <span style="color:var(--orange);">■ Pre</span>
+        <span style="color:var(--muted);">■ Free</span>
+      </div>
     </div>
   </div>
   <div class="slots" id="slotMap"></div>
@@ -651,29 +660,14 @@ html.auth-none #mainApp { display: none !important; }
         <input type="date" id="b-date" onchange="checkConflict()">
       </div>
       <div class="fl">
-        <label>Start Time</label>
+        <label>Start Time (Clock)</label>
         <div style="display:flex;gap:6px;align-items:center;">
-          <select id="b-hour" onchange="buildTime()" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;flex:1;">
-            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-            <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
-          </select>
-          <select id="b-min" onchange="buildTime()" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;outline:none;width:70px;">
-            <option value="00">:00</option>
-            <option value="15">:15</option>
-            <option value="30">:30</option>
-            <option value="45">:45</option>
-          </select>
-          <select id="b-ampm" onchange="buildTime()" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;outline:none;width:72px;color:var(--gold);">
-            <option value="AM">AM</option>
-            <option value="PM" selected>PM</option>
-          </select>
+          <input type="time" id="b-startTime" onchange="buildTime()" style="background:var(--card2);border:1.5px solid rgba(255,255,255,0.07);border-radius:9px;padding:12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;outline:none;width:100%;color:var(--gold);">
         </div>
-        <input type="hidden" id="b-st" value="6:00 PM">
-        <div id="b-st-preview" style="font-size:10px;color:var(--gold);font-weight:800;margin-top:3px;text-align:center;">⏰ 6:00 PM</div>
+        <input type="hidden" id="b-st" value="06:00 PM">
+        <div id="b-st-preview" style="font-size:10px;color:var(--gold);font-weight:800;margin-top:3px;text-align:center;">⏰ 06:00 PM</div>
       </div>
-      <div class="fl"><label>Hours (Type manually)</label><input type="number" id="b-hr" placeholder="1, 2, 2.5..." min="0.5" step="0.5" oninput="onHrChange()"></div>
+      <div class="fl"><label>Hours (Type manually)</label><input type="number" id="b-hr" placeholder="e.g. 1.5, 2, 3..." min="0.5" step="0.1" oninput="onHrChange()"></div>
     </div>
     <!-- Day name preview -->
     <div id="dayPreview" style="background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;color:var(--gold);margin-bottom:8px;display:none;text-align:center;"></div>
