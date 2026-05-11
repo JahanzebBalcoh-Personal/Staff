@@ -11,6 +11,12 @@ const EJ_TO = 'jahanzebbaloch@example.com';
 const firebaseConfig={apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"};
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+var messaging = null;
+try {
+    if (firebase.messaging.isSupported()) {
+        messaging = firebase.messaging();
+    }
+} catch (e) { console.warn("Messaging not supported:", e); }
 
 // Enable Persistence for Speed
 db.enablePersistence().catch(err => console.warn("Persistence failed:", err.code));
@@ -128,7 +134,8 @@ function playSiren(msg) {
     document.getElementById('alarmMsg').textContent = msg || 'Customer needs attention!';
     document.getElementById('alarmAlert').style.display = 'block';
     if (!sirenAudio) {
-        sirenAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2816/2816-preview.mp3');
+        // Updated Siren Music - More professional alert sound
+        sirenAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         sirenAudio.loop = true;
     }
     sirenAudio.play().catch(e => console.log("Sound blocked:", e));
@@ -155,12 +162,35 @@ function showNotification(title, options) {
     }
 }
 
+// Background Token Registration
+async function registerMessaging() {
+    if (!messaging) return;
+    try {
+        const token = await messaging.getToken({ vapidKey: 'BMXvX-X_X_X_X_X_X_X_X_X_X' });
+        if (token) {
+            await db.collection('fcm_tokens').doc('staff_panel').set({
+                token: token,
+                updatedAt: new Date().toISOString(),
+                device: navigator.userAgent
+            });
+            console.log("FCM Token registered");
+        }
+    } catch (e) { console.warn("FCM Token failed:", e); }
+}
+
 // Request permission on first click
 document.addEventListener('click', () => {
     if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
+        Notification.requestPermission().then(perm => {
+            if(perm === 'granted') registerMessaging();
+        });
     }
 }, { once: true });
+
+// Initial registration if already granted
+if ("Notification" in window && Notification.permission === "granted") {
+    registerMessaging();
+}
 
 // ─── HELPERS ───
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${dd}`;};
