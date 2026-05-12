@@ -1860,36 +1860,73 @@ function goPreWithDate(date){
   }
 }
 
-// ─── AUTH LOGIC ───
-let APP_PIN = "1122"; // Default fallback
-
-function checkPin() {
-  const inp = document.getElementById('pinInp');
-  const err = document.getElementById('pinErr');
-  if (inp.value === APP_PIN) {
-    localStorage.setItem('sultans_auth', 'true');
-    localStorage.setItem('always_pin', 'false');
-    // Use CSS classes for instant, flicker-free transition
-    document.documentElement.classList.remove('auth-none');
-    document.documentElement.classList.add('auth-ok');
-    inp.value = '';
-    err.textContent = '';
-  } else {
-    err.textContent = '❌ Wrong PIN — Contact Jahanzeb Baloch 0306-0711529';
-    inp.value = '';
-    inp.focus();
-  }
+// ─── AUTH LOGIC (GOOGLE OAUTH) ───
+async function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const err = document.getElementById('pinErr');
+    try {
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+        toast('Signing in...', 'info');
+        // checkUserAccess(user) will be handled by onAuthStateChanged
+    } catch (e) {
+        console.error("Auth Error:", e);
+        if (err) err.textContent = '❌ Login failed: ' + e.message;
+    }
 }
 
-// Allow Enter key on PIN input
-document.addEventListener('DOMContentLoaded', () => {
-  const pinInp = document.getElementById('pinInp');
-  if (pinInp) {
-    pinInp.addEventListener('keydown', e => { if (e.key === 'Enter') checkPin(); });
-  }
+async function checkUserAccess(user) {
+    const err = document.getElementById('pinErr');
+    if (!user) {
+        logout();
+        return;
+    }
+
+    try {
+        // Check if user's email is in 'users' collection
+        const doc = await db.collection('users').doc(user.email).get();
+        
+        if (doc.exists) {
+            const userData = doc.data();
+            if (userData.authorized === false) {
+                throw new Error("Access Denied: Your account has been disabled.");
+            }
+            
+            console.log("Access Granted for:", user.email);
+            localStorage.setItem('sultans_auth', 'true');
+            document.documentElement.classList.remove('auth-none');
+            document.documentElement.classList.add('auth-ok');
+            
+            // Start App if not already started
+            if (!allBookings.length) {
+                startListeners();
+                startAlarmListener();
+            }
+        } else {
+            // First time? If it's the developer or specific email, auto-authorize?
+            // For now, let's keep it strict but maybe add a "First user is Admin" logic if desired.
+            // Suggesting user to add their email to Firestore manually for the first time.
+            throw new Error("Access Denied: Email not authorized. Contact Admin.");
+        }
+    } catch (e) {
+        console.error("Access Error:", e);
+        if (err) err.textContent = '❌ ' + e.message;
+        firebase.auth().signOut();
+        logout();
+    }
+}
+
+// Watch Auth State
+firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+        checkUserAccess(user);
+    } else {
+        logout();
+    }
 });
 
 function logout() {
+  firebase.auth().signOut().catch(()=>{});
   localStorage.removeItem('sultans_auth');
   document.documentElement.classList.remove('auth-ok');
   document.documentElement.classList.add('auth-none');
@@ -2133,7 +2170,7 @@ Object.assign(window, {
   renderPostTab, calNav, showCalDay,
   bulkWAReminder, saveCust, renderCustTable, delCust,
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
-  calcAddPay, saveAddPay, checkPin, logout,
+  calcAddPay, saveAddPay, logout, loginWithGoogle,
   archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact,
   viewSS, verifyOnline, renderOnline, renderOnlineAlert, stopAlarm
 });
@@ -2145,8 +2182,7 @@ try {
     throw new Error("Firebase SDK not loaded! Check internet connection.");
   }
   init();
-  startListeners();
-  startAlarmListener();
+  // startListeners() and startAlarmListener() are now called after successful auth in checkUserAccess
 } catch (e) {
   console.error("App boot error:", e);
   const errBox = document.getElementById('globalErr');

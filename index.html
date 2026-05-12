@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
@@ -483,14 +484,27 @@ html.auth-none #mainApp { display: none !important; }
   </div>
 </div>
 
-<!-- PIN SCREEN -->
+<!-- AUTH SCREEN -->
 <div id="pinScreen">
   <div class="pin-logo">🏏</div>
-  <div class="pin-title">SULTANS ADMIN</div>
-  <div class="pin-sub">Indoor Cricket Club</div>
-  <input type="password" class="pin-inp" id="pinInp" placeholder="Enter PIN" maxlength="4" autofocus>
-  <button class="pin-login-btn" onclick="checkPin()">LOGIN</button>
-  <div class="pin-err" id="pinErr"></div>
+  <div class="pin-title">SULTANS STAFF</div>
+  <div class="pin-sub">Indoor Cricket Club | Authentication Required</div>
+  
+  <div id="googleAuthBox" style="background:var(--card); border:2px solid var(--border); border-radius:20px; padding:30px; width:100%; max-width:320px; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.4);">
+    <div style="font-size:12px; color:var(--soft); margin-bottom:20px; line-height:1.5;">Staff and Admin must sign in with an authorized Google account to access the system.</div>
+    
+    <button onclick="loginWithGoogle()" style="background:#fff; color:#000; border:none; border-radius:12px; padding:12px 20px; font-family:'Nunito',sans-serif; font-size:14px; font-weight:800; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:12px; transition:0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
+      SIGN IN WITH GOOGLE
+    </button>
+    
+    <div id="pinErr" style="color:var(--red); font-size:11px; font-weight:700; margin-top:15px; min-height:18px;"></div>
+  </div>
+
+  <div style="margin-top:40px; text-align:center;">
+    <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;">AUTHORIZED BY</div>
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--gold); letter-spacing:2px;">JAHANZEB BALOCH</div>
+  </div>
 </div>
 
 <!-- MAIN APP -->
