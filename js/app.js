@@ -31,13 +31,16 @@ let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
 let currentInvBooking=null;
 let allHistory=[];
 const APP_VERSION = '1.2.2'; // Update this when deploying new code
+let currentUserRole = null;
 
 // ─── FIREBASE LISTENERS ───
 function startListeners(){
   try {
     showSync(true);
     db.collection('bookings').onSnapshot(s=>{
-      allBookings=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
+      allBookings=s.docs.map(d=>({...d.data(),id:d.id}))
+        .filter(b => !b.isDeleted) // Hide soft-deleted bookings for staff
+        .sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
       showSync(false);
       renderOnline(); // Update online badge/tab
       refreshTab();
@@ -878,7 +881,24 @@ function renderPostTab(){
 
     </tr>`).join('');
 }
-async function delBk(id){if(!confirm('Delete?'))return;await db.collection('bookings').doc(id).delete();toast('Deleted','err');}
+async function delBk(id){
+  const b = allBookings.find(x => x.id === id);
+  if(!b) return;
+  
+  if(currentUserRole === 'admin') {
+    if(!confirm('⚠️ ADMIN: Permanent Delete? This cannot be undone.')) return;
+    await db.collection('bookings').doc(id).delete();
+    toast('Permanently Deleted','err');
+  } else {
+    if(!confirm('Archive this booking? (Admin can still view/restore it)')) return;
+    await db.collection('bookings').doc(id).update({
+      isDeleted: true,
+      deletedAt: new Date().toISOString(),
+      deletedBy: firebase.auth().currentUser.email
+    });
+    toast('Booking Archived ✅','ok');
+  }
+}
 
 // ─── ONLINE REQUESTS ───
 function renderOnline(){
@@ -1893,6 +1913,7 @@ async function checkUserAccess(user) {
             }
             
             console.log("Access Granted for:", user.email);
+            currentUserRole = userData.role || 'staff';
             localStorage.setItem('sultans_auth', 'true');
             document.documentElement.classList.remove('auth-none');
             document.documentElement.classList.add('auth-ok');
