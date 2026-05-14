@@ -1891,6 +1891,12 @@ async function loginWithEmail() {
 
     try {
         toast('Verifying access...', 'info');
+        
+        // Background Auth: Sign in anonymously to get permission to read Firestore
+        if (!firebase.auth().currentUser) {
+            await firebase.auth().signInAnonymously();
+        }
+
         // Check if user's email is in 'users' collection
         const doc = await db.collection('users').doc(email).get();
         
@@ -1917,7 +1923,7 @@ async function loginWithEmail() {
         }
     } catch (e) {
         console.error("Access Error:", e);
-        if (err) err.textContent = '❌ ' + e.message;
+        if (err) err.textContent = '❌ ' + (e.code === 'permission-denied' ? 'Permission Denied! Please check Firebase Rules.' : e.message);
         logout();
     }
 }
