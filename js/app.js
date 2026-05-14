@@ -1880,31 +1880,19 @@ function goPreWithDate(date){
   }
 }
 
-// ─── AUTH LOGIC (GOOGLE OAUTH) ───
-async function loginWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
+// ─── AUTH LOGIC (EMAIL ONLY) ───
+async function loginWithEmail() {
+    const email = document.getElementById('staffEmailInp').value.trim().toLowerCase();
     const err = document.getElementById('pinErr');
-    try {
-        const result = await firebase.auth().signInWithPopup(provider);
-        const user = result.user;
-        toast('Signing in...', 'info');
-        // checkUserAccess(user) will be handled by onAuthStateChanged
-    } catch (e) {
-        console.error("Auth Error:", e);
-        if (err) err.textContent = '❌ Login failed: ' + e.message;
-    }
-}
-
-async function checkUserAccess(user) {
-    const err = document.getElementById('pinErr');
-    if (!user) {
-        logout();
+    if (!email || !email.includes('@')) {
+        if (err) err.textContent = '❌ Valid Gmail address required!';
         return;
     }
 
     try {
+        toast('Verifying access...', 'info');
         // Check if user's email is in 'users' collection
-        const doc = await db.collection('users').doc(user.email).get();
+        const doc = await db.collection('users').doc(email).get();
         
         if (doc.exists) {
             const userData = doc.data();
@@ -1912,43 +1900,45 @@ async function checkUserAccess(user) {
                 throw new Error("Access Denied: Your account has been disabled.");
             }
             
-            console.log("Access Granted for:", user.email);
+            console.log("Access Granted for:", email);
             currentUserRole = userData.role || 'staff';
             localStorage.setItem('sultans_auth', 'true');
+            localStorage.setItem('staff_email', email);
+            
             document.documentElement.classList.remove('auth-none');
             document.documentElement.classList.add('auth-ok');
             
-            // Start App if not already started
-            if (!allBookings.length) {
-                startListeners();
-                startAlarmListener();
-            }
+            // Start App
+            startListeners();
+            startAlarmListener();
+            toast('Welcome back!', 'ok');
         } else {
-            // First time? If it's the developer or specific email, auto-authorize?
-            // For now, let's keep it strict but maybe add a "First user is Admin" logic if desired.
-            // Suggesting user to add their email to Firestore manually for the first time.
-            throw new Error("Access Denied: Email not authorized. Contact Admin.");
+            throw new Error("Access Denied: Email not authorized in Admin Panel.");
         }
     } catch (e) {
         console.error("Access Error:", e);
         if (err) err.textContent = '❌ ' + e.message;
-        firebase.auth().signOut();
         logout();
     }
 }
 
-// Watch Auth State
-firebase.auth().onAuthStateChanged(user => {
-    if (user) {
-        checkUserAccess(user);
+// Watch Session on Load
+(function checkSession() {
+    const isAuth = localStorage.getItem('sultans_auth') === 'true';
+    const email = localStorage.getItem('staff_email');
+    if (isAuth && email) {
+        document.documentElement.classList.remove('auth-none');
+        document.documentElement.classList.add('auth-ok');
+        startListeners();
+        startAlarmListener();
     } else {
         logout();
     }
-});
+})();
 
 function logout() {
-  firebase.auth().signOut().catch(()=>{});
   localStorage.removeItem('sultans_auth');
+  localStorage.removeItem('staff_email');
   document.documentElement.classList.remove('auth-ok');
   document.documentElement.classList.add('auth-none');
 }
@@ -2191,7 +2181,7 @@ Object.assign(window, {
   renderPostTab, calNav, showCalDay,
   bulkWAReminder, saveCust, renderCustTable, delCust,
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
-  calcAddPay, saveAddPay, logout, loginWithGoogle,
+  calcAddPay, saveAddPay, logout, loginWithEmail,
   archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact,
   viewSS, verifyOnline, renderOnline, renderOnlineAlert, stopAlarm
 });

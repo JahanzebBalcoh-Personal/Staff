@@ -487,23 +487,24 @@ html.auth-none #mainApp { display: none !important; }
 <!-- AUTH SCREEN -->
 <div id="pinScreen">
   <div class="pin-logo">🏏</div>
-  <div class="pin-title">SULTANS STAFF</div>
-  <div class="pin-sub">Indoor Cricket Club | Authentication Required</div>
+  <div class="pin-title">SCC STAFF LOGIN</div>
+  <div class="pin-sub">Enter your authorized Gmail address</div>
   
   <div id="googleAuthBox" style="background:var(--card); border:2px solid var(--border); border-radius:20px; padding:30px; width:100%; max-width:320px; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.4);">
-    <div style="font-size:12px; color:var(--soft); margin-bottom:20px; line-height:1.5;">Staff and Admin must sign in with an authorized Google account to access the system.</div>
+    <div style="font-size:12px; color:var(--soft); margin-bottom:20px; line-height:1.5;">Type your Gmail address as added by Admin to access the portal.</div>
     
-    <button onclick="loginWithGoogle()" style="background:#fff; color:#000; border:none; border-radius:12px; padding:12px 20px; font-family:'Nunito',sans-serif; font-size:14px; font-weight:800; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:12px; transition:0.2s; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" height="20">
-      SIGN IN WITH GOOGLE
+    <input type="email" id="staffEmailInp" placeholder="yourname@gmail.com" style="background:var(--card2); border:1.5px solid var(--border); border-radius:12px; padding:14px; color:var(--text); font-family:'Nunito',sans-serif; font-size:15px; font-weight:700; outline:none; width:100%; margin-bottom:15px; text-align:center; transition:0.2s;">
+    
+    <button onclick="loginWithEmail()" style="background:linear-gradient(135deg,var(--gold),var(--gold2)); color:#000; border:none; border-radius:12px; padding:14px 20px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:900; cursor:pointer; width:100%; transition:0.2s; box-shadow:0 5px 15px rgba(240,180,41,0.2);">
+      ACCESS PORTAL 🚀
     </button>
     
     <div id="pinErr" style="color:var(--red); font-size:11px; font-weight:700; margin-top:15px; min-height:18px;"></div>
   </div>
 
   <div style="margin-top:40px; text-align:center;">
-    <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;">AUTHORIZED BY</div>
-    <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--gold); letter-spacing:2px;">JAHANZEB BALOCH</div>
+    <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;">POWERED BY</div>
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--gold); letter-spacing:2px;">JAHANZEB BALOCH AGENCY</div>
   </div>
 </div>
 
