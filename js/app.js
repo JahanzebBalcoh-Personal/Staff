@@ -42,39 +42,30 @@ function startListeners(){
         .filter(b => !b.isDeleted) // Hide soft-deleted bookings for staff
         .sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
       showSync(false);
+
+      // INSTANT SIREN TRIGGER on Booking Snapshot
+      s.docChanges().forEach(ch => {
+        if (ch.type === 'added') {
+            const d = ch.doc.data();
+            if (d.status === 'waiting_approval' || d.status === 'pending') {
+                playSiren("🌐 NEW ONLINE BOOKING: " + d.nm);
+                toast('New Online Booking Request! 🔔', 'info');
+                if (Notification.permission === "granted") {
+                    showNotification("New Online Booking Request! 🏏", {
+                        body: d.nm + " has requested a slot for " + (d.st || "unknown time"),
+                        icon: "icon.jpg"
+                    });
+                }
+            }
+        }
+      });
+
       renderOnline(); // Update online badge/tab
       refreshTab();
     },err=>{showSync(false);console.log('Bookings error:',err);});
     db.collection('expenses').onSnapshot(s=>{allExpenses=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('Expenses error:',err);});
     db.collection('customers').onSnapshot(s=>{allCustomers=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(a.nm||'').localeCompare(b.nm||''));refreshTab();},err=>{console.log('Customers error:',err);});
     db.collection('history_reset').onSnapshot(s=>{allHistory=s.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));refreshTab();},err=>{console.log('History error:',err);});
-    
-    // Listen for real-time notifications from Public App
-    db.collection('feed').orderBy('at', 'desc').limit(5).onSnapshot(s => {
-      s.docChanges().forEach(change => {
-        if (change.type === 'added') {
-          const data = change.doc.data();
-          const now = new Date().getTime();
-          const at = new Date(data.at).getTime();
-          // Only notify for new items (within last 30s) to avoid old alerts on load
-          if (now - at < 30000) {
-            toast('🔔 ' + data.txt, 'info');
-            
-            // Browser Notification
-            if (Notification.permission === "granted") {
-                showNotification("Sultan Booking Alert! 🏏", {
-                    body: data.txt,
-                    icon: "icon.jpg"
-                });
-            }
-
-            // Play a sound if possible
-            try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e){}
-          }
-        }
-      });
-    });
-
   } catch (e) {
     console.error("Firebase Listeners failed:", e);
     showSync(false);
@@ -114,9 +105,11 @@ function startAlarmListener() {
         snap.docChanges().forEach(ch => {
             if (ch.type === 'added') {
                 const data = ch.doc.data();
+                const at = data.at;
+                const atMs = (at && at.toMillis) ? at.toMillis() : new Date(at).getTime();
                 const now = new Date().getTime();
-                const at = new Date(data.at).getTime();
-                if (now - at < 60000) { // Only if alert is within last 1 minute
+                
+                if (now - atMs < 30000) { // Aggressive 30s window
                     playSiren(data.txt);
                     
                     // Browser Notification for Alarm

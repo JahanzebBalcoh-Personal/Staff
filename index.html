@@ -488,25 +488,72 @@ html.auth-none #mainApp { display: none !important; }
 <div id="pinScreen">
   <div class="pin-logo">🏏</div>
   <div class="pin-title">SCC STAFF LOGIN</div>
-  <div class="pin-sub">Enter your authorized Gmail address</div>
+  <div class="pin-sub">Indoor Cricket Club | Authorized Access Only</div>
   
-  <div id="googleAuthBox" style="background:var(--card); border:2px solid var(--border); border-radius:20px; padding:30px; width:100%; max-width:320px; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.4);">
-    <div style="font-size:12px; color:var(--soft); margin-bottom:20px; line-height:1.5;">Type your Gmail address as added by Admin to access the portal.</div>
+  <div style="background:var(--card); border:2px solid var(--border); border-radius:24px; padding:35px; width:100%; max-width:340px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+    <div style="font-size:13px; color:var(--soft); margin-bottom:25px; line-height:1.6;">Sign in with your authorized Google account to manage matches and payments.</div>
     
-    <input type="email" id="staffEmailInp" placeholder="yourname@gmail.com" style="background:var(--card2); border:1.5px solid var(--border); border-radius:12px; padding:14px; color:var(--text); font-family:'Nunito',sans-serif; font-size:15px; font-weight:700; outline:none; width:100%; margin-bottom:15px; text-align:center; transition:0.2s;">
-    
-    <button onclick="loginWithEmail()" style="background:linear-gradient(135deg,var(--gold),var(--gold2)); color:#000; border:none; border-radius:12px; padding:14px 20px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:900; cursor:pointer; width:100%; transition:0.2s; box-shadow:0 5px 15px rgba(240,180,41,0.2);">
-      ACCESS PORTAL 🚀
+    <button onclick="loginWithGoogle()" style="background:#fff; color:#000; border:none; border-radius:12px; padding:14px 20px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:900; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:12px; transition:0.2s; box-shadow:0 5px 15px rgba(0,0,0,0.2);">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="22" height="22">
+      LOGIN WITH GOOGLE
     </button>
     
-    <div id="pinErr" style="color:var(--red); font-size:11px; font-weight:700; margin-top:15px; min-height:18px;"></div>
+    <div id="pinErr" style="color:var(--red); font-size:11px; font-weight:800; margin-top:20px; min-height:18px;"></div>
   </div>
 
-  <div style="margin-top:40px; text-align:center;">
-    <div style="font-size:10px; color:var(--muted); letter-spacing:1px; margin-bottom:10px;">POWERED BY</div>
-    <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--gold); letter-spacing:2px;">JAHANZEB BALOCH AGENCY</div>
+  <div style="margin-top:50px;">
+    <div style="font-size:10px; color:var(--muted); letter-spacing:2px; margin-bottom:8px; font-weight:900;">POWERED BY</div>
+    <div style="font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--gold); letter-spacing:3px;">JAHANZEB BALOCH AGENCY</div>
   </div>
 </div>
+
+<script>
+var userWatcher = null;
+function loginWithGoogle() {
+    var p = new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(p).then(function() {
+        localStorage.setItem('sultans_auth', 'true');
+        document.documentElement.className = 'auth-ok';
+    }).catch(function(err) {
+        document.getElementById('pinErr').textContent = "Auth Error: " + err.message;
+    });
+}
+
+function logout() {
+    if(userWatcher) userWatcher();
+    firebase.auth().signOut().then(function() {
+        localStorage.removeItem('sultans_auth');
+        document.documentElement.className = 'auth-none';
+    });
+}
+
+firebase.auth().onAuthStateChanged(function(user) {
+    var loading = document.getElementById('loadingOverlay');
+    if (user) {
+        if(userWatcher) userWatcher();
+        userWatcher = db.collection('users').doc(user.email).onSnapshot(function(doc) {
+            if(doc.exists && (doc.data().role === 'staff' || doc.data().role === 'admin')) {
+                localStorage.setItem('sultans_auth', 'true');
+                document.documentElement.className = 'auth-ok';
+                if(loading) loading.style.opacity = '0';
+                setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
+                
+                // Initialize portal if not already
+                if(typeof startSync === 'function') startSync();
+                if(typeof startAlarmListener === 'function') startAlarmListener();
+            } else {
+                document.getElementById('pinErr').textContent = "Access Denied: Email not authorized as Staff.";
+                logout();
+            }
+        }, function() { logout(); });
+    } else {
+        localStorage.removeItem('sultans_auth');
+        document.documentElement.className = 'auth-none';
+        if(loading) loading.style.opacity = '0';
+        setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
+    }
+});
+</script>
 
 <!-- MAIN APP -->
 <div id="mainApp">
