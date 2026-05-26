@@ -514,6 +514,9 @@ html.auth-none #mainApp { display: none !important; }
 </div>
 
 <script>
+const firebaseConfig={apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
 var userWatcher = null;
 function loginWithGoogle() {
     var p = new firebase.auth.GoogleAuthProvider();
@@ -537,7 +540,8 @@ firebase.auth().onAuthStateChanged(function(user) {
     var loading = document.getElementById('loadingOverlay');
     if (user) {
         if(userWatcher) userWatcher();
-        userWatcher = db.collection('users').doc(user.email).onSnapshot(function(doc) {
+        var localDb = firebase.firestore();
+        userWatcher = localDb.collection('users').doc(user.email).onSnapshot(function(doc) {
             if(doc.exists && (doc.data().role === 'staff' || doc.data().role === 'admin')) {
                 localStorage.setItem('sultans_auth', 'true');
                 document.documentElement.className = 'auth-ok';
