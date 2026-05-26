@@ -12,11 +12,11 @@
 <meta name="theme-color" content="#f0b429">
 <title>SCC Staff | Sultans Cricket Club</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <script>
   // NUCLEAR CACHE FIX — runs before anything else
   if('serviceWorker' in navigator){
@@ -43,6 +43,9 @@
   }
   window.addEventListener('error', function(e) {
     console.error('Global Error:', e);
+    if (e.message && (e.message === 'Script error.' || e.message === 'Script error')) {
+      return; // Ignore generic cross-origin browser extension errors
+    }
     var syncBar = document.getElementById('syncBar');
     if (syncBar) {
       syncBar.style.display = 'block';
@@ -276,6 +279,9 @@ html.auth-none #mainApp { display: none !important; }
   <script>
     window.addEventListener('error', function(e) {
       console.error('Global Error:', e);
+      if (e.message && (e.message === 'Script error.' || e.message === 'Script error')) {
+        return; // Ignore generic cross-origin browser extension errors
+      }
       const errBox = document.getElementById('globalErr');
       if (errBox) {
         errBox.style.display = 'block';
