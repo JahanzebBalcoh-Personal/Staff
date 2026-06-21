@@ -2181,6 +2181,7 @@ Object.assign(window, {
   bulkWAReminder, saveCust, renderCustTable, delCust,
   checkExpCat, saveExp, renderET, clrEF, delEx, renderRep, fillCust,
   calcAddPay, saveAddPay, logout, loginWithEmail,
+  startListeners, startAlarmListener,
   archiveAndReset, renderHistory, delHistory, timerNav, formatCountdownExact,
   viewSS, verifyOnline, renderOnline, renderOnlineAlert, stopAlarm
 });
@@ -2192,7 +2193,13 @@ try {
     throw new Error("Firebase SDK not loaded! Check internet connection.");
   }
   init();
-  // startListeners() and startAlarmListener() are now called after successful auth in checkUserAccess
+  
+  // Auto-start listeners if already authenticated
+  var saved = localStorage.getItem('sultans_staff_email');
+  if (saved && localStorage.getItem('sultans_auth') === 'true') {
+      startListeners();
+      startAlarmListener();
+  }
 } catch (e) {
   console.error("App boot error:", e);
   const errBox = document.getElementById('globalErr');

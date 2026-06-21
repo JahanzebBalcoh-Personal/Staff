@@ -576,7 +576,7 @@ function startStaffSession(email) {
             localStorage.setItem('sultans_auth', 'true');
             document.documentElement.className = 'auth-ok';
             if (loading) { loading.style.opacity = '0'; setTimeout(function(){ loading.style.display='none'; }, 500); }
-            if (typeof startSync === 'function') startSync();
+            if (typeof startListeners === 'function') startListeners();
             if (typeof startAlarmListener === 'function') startAlarmListener();
         } else {
             logout();
