@@ -497,11 +497,15 @@ html.auth-none #mainApp { display: none !important; }
   <div class="pin-sub">Indoor Cricket Club | Authorized Access Only</div>
   
   <div style="background:var(--card); border:2px solid var(--border); border-radius:24px; padding:35px; width:100%; max-width:340px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.5);">
-    <div style="font-size:13px; color:var(--soft); margin-bottom:25px; line-height:1.6;">Sign in with your authorized Google account to manage matches and payments.</div>
+    <div style="font-size:13px; color:var(--soft); margin-bottom:25px; line-height:1.6;">Enter your authorized email address to access the staff portal.</div>
     
-    <button onclick="loginWithGoogle()" style="background:#fff; color:#000; border:none; border-radius:12px; padding:14px 20px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:900; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:12px; transition:0.2s; box-shadow:0 5px 15px rgba(0,0,0,0.2);">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="22" height="22">
-      LOGIN WITH GOOGLE
+    <div style="text-align:left; margin-bottom:15px;">
+      <label style="font-size:9px; font-weight:800; letter-spacing:1px; color:var(--muted); text-transform:uppercase;">Email Address</label>
+      <input type="email" id="staffEmailInput" placeholder="yourname@gmail.com" onkeydown="if(event.key==='Enter') loginWithEmail()" style="width:100%; margin-top:6px; background:var(--card2); border:1.5px solid var(--border); border-radius:12px; padding:14px; color:var(--text); font-family:'Nunito',sans-serif; font-size:14px; font-weight:700; outline:none;">
+    </div>
+    
+    <button onclick="loginWithEmail()" id="staffLoginBtn" style="background:linear-gradient(135deg,var(--gold),var(--gold2)); color:#000; border:none; border-radius:12px; padding:14px 20px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:900; cursor:pointer; width:100%; transition:0.2s; box-shadow:0 5px 15px rgba(240,180,41,0.3);">
+      🔐 SIGN IN
     </button>
     
     <div id="pinErr" style="color:var(--red); font-size:11px; font-weight:800; margin-top:20px; min-height:18px;"></div>
@@ -519,51 +523,68 @@ if (!firebase.apps.length) {
 }
 
 var userWatcher = null;
-function loginWithGoogle() {
-    var p = new firebase.auth.GoogleAuthProvider();
-    firebase.auth().signInWithPopup(p).then(function() {
-        localStorage.setItem('sultans_auth', 'true');
-        document.documentElement.className = 'auth-ok';
+var staffDb = firebase.firestore();
+
+function loginWithEmail() {
+    var email = document.getElementById('staffEmailInput').value.trim().toLowerCase();
+    var errEl = document.getElementById('pinErr');
+    var btn = document.getElementById('staffLoginBtn');
+    if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required.'; return; }
+    errEl.textContent = '';
+    btn.textContent = 'Checking...';
+    btn.disabled = true;
+    staffDb.collection('users').doc(email).get().then(function(doc) {
+        if (doc.exists && (doc.data().role === 'staff' || doc.data().role === 'admin' || doc.data().role === 'superadmin')) {
+            localStorage.setItem('sultans_auth', 'true');
+            localStorage.setItem('sultans_staff_email', email);
+            startStaffSession(email);
+        } else {
+            errEl.textContent = 'Access Denied: Email not authorized.';
+            btn.textContent = '🔐 SIGN IN';
+            btn.disabled = false;
+        }
     }).catch(function(err) {
-        document.getElementById('pinErr').textContent = "Auth Error: " + err.message;
+        errEl.textContent = 'Error: ' + err.message;
+        btn.textContent = '🔐 SIGN IN';
+        btn.disabled = false;
     });
+}
+
+function startStaffSession(email) {
+    var loading = document.getElementById('loadingOverlay');
+    if (userWatcher) userWatcher();
+    userWatcher = staffDb.collection('users').doc(email).onSnapshot(function(doc) {
+        if (doc.exists && (doc.data().role === 'staff' || doc.data().role === 'admin' || doc.data().role === 'superadmin')) {
+            localStorage.setItem('sultans_auth', 'true');
+            document.documentElement.className = 'auth-ok';
+            if (loading) { loading.style.opacity = '0'; setTimeout(function(){ loading.style.display='none'; }, 500); }
+            if (typeof startSync === 'function') startSync();
+            if (typeof startAlarmListener === 'function') startAlarmListener();
+        } else {
+            logout();
+        }
+    }, function() { logout(); });
 }
 
 function logout() {
-    if(userWatcher) userWatcher();
-    firebase.auth().signOut().then(function() {
-        localStorage.removeItem('sultans_auth');
-        document.documentElement.className = 'auth-none';
-    });
+    if (userWatcher) { userWatcher(); userWatcher = null; }
+    localStorage.removeItem('sultans_auth');
+    localStorage.removeItem('sultans_staff_email');
+    document.documentElement.className = 'auth-none';
+    var btn = document.getElementById('staffLoginBtn');
+    if (btn) { btn.textContent = '🔐 SIGN IN'; btn.disabled = false; }
 }
 
-firebase.auth().onAuthStateChanged(function(user) {
-    var loading = document.getElementById('loadingOverlay');
-    if (user) {
-        if(userWatcher) userWatcher();
-        var localDb = firebase.firestore();
-        userWatcher = localDb.collection('users').doc(user.email).onSnapshot(function(doc) {
-            if(doc.exists && (doc.data().role === 'staff' || doc.data().role === 'admin')) {
-                localStorage.setItem('sultans_auth', 'true');
-                document.documentElement.className = 'auth-ok';
-                if(loading) loading.style.opacity = '0';
-                setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
-                
-                // Initialize portal if not already
-                if(typeof startSync === 'function') startSync();
-                if(typeof startAlarmListener === 'function') startAlarmListener();
-            } else {
-                document.getElementById('pinErr').textContent = "Access Denied: Email not authorized as Staff.";
-                logout();
-            }
-        }, function() { logout(); });
+// Auto-resume session on load
+(function() {
+    var saved = localStorage.getItem('sultans_staff_email');
+    if (saved && localStorage.getItem('sultans_auth') === 'true') {
+        startStaffSession(saved);
     } else {
-        localStorage.removeItem('sultans_auth');
-        document.documentElement.className = 'auth-none';
-        if(loading) loading.style.opacity = '0';
-        setTimeout(() => { if(loading) loading.style.display = 'none'; }, 500);
+        var loading = document.getElementById('loadingOverlay');
+        if (loading) { loading.style.opacity='0'; setTimeout(function(){ loading.style.display='none'; },500); }
     }
-});
+})();
 </script>
 
 <!-- MAIN APP -->
