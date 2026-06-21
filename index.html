@@ -522,6 +522,24 @@ if (!firebase.apps.length) {
     firebase.initializeApp({apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"});
 }
 
+// SCREEN WAKE LOCK
+var wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('Wake Lock active');
+    }
+  } catch (err) {}
+}
+document.addEventListener('visibilitychange', async function() {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    await requestWakeLock();
+  }
+});
+requestWakeLock();
+document.addEventListener('click', requestWakeLock, {once: true});
+
 var userWatcher = null;
 var staffDb = firebase.firestore();
 
