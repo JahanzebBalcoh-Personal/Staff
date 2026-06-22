@@ -1873,74 +1873,62 @@ function goPreWithDate(date){
   }
 }
 
-// ─── AUTH LOGIC (EMAIL ONLY) ───
-async function loginWithEmail() {
-    const email = document.getElementById('staffEmailInp').value.trim().toLowerCase();
+// NOTE: Main loginWithEmail is defined in index.html (uses staffDb)
+// This is a fallback only, not used when index.html version is active
+async function _appLoginWithEmail() {
+    // Support both id variants
+    const inp = document.getElementById('staffEmailInput') || document.getElementById('staffEmailInp');
+    const email = inp ? inp.value.trim().toLowerCase() : '';
     const err = document.getElementById('pinErr');
+    const btn = document.getElementById('staffLoginBtn');
+    
     if (!email || !email.includes('@')) {
-        if (err) err.textContent = '❌ Valid Gmail address required!';
+        if (err) err.textContent = '❌ Valid email address required!';
         return;
     }
+    if (err) err.textContent = '';
+    if (btn) { btn.textContent = 'Checking...'; btn.disabled = true; }
 
     try {
-        toast('Verifying access...', 'info');
-        
-        // Background Auth: Sign in anonymously to get permission to read Firestore
-        if (!firebase.auth().currentUser) {
-            await firebase.auth().signInAnonymously();
-        }
-
         // Check if user's email is in 'users' collection
         const doc = await db.collection('users').doc(email).get();
         
-        if (doc.exists) {
+        if (doc.exists && (doc.data().role === 'staff' || doc.data().role === 'admin' || doc.data().role === 'superadmin')) {
             const userData = doc.data();
             if (userData.authorized === false) {
-                throw new Error("Access Denied: Your account has been disabled.");
+                throw new Error('Access Denied: Your account has been disabled.');
             }
             
-            console.log("Access Granted for:", email);
+            console.log('Access Granted for:', email);
             currentUserRole = userData.role || 'staff';
             localStorage.setItem('sultans_auth', 'true');
-            localStorage.setItem('staff_email', email);
+            localStorage.setItem('sultans_staff_email', email);
             
             document.documentElement.classList.remove('auth-none');
             document.documentElement.classList.add('auth-ok');
             
+            // Hide loading overlay
+            var loading = document.getElementById('loadingOverlay');
+            if (loading) { loading.style.opacity = '0'; setTimeout(function(){ loading.style.display='none'; }, 500); }
+            
             // Start App
             startListeners();
             startAlarmListener();
-            toast('Welcome back!', 'ok');
+            toast('✅ Welcome! Logged in as ' + email, 'ok');
         } else {
-            throw new Error("Access Denied: Email not authorized in Admin Panel.");
+            throw new Error('Access Denied: Email not authorized. Ask admin to add you.');
         }
     } catch (e) {
-        console.error("Access Error:", e);
-        if (err) err.textContent = '❌ ' + (e.code === 'permission-denied' ? 'Permission Denied! Please check Firebase Rules.' : e.message);
-        logout();
+        console.error('Access Error:', e);
+        if (err) err.textContent = '❌ ' + (e.code === 'permission-denied' ? 'Firebase Permission Denied! Check rules.' : e.message);
+        if (btn) { btn.textContent = '🔐 SIGN IN'; btn.disabled = false; }
     }
 }
 
-// Watch Session on Load
-(function checkSession() {
-    const isAuth = localStorage.getItem('sultans_auth') === 'true';
-    const email = localStorage.getItem('staff_email');
-    if (isAuth && email) {
-        document.documentElement.classList.remove('auth-none');
-        document.documentElement.classList.add('auth-ok');
-        startListeners();
-        startAlarmListener();
-    } else {
-        logout();
-    }
-})();
+// NOTE: checkSession and logout are defined in index.html's inline script.
+// They handle auth flow via staffDb and startStaffSession.
+// Do NOT redefine them here.
 
-function logout() {
-  localStorage.removeItem('sultans_auth');
-  localStorage.removeItem('staff_email');
-  document.documentElement.classList.remove('auth-ok');
-  document.documentElement.classList.add('auth-none');
-}
 
 // ─── INIT ───
 function init(){
