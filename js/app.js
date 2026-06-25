@@ -915,20 +915,8 @@ function renderOnline(){
       </td>
     </tr>`).join('');
 }
-async function verifyOnline(id, approve){
-  if(!confirm(approve?'Approve this booking?':'Reject and delete?'))return;
-  showSync(true);
-  try{
-    if(approve){
-      await db.collection('bookings').doc(id).update({status:'pre', approvedAt:new Date().toISOString()});
-      toast('Booking Approved! ✅','ok');
-    } else {
-      await db.collection('bookings').doc(id).delete();
-      toast('Rejected & Deleted','err');
-    }
-  }catch(e){toast('Error: '+e.message,'err');}
-  showSync(false);
-}
+// verifyOnline is defined below (line ~2085) with the correct implementation
+// that sets status:'rejected' instead of deleting, preserving booking history.
 
 // ─── CALENDAR ───
 function renderCal(){
