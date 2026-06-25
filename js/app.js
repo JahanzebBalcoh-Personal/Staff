@@ -10,16 +10,17 @@ const EJ_TPL = 'template_id';
 const EJ_TO = 'jahanzebbaloch@example.com';
 const firebaseConfig={apiKey:"AIzaSyBfhbjD0b8UaISn1QrK6E-Ci5Yr7HcUTzA",authDomain:"sultans-cricket.firebaseapp.com",projectId:"sultans-cricket",storageBucket:"sultans-cricket.firebasestorage.app",messagingSenderId:"975861366304",appId:"1:975861366304:web:6bfef2fc3e3b01d0284645"};
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// Use staffDb from index.html if already initialized (to avoid double-init errors)
+const db = (typeof staffDb !== 'undefined') ? staffDb : firebase.firestore();
 var messaging = null;
 try {
-    if (firebase.messaging.isSupported()) {
+    if (firebase.messaging && firebase.messaging.isSupported()) {
         messaging = firebase.messaging();
     }
 } catch (e) { console.warn("Messaging not supported:", e); }
 
-// Enable Persistence for Speed
-db.enablePersistence().catch(err => console.warn("Persistence failed:", err.code));
+// NOTE: enablePersistence removed — index.html already opened Firestore via staffDb.
+// Calling enablePersistence after any Firestore call crashes with FirebaseError.
 
 let RATE=2000;
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -29,7 +30,7 @@ let activeBookingId=null;
 let allBookings=[],allExpenses=[],allCustomers=[];
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
 let currentInvBooking=null;
-let allHistory=[];
+var allHistory=[];  // var used to avoid TDZ issues with async script load order
 const APP_VERSION = '1.2.2'; // Update this when deploying new code
 let currentUserRole = null;
 
