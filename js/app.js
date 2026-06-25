@@ -34,6 +34,30 @@ var allHistory=[];  // var used to avoid TDZ issues with async script load order
 const APP_VERSION = '1.2.2'; // Update this when deploying new code
 let currentUserRole = null;
 
+// PWA Install Logic
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('installPwaBtn');
+    if(installBtn) {
+        installBtn.style.display = 'inline-block';
+        installBtn.addEventListener('click', () => {
+            installBtn.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('Staff accepted the PWA prompt');
+                } else {
+                    console.log('Staff dismissed the PWA prompt');
+                    installBtn.style.display = 'inline-block';
+                }
+                deferredPrompt = null;
+            });
+        });
+    }
+});
+
 // ─── FIREBASE LISTENERS ───
 function startListeners(){
   try {
@@ -254,8 +278,9 @@ function viewSS(url){
 }
 
 // ─── WHATSAPP MESSAGES ───
-function waConfirm(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\n✅ *Your booking is confirmed!*\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n🕐 Hours: ${b.hrs} hrs\n💰 Total: ${Rs(b.fin)}\n💵 Advance Paid: ${Rs(b.advAmt)}\n⏳ Remaining: ${Rs(b.due)}\n\nPlease arrive on time!\n*Thank you! 🙏*`;}
-function waDue(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club — Multan*\n\nYour payment is pending:\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n💰 Total: ${Rs(b.fin)}\n❗ *Due Amount: ${Rs(b.due)}*\n\nPlease clear your payment:\n🟣 JazzCash: 0300-3510175 (Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101 (Mehboob Ahmad)\n\n*Thank you! 🙏*`;}
+function waConfirm(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club - Multan*\n\n✅ *Your booking is confirmed!*\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n⏳ Hours: ${b.hrs} hrs\n💰 Total: ${Rs(b.fin)}\n💵 Advance Paid: ${Rs(b.advAmt)}\n⚠️ Remaining: ${Rs(b.due)}\n\nPlease arrive on time!\n*Thank you! 🏏*`;}
+function waDue(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club - Multan*\n\nYour payment is pending:\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n💰 Total: ${Rs(b.fin)}\n⚠️ *Due Amount: ${Rs(b.due)}*\n\nPlease clear your payment:\n🟢 JazzCash: 0300-3510175 (Abdul Gaffar)\n🔵 Bank Alfalah: 83721010111101 (Mehboob Ahmad)\n\n*Thank you! 🏏*`;}
+function waReceipt(b){return`Assalam o Alaikum ${b.nm}! 🏏\n*The Sultans Indoor Cricket Club - Multan*\n\n🧾 *Match Receipt*\n📅 Date: ${b.date}\n⏰ Time: ${b.st}\n⏳ Hours: ${b.hrs} hrs\n\n💰 Total Amount: ${Rs(b.fin)}\n💵 Paid Amount: ${Rs((b.advAmt||0)+(b.afterCash||0)+(b.afterAcc||0))}\n${(b.due||0)>0 ? `⚠️ *Remaining Due: ${Rs(b.due)}*\n` : `✅ *Fully Paid!*\n`}\nThanks for playing at SCC! We hope to see you again soon. 🏏`;}
 function waInvoiceText(b){
   const status=b.status==='paid'?'✅ FULLY PAID':b.status==='partial'?'💛 PARTIAL PAYMENT':'⏳ PRE-MATCH';
   return `🏏 *THE SULTANS INDOOR CRICKET CLUB*\n📍 Multan, Pakistan\n\n━━━━━━━━━━━━━━\n📄 *BOOKING RECEIPT*\n━━━━━━━━━━━━━━\n👤 *Name:* ${b.nm}\n📞 *Phone:* ${b.ph||'—'}\n📅 *Date:* ${b.date}\n⏰ *Time:* ${b.st||'—'} (${b.hrs} hrs${b.exM>0?' + '+b.exM+' min':''})\n💰 *Rate:* Rs.${RATE}/hr${b.dA>0?'\n🎁 *Discount:* -'+Rs(b.dA):''}\n\n━━━━━━━━━━━━━━\n💵 *PAYMENT DETAILS*\n━━━━━━━━━━━━━━\n*Total: ${Rs(b.fin)}*\nAdvance (${b.advMode}): ${Rs(b.advAmt)}${b.status!=='pre'?'\nCash (After Match): '+Rs(b.afterCash||0)+'\nAccount (After Match): '+Rs(b.afterAcc||0):''}\n*Due Remaining: ${(b.due||0)>0?Rs(b.due):'CLEAR ✅'}*\n\n*Status: ${status}*\n\n━━━━━━━━━━━━━━\n🏦 *PAYMENT ACCOUNTS*\n━━━━━━━━━━━━━━\n🟣 JazzCash: 0300-3510175\n(Abdul Gaffar)\n🏦 Bank Alfalah: 83721010111101\n(Mehboob Ahmad)\n\n📞 0300-9634880\nThank you! 🙏`;}
@@ -711,7 +736,7 @@ function renderPreTable(){
           <button class="btn-inv" onclick="openInv('${b.id}')" style="font-size:9px;padding:4px 8px;">🧾</button>
           ${b.screenshot ? `<button class="btn-orange" onclick="viewSS('${b.screenshot}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;">🖼️ VIEW SS</button>` : ''}
           <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
-          ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waConfirm(b))}" target="_blank">💬</a>`:''}
+          ${b.ph?`<a href="${waLink(b.ph,waConfirm(b))}" target="_blank" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;text-decoration:none;">📲 WA Confirm</a>`:''}
           <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
         </td>
 
@@ -847,7 +872,7 @@ function renderPostTab(){
       <td style="color:var(--purple);font-weight:800;">${Rs(b.due)}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap;">
         <button class="btn-orange" onclick="openComplete('${b.id}')">✅ Complete</button>
-        ${b.ph?`<a class="btn-wa" href="${waLink(b.ph,waDue(b))}" target="_blank">💬 Due</a>`:''}
+        ${b.ph?`<a href="${waLink(b.ph,waDue(b))}" target="_blank" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;text-decoration:none;">📲 WA Due</a>`:''}
       </td>
     </tr>`).join('');
   const fd=document.getElementById('comp-filter').value;
@@ -870,6 +895,7 @@ function renderPostTab(){
         ${b.screenshot ? `<img src="${b.screenshot}" onclick="viewSS('${b.screenshot}')" style="width:28px;height:28px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--gold);">` : ''}
         ${(b.due||0)>0?`<button class="btn-orange" onclick="openAddPay('${b.id}')" style="font-size:9px;padding:4px 8px;">💰 Add Pay</button>`:''}
         <button class="btn-blue" onclick="openEdit('${b.id}')" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,var(--blue),#1d4ed8);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;">✏️</button>
+        ${b.ph?`<a href="${waLink(b.ph,waReceipt(b))}" target="_blank" style="font-size:9px;padding:4px 8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;text-decoration:none;">📲 WA Receipt</a>`:''}
         <button class="btn-del" onclick="delBk('${b.id}')">Del</button>
       </td>
 
